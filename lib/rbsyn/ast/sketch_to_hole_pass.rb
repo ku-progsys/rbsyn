@@ -15,7 +15,7 @@ class SketchToHolePass < ::AST::Processor
 
   def on_def(node)
     @methods << node.children[0]
-    @tenv = []
+    @tenv = {}
     @ret = RDL::Globals.types[:integer]
     new_nodes = node.children.map { |k|
       k.is_a?(Parser::AST::Node) ? process(k) : k
@@ -28,6 +28,7 @@ class SketchToHolePass < ::AST::Processor
     node.children.each { |arg|
       @tenv[arg.children[0]] = RDL::Globals.types[:integer]
     }
+    node
   end
 
   def handler_missing(node)

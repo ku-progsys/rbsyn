@@ -91,7 +91,8 @@ module SpecDSL
     puts ast
     rewrite_holes = SketchToHolePass.new
     new_ast = rewrite_holes.process(ast)
-    # puts new_ast
+    puts "========="
+    puts new_ast
 
     syn_proxy = SynthesizerProxy.new(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, new_ast)
     syn_proxy.instance_eval(&blk)
