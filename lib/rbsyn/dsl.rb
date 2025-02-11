@@ -94,6 +94,13 @@ module SpecDSL
     puts "========="
     puts new_ast
 
+    gtenv_pass = GlobalTEnv.new
+    gtenv_pass.process(new_ast)
+    gtenv = gtenv_pass.tenv
+
+    ltenv_pass = LocalTEnv.new(gtenv)
+    ltenv_pass.process(new_ast)
+
     syn_proxy = SynthesizerProxy.new(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, new_ast)
     syn_proxy.instance_eval(&blk)
   end
