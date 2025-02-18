@@ -23,7 +23,7 @@ describe "Sketch" do
   it "does arithmetic with sketch" do
     load_typedefs :stdlib
 
-    src = File.join(__dir__, "arith_1_sketch.rb")
+    src = File.join(__dir__, "arith_2_sketch.rb")
 
     sketch src, :sketch_1, "(Integer) -> Integer", [], consts: true do
 
