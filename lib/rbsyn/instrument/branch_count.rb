@@ -17,7 +17,7 @@ class BranchCount < ::AST::Processor
       process(node.children[1])
     elsif node.children.size == 3
       @branches += 1 unless node.children[1].type == :if
-      @branches += 1 unless node.children[2].type == :if
+      @branches += 1 unless (node.children[2] && node.children[2].type == :if)
       process(node.children[1])
       process(node.children[2])
     else
