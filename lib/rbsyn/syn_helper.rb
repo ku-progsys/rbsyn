@@ -15,9 +15,12 @@ module SynHelper
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
             res, klass = eval_ast(@ctx, prog_wrap.to_ast, precond)
+            
           rescue RbSynError => err
             raise err
           rescue StandardError => err
+            puts "StandardError for prog: #{Unparser.unparse(prog_wrap.to_ast)}"
+            puts "Error raised was: #{err}"
             next
           end
 

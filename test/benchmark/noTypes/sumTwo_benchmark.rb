@@ -1,18 +1,19 @@
 # augmented: true
 require "test_helper"
 include RDL::Annotate
-
+require_relative "../../../lib/rbsyn/helpermodule"
 
 
 describe "noTypes" do
-  load_typedefs :stdlib
+  it "sums two numbers together" do
 
-  RDL.type Integer, :+, "(Integer) -> Integer", wrap: false
-  it "sum_two" do
-
+    RDL.nowrap :Integer
+    RDL.nowrap :BasicObject
+    RDL.type :BasicObject, :!, '() -> %bool'
+    RDL.type :Integer, :==, "(Integer) -> %bool"
+    RDL.type :BasicObject, :+,  "(%dyn) -> %dyn" # providing Ruby with as little information as possible. 
     
-
-    define :sumTwo, "(Integer, Integer) -> Integer", [], consts: false do
+    define :sumTwo, "(Integer, Integer) -> Integer", [], consts: :true do
 
   
       spec "Should Sum Results but will throw error" do
