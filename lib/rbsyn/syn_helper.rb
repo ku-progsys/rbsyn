@@ -1,81 +1,20 @@
 require 'parser/current'
+require "set"
 module SynHelper
   include TypeOperations
-
-  def traverse_and_check(ast, klass, mthd, *argtypes)
-
-
-    if ast.children.size == 0
-      return true
-    end
-    thisklass = nil
-    thismthd = nil
-    
-    aargs = []
-    targs = []
-    if ast.type == :send
-      thisklass = ast.children[0]
-        if thisklass.type == :send
-          thisklass = ast.children[0] 
-        end
-    else
-      thisklass = ast.children[0]
-    end
-
-    if ast.children.size == 1
-      return true
-    end
-
-    ast.children[1 ...].each do |i|
-
-      if i.class == TypedNode
-
-        targs.append(i.ttype)
-      else
-        thismthd = i
-      end
-    end
-
-    if thismthd == mthd
-      if thisklass.ttype.to_s == klass.to_s && argtypes.size == targs.size
-
-        (0..targs.size).each do |i|
-
-          if targs[i].to_s != argtypes[i].to_s
-
-            return false
-            
-          end 
-        end
-
-        if thisklass.children.size > 1
-          if ! traverse_and_check(thisklass, klass, mthd, *argtypes)
-
-            return false
-          end
-        end
-        aargs.each do |i|
-          if i.children.size > 1
-            if ! traverse_and_check(i, klass, mthd, *argtypes)
-
-             return false
-            end
-          end
-        end
-        return true
-      else
-
-        return false
-        
-      end
-
-    else
-      return true
-    end
-
-  end
+  require_relative 'error_assess'
 
   def generate(seed_hole, preconds, postconds, return_all=false)
+
+    tenvdict = @ctx.tenv.map {|k, v|
+      [k, v.name.to_sym]
+    }.to_h
+
+    suspect_methods = Set.new
+    suspect_types = Set.new
+    correct_types = Set.new
+
+    suspect_methods.add(:+) # hard coded
     correct_progs = []
 
     work_list = [seed_hole]
@@ -83,40 +22,53 @@ module SynHelper
       base = work_list.shift
       effect_needed = []
       generated = base.build_candidates
+
+      generated.each do |i|
+        i.type_suspect = type_priority(suspect_types, i, tenvdict)
+      end
+
       evaluable = generated.reject &:has_hole?
-      flag = false
-      counterbad =0
-      countergood = 0
+      #counterbad =0
+      #countergood = 0
       evaluable.each { |prog_wrap|
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
-
-            if flag
-              puts "Now testing: #{Unparser.unparse(prog_wrap.to_ast)} for censored type."
-              temp = traverse_and_check( prog_wrap.to_ast, :Integer, :+, :Integer)
-              if ! temp
-                puts "bad example removed: #{Unparser.unparse(prog_wrap.to_ast)}\n\n"
-                counterbad += 1
-                next
-              else
-                puts "is fine: #{Unparser.unparse(prog_wrap.to_ast)}\n\n"
-                countergood += 1
-              end
-            end
-            
 
             res, klass = eval_ast(@ctx, prog_wrap.to_ast, precond)
           rescue RbSynError => err
             raise err
           rescue StandardError => err
-            puts "StandardError for prog: #{Unparser.unparse(prog_wrap.to_ast)}"
-            puts "Error raised was: #{err}\n\n"
-            puts "Correcting Type For further iterations (Stub for now)"
-            counterbad += 1
-            RDL.remove_type :BasicObject, :+
-            RDL.type :BasicObject, :+, "(Integer) -> Integer"
-            flag = true
 
+            #puts "StandardError for prog: #{Unparser.unparse(prog_wrap.to_ast)}"
+            puts  "environment: #{prog_wrap.env.inspect}"
+            puts "Error: #{err.to_s}"
+            #err.backtrace.each do |i|
+            #  puts "error: #{i}"
+            #end
+            size = suspect_types.size
+            suspect_types.add(get_type_error(prog_wrap, err, tenvdict))
+            puts "Type returned was : #{get_type_error(prog_wrap, err, tenvdict)}"
+            #puts "Error type: #{err.class}"
+            #puts "Errorstack: #{err.backtrace[0]} #{err.backtrace[1]}"
+            #puts "Suspected error: #{get_type_error(prog_wrap, err, tenvdict).to_s}"
+
+            puts "\n\n"
+            if suspect_types.size > size
+              generated.each do |i|
+                
+                i.type_suspect = type_priority(suspect_types, i, tenvdict)
+                #puts "SUSPECT?"
+                #puts i.type_suspect
+                #if i.type_suspect == 1
+                  #puts i.to_ast
+                #end
+              end
+            end
+            #puts "did it detect? #{type_priority(suspect_types, prog_wrap, tenvdict)}"
+            #counterbad += 1
+            #RDL.remove_type :BasicObject, :+
+            #RDL.type :BasicObject, :+, "(Integer) -> Integer"
+          
             next
           end
 
@@ -146,7 +98,7 @@ module SynHelper
         }
 
         if test_outputs.all? true
-          puts "Number of ill typed dynamic programs removed: #{counterbad} out of #{countergood + counterbad} tested"
+          #puts "Number of ill typed dynamic programs removed: #{counterbad} out of #{countergood + counterbad} tested"
           correct_progs << prog_wrap
           return prog_wrap unless return_all
         elsif ENV.key? 'DISABLE_EFFECTS'
@@ -154,6 +106,7 @@ module SynHelper
           prog_wrap.look_for(:effect, ['*'])
           effect_needed << prog_wrap
         end
+
       }
 
 
@@ -171,12 +124,16 @@ module SynHelper
       end
 
       work_list = [*work_list, *remainder_holes].sort { |a, b| comparator(a, b) }
+      #puts work_list.map {|i| ["solved: #{i.passed_asserts}", "size: #{i.prog_size}", "suspect: #{i.type_suspect}"]}
+      work_list 
     end
     raise RbSynError, "No candidates found"
   end
 
   def comparator(a, b)
-    if a.passed_asserts < b.passed_asserts
+    if a.type_suspect > b.type_suspect
+      1
+    elsif a.passed_asserts < b.passed_asserts
       1
     elsif a.passed_asserts == b.passed_asserts
       if a.prog_size < b.prog_size

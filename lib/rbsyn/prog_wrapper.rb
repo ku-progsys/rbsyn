@@ -1,8 +1,9 @@
 class ProgWrapper
   include AST
+  require_relative "error_assess"
 
-  attr_reader :seed, :env, :exprs, :looking_for, :target
-  attr_accessor :passed_asserts
+  attr_reader :seed, :env, :exprs, :looking_for, :target, :type_suspect, :exprs
+  attr_accessor :passed_asserts, :type_suspect
 
   def initialize(ctx, seed, env, exprs=RDL.type_cast([], 'Array<TypedNode>', force: true))
     @ctx = ctx
@@ -11,6 +12,8 @@ class ProgWrapper
     @exprs = exprs
     @passed_asserts = 0
     @looking_for = :type
+    @type_suspect = 0
+    # add the ranking for types here
   end
 
   def look_for(kind, target)

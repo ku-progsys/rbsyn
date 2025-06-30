@@ -10,24 +10,15 @@ describe "noTypes" do
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.type :BasicObject, :!, '() -> %bool'
-    RDL.type :Integer, :==, "(Integer) -> %bool"
+    RDL.type :BasicObject, :+, "(%dyn) -> Integer" # providing Ruby with as little information as possible, honestly I shouldn't
+    # even provide it with the return type if I'm being honest. 
     
 
     #RDL::Globals.module_eval.types[:object].each {|i| puts i}
 
     
-
-
     define :sumTwo, "(Integer, Integer) -> Integer", [], consts: :true do
-
-      if ENV.key? 'SETTYPE'
-        puts "nokey"
-        type = ENV['SETTYPE']
-      else
-        puts "key"
-        type = "(%dyn) -> Integer"
-      end
-      RDL.type :BasicObject, :+, type # providing Ruby with as little information as possible. 
+      
 
       spec "Should Sum Results but will throw error" do
 
@@ -37,7 +28,7 @@ describe "noTypes" do
 
         post { |result|
         
-          assert {result == 5 }
+          assert {result ==  7}
 
         }
       end
