@@ -10,7 +10,7 @@ class InferTypeErrPass < ::AST::Processor
     if node.children[1] == @meth
       trecv = node.children[0].ttype
       targs = node.children[2..].map { |i| i.ttype }
-      @bad_type = [trecv, *targs]
+      @bad_type = [trecv, @meth, *targs]
     end
     node.updated(nil, node.children.map { |k|
       k.is_a?(TypedNode) ? process(k) : k

@@ -3,18 +3,15 @@ require "set"
 module SynHelper
   include TypeOperations
   require_relative 'error_assess'
+  require_relative 'ast/check_error_pass'
 
   def generate(seed_hole, preconds, postconds, return_all=false)
-
+    
     tenvdict = @ctx.tenv.map {|k, v|
       [k, v.name.to_sym]
     }.to_h
 
-    suspect_methods = Set.new
     suspect_types = Set.new
-    correct_types = Set.new
-
-    suspect_methods.add(:+) # hard coded
     correct_progs = []
 
     work_list = [seed_hole]
@@ -23,52 +20,54 @@ module SynHelper
       effect_needed = []
       generated = base.build_candidates
 
-      generated.each do |i|
-        i.type_suspect = type_priority(suspect_types, i, tenvdict)
+      generated.each do |i| # this should be done in the generate section instead
+
+        pass = CheckErrorPass.new(suspect_types)
+        pass.process(i)
+        if pass.contains_type
+          i.type_suspect += 1
+        end
+        
       end
 
       evaluable = generated.reject &:has_hole?
       #counterbad =0
       #countergood = 0
+
       evaluable.each { |prog_wrap|
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
 
             res, klass = eval_ast(@ctx, prog_wrap.to_ast, precond)
           rescue RbSynError => err
+
             raise err
+          rescue TypeError => err
+
+            pass = CheckErrorPass.new(suspect_types) # don't want to test programs that have a known error. 
+            pass.process(prog_wrap)
+            
+            if !pass.contains_type
+              restricted_type = get_type_error(prog_wrap, err, tenvdict) #look for and get the new type error. 
+              suspect_types.add(restricted_type) # add to the list of restricted types.                
+                # for each of the existing partial programs, if there is a new type in the suspect types list, remove it.          
+              generated.each do |i|
+
+                if i.type_suspect < 1  # no point in updating if it already has an error THIS MIGHT BE A MISTAKE RETURN TO SEE
+                  pass = CheckErrorPass.new([restricted_type])
+
+                  pass.process(i)
+                  if pass.contains_type
+                    i.type_suspect += 1
+                  end
+                end  
+              end
+
+            end
+
+            next
           rescue StandardError => err
 
-            #puts "StandardError for prog: #{Unparser.unparse(prog_wrap.to_ast)}"
-            puts  "environment: #{prog_wrap.env.inspect}"
-            puts "Error: #{err.to_s}"
-            #err.backtrace.each do |i|
-            #  puts "error: #{i}"
-            #end
-            size = suspect_types.size
-            suspect_types.add(get_type_error(prog_wrap, err, tenvdict))
-            puts "Type returned was : #{get_type_error(prog_wrap, err, tenvdict)}"
-            #puts "Error type: #{err.class}"
-            #puts "Errorstack: #{err.backtrace[0]} #{err.backtrace[1]}"
-            #puts "Suspected error: #{get_type_error(prog_wrap, err, tenvdict).to_s}"
-
-            puts "\n\n"
-            if suspect_types.size > size
-              generated.each do |i|
-                
-                i.type_suspect = type_priority(suspect_types, i, tenvdict)
-                #puts "SUSPECT?"
-                #puts i.type_suspect
-                #if i.type_suspect == 1
-                  #puts i.to_ast
-                #end
-              end
-            end
-            #puts "did it detect? #{type_priority(suspect_types, prog_wrap, tenvdict)}"
-            #counterbad += 1
-            #RDL.remove_type :BasicObject, :+
-            #RDL.type :BasicObject, :+, "(Integer) -> Integer"
-          
             next
           end
 
@@ -100,6 +99,15 @@ module SynHelper
         if test_outputs.all? true
           #puts "Number of ill typed dynamic programs removed: #{counterbad} out of #{countergood + counterbad} tested"
           correct_progs << prog_wrap
+          puts "FOUND SOLUTION, RESTRICTED TYPES:"
+
+          suspect_types.each do |i|
+            puts "--------------------"
+            puts i
+            puts "--------------------"
+          end
+
+
           return prog_wrap unless return_all
         elsif ENV.key? 'DISABLE_EFFECTS'
           prog_wrap.passed_asserts = 0
@@ -129,7 +137,7 @@ module SynHelper
     end
     raise RbSynError, "No candidates found"
   end
-
+=begin
   def comparator(a, b)
     if a.type_suspect > b.type_suspect
       1
@@ -147,4 +155,26 @@ module SynHelper
       -1
     end
   end
+=end
+  def comparator(a, b)
+    #puts "comparitor"
+    #puts "a: #{a.type_suspect}\nb: #{b.type_suspect}\n"
+    if a.type_suspect > b.type_suspect
+      #puts "reordered"
+      1
+    elsif a.passed_asserts < b.passed_asserts
+      1
+    elsif a.passed_asserts == b.passed_asserts
+      if a.prog_size < b.prog_size
+        -1
+      elsif a.prog_size == b.prog_size
+        0
+      else
+        1
+      end
+    else
+      -1
+    end
+  end
+
 end

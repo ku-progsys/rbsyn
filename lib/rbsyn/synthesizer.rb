@@ -30,7 +30,9 @@ class Synthesizer
         prog_ref = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
         seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref), env)
         seed.look_for(:type, @ctx.functype.ret)
-        prog = generate(seed, [precond], [postcond], false)
+        #puts "here a"
+        prog = generate(seed, [precond], [postcond], false) # this is where we are getting to 
+        #puts "here b"
         # add to cache for future use
         prog_cache.add(prog)
         @ctx.logger.debug("Synthesized program:\n#{format_ast(prog.to_ast)}")
@@ -42,7 +44,10 @@ class Synthesizer
       branch_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))
       seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, branch_ref), env)
       seed.look_for(:type, RDL::Globals.types[:bool])
+
+      #BR THIS IS WHERE IT IS FAILING
       branches = generate(seed, [precond], [TRUE_POSTCOND], true)
+
       cond = BoolCond.new
       branches.each { |b| cond << update_types_pass.process(b.to_ast) }
 
@@ -55,6 +60,7 @@ class Synthesizer
     }
 
     # if there is only one generated, there is nothing to merge, we return the first synthesized program
+    #puts "num progconds: #{progconds.size}"
     return progconds[0].prog if progconds.size == 1
 
     # progconds = merge_same_progs(progconds).map { |progcond| [progcond] }

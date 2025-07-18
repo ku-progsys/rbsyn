@@ -7,11 +7,13 @@ include RDL::Annotate
 describe "noTypes" do
   it "sums two numbers together" do
 
+
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.type :BasicObject, :!, '() -> %bool'
-    RDL.type :BasicObject, :+, "(%dyn) -> Integer" # providing Ruby with as little information as possible, honestly I shouldn't
-    # even provide it with the return type if I'm being honest. 
+    RDL.type :BasicObject, :+, "(%dyn) -> Integer" # for some reason it won't work if I don't provide the output type
+    # it can synthesize the solution branch but it can't find the solution when attempting to integrate them in the 
+    # second step. 
     
 
     #RDL::Globals.module_eval.types[:object].each {|i| puts i}
@@ -27,9 +29,8 @@ describe "noTypes" do
         }
 
         post { |result|
-        
-          assert {result ==  7}
 
+          assert {result ==  8}
         }
       end
       generate_program

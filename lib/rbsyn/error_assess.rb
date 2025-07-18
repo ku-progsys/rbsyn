@@ -1,3 +1,5 @@
+require_relative "ast/infer_type_err_pass.rb"
+
 def traverse_and_check(ast, klass, mthd, *argtypes)
     # function to remove complete candidates that are censored, VERY inefficient right now. 
     # TODO alter to use a full list of censored typed 
@@ -115,11 +117,11 @@ def traverse_and_check(ast, klass, mthd, *argtypes)
     # I am finding that it doesn't always include what I need so I will have it look at the message now
 
     bktrace = error.backtrace
+    
     relevant = []
     bktrace.each do |i|
       if i.include?("(eval)")
         relevant.append(i.scan(/`.*?'/)[0].gsub(/^`|\'$/, ''))
-        
       else
         break
       end
@@ -127,12 +129,12 @@ def traverse_and_check(ast, klass, mthd, *argtypes)
     temp = error.to_s.scan(/`.*?'/)[0]
     temp = if temp != nil then temp.gsub(/^`|\'$/, '') else nil end
     relevant.append(temp)
+    
     relevant
 
   end
-  
 
-
+=begin
   def extract_type_error(components, error, ast)
     
     # puts together all other error functions to get the most likely type that must be 'prohibited'
@@ -227,7 +229,6 @@ def traverse_and_check(ast, klass, mthd, *argtypes)
 
 
 
-
 def type_priority(suspect_types_list, ast, tenvd)
 
   if ast.type_suspect == 1
@@ -289,27 +290,30 @@ def type_priority(suspect_types_list, ast, tenvd)
   
 end
 
+=end
 
 def get_type_error(ast, error, tenvd, test_name = "sumTwo")
-  puts "geterror called"
+  #puts "geterror called"
   #should identify all points where an error could have occurred.
   #for now will have it identify the top level error
   #
-  ast = ast.to_ast
 
+  ast = ast.to_ast
   err = backtrace_scrape(error) #top level error
   if err[0] == test_name # hard coded test name for now
     err = err[-1]
   else
     err = err[0]
   end
-  #puts "Error detected is: #{err}"
-  #
 
   pass = InferTypeErrPass.new(err.to_sym)
   pass.process(ast)
-  puts "BAD TYPE: #{pass.bad_type}"
 
+  pass.bad_type
+end
+
+
+=begin
   top_store = []
   iter = ast_iterate ast do |l|
 
@@ -344,7 +348,7 @@ def get_type_error(ast, error, tenvd, test_name = "sumTwo")
 
 end
       # extract current type tree
-=begin
+
         if i.class == TypedNode
           if [:true, :false].include?(i.type) 
             puts "BOOL TYPE: #{i.ttype} type: #{i.type}"
