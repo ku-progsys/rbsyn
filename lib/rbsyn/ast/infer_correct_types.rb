@@ -1,14 +1,12 @@
-class InferTypeErrPass < ::AST::Processor
+class InferCorrectPass < ::AST::Processor
   include TypeOperations
+  require "set"
 
-  attr_reader :bad_type
+  attr_reader :gtlist
 
-  def initialize(meth, btlist, gtlist)
-    @meth = meth
-    @btlist = btlist
+  def initialize(meths, gtlist)
     @gtlist = gtlist
-    @bad_type = nil
-    @found = false
+    @meth = meths
   end
 
   def on_send(node)
@@ -29,17 +27,12 @@ class InferTypeErrPass < ::AST::Processor
     rescue
     end
 
-    if mth == @meth
+    if @meth.include?(mth)
       # here is where we update the bad types if this is the method we are searching for.  
-      temp = [trecv, @meth, *targs, tret]
+      @gtlist.add([trecv, @meth, *targs, tret])
 
-      if @btlist.include?(temp)
-        @bad_type = temp# <<< BR I am currently choosing to supercede any "found" bad types with prior observed 
-        #"bad types" as opposed to assuming that we have seen
-        # a new bad type. 
-        @found = true
-      elsif !@gtlist.include?(temp) && !@found
-          @bad_type = temp
+      if [trecv, @meth, *targs, tret].map {|i| i.to_s} == ["true or false", "[:+]", "Integer", "Integer"]
+        puts "problem here: #{node}\n\n"
       end
     end
 

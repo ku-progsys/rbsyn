@@ -47,6 +47,9 @@ These environment variables can be passed in any combination in the bench comman
 
 ```
 CONSOLE_LOG=1 DISABLE_EFFECTS=1 bundle exec rake bench
+
+BRYAN MODS
+To run my version call CONSOLE_LOG=1 DISABLE_EFFECTS=1 bundle exec rake notypes
 ```
 
 ## Using RbSyn

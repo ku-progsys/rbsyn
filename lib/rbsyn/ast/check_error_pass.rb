@@ -1,6 +1,7 @@
 class CheckErrorPass < ::AST::Processor
 
   attr_reader :contains_type
+  attr_accessor :contains_type
 
   def initialize(err)
 
@@ -10,14 +11,19 @@ class CheckErrorPass < ::AST::Processor
   end
 
   def on_send(node)
+    
+    node.updated(nil, node.children.map { |k|
+      k.is_a?(TypedNode) ? process(k) : k
+    })
+
     @err.each do |k|
       
       meth = k[1]
-      if node.children[1] == meth
+      
+      if node.children[1] == meth # I think that I need to update this to carry the type of the previous node???????? I don't think I'm doing it properly??????
         trecv = node.children[0].ttype
         targs = node.children[2..].map { |i| i.ttype }
         temp_type = [trecv, meth, *targs] 
-
         
         if temp_type == k
 
@@ -27,11 +33,6 @@ class CheckErrorPass < ::AST::Processor
         end
       end
     end
-
-    node.updated(nil, node.children.map { |k|
-      k.is_a?(TypedNode) ? process(k) : k
-    })
-
   end
 
   def handler_missing(node)

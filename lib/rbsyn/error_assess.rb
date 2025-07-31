@@ -292,7 +292,7 @@ end
 
 =end
 
-def get_type_error(ast, error, tenvd, test_name = "sumTwo")
+def get_type_error(ast, error, tenvd, suspect_types, correct_types, test_name = "sumTwo")
   #puts "geterror called"
   #should identify all points where an error could have occurred.
   #for now will have it identify the top level error
@@ -305,11 +305,11 @@ def get_type_error(ast, error, tenvd, test_name = "sumTwo")
   else
     err = err[0]
   end
-
-  pass = InferTypeErrPass.new(err.to_sym)
+  #puts "checking bad type. "
+  pass = InferTypeErrPass.new(err.to_sym, suspect_types, correct_types)
   pass.process(ast)
-
   pass.bad_type
+  
 end
 
 

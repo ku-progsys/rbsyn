@@ -1,6 +1,7 @@
 class ExpandHolePass < ::AST::Processor
   include AST
   include TypeOperations
+  require_relative "check_error_pass"
 
   attr_reader :expand_map, :read_effs
   attr_writer :effect_methds
@@ -84,11 +85,13 @@ class ExpandHolePass < ::AST::Processor
 
       # possibly reusable subexpressions
       expanded.concat envref(node.ttype)
-    elsif depth > 0 && !@effect
+    elsif depth > 0 && !@effect #MODIFY THIS NEXT BR
       # synthesize function calls
       r = Reachability.new(@ctx.tenv)
       paths = r.paths_to_type(node.ttype, depth, @variance)
+      #puts "method"
       expanded.concat paths.map { |path| fn_call(path) }
+
     elsif depth == 1 && @effect
       expanded.concat effects
     else
@@ -245,7 +248,7 @@ class ExpandHolePass < ::AST::Processor
 
   def finite_hash(type)
     # TODO: some hashes can have mandatory keys too
-    type.elts.each { |k, t| raise RbSynError, "expect everything to be optional in a hash" unless t.is_a? RDL::Type::OptionalType }
+    type.elts.each { |k, t| raise RbSynError, "expect everyt         ng to be optional in a hash" unless t.is_a? RDL::Type::OptionalType }
     possible_types = (1..@ctx.max_hash_size).map { |size|
       hash_combinations(type, size)
     }.flatten

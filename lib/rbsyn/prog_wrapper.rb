@@ -1,6 +1,6 @@
 class ProgWrapper
   include AST
-  require_relative "error_assess"
+  require_relative "ast/check_error_pass"
 
   attr_reader :seed, :env, :exprs, :looking_for, :target, :type_suspect, :exprs
   attr_accessor :passed_asserts, :type_suspect
@@ -66,10 +66,12 @@ class ProgWrapper
     @exprs << expr
   end
 
-  def build_candidates
+  def build_candidates(prhb)
     update_types_pass = RefineTypesPass.new
     case @looking_for
     when :type
+
+      # send the list of suspect type args to the function that builds candidates
       pass1 = ExpandHolePass.new(@ctx, @env)
       expanded = pass1.process(@seed)
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
@@ -80,6 +82,12 @@ class ProgWrapper
         prog_wrap = ProgWrapper.new(@ctx, program, new_env)
         prog_wrap.look_for(:type, @target)
         prog_wrap.passed_asserts = @passed_asserts
+        #puts "progwrap: #{prog_wrap.to_ast}"
+        #tchecker.contains_type = false #reset the type_checker
+        tchecker = CheckErrorPass.new(prhb) 
+        tchecker.process(prog_wrap)
+        #puts "contains type: #{tchecker.contains_type}"
+        prog_wrap.type_suspect = @type_suspect + (tchecker.contains_type ? 1 : 0) # if the type is bad add a 1 to the appropriate attr
         prog_wrap
       }
     when :effect
