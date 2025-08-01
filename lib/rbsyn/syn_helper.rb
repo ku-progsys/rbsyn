@@ -39,47 +39,38 @@ module SynHelper
       #countergood = 0
 
       evaluable.each { |prog_wrap|
+        prior_size = suspect_types.size
         flag = true
+        restricted_type = nil
+
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
+          
 
             res, klass = eval_ast(@ctx, prog_wrap.to_ast, precond)
+
           rescue RbSynError => err
             flag = false
             raise err
+
           rescue TypeError => err
-
             flag = false
-            #pass = CheckErrorPass.new(suspect_types) # don't want to test programs that have a known error. 
-            #pass.process(prog_wrap)
-
-            #puts "error_prog: #{prog_wrap.to_ast}\n\n"
-            restricted_type = get_type_error(prog_wrap, err, tenvdict, suspect_types, correct_types) #BR look for and get the new type error. 
-            
-            prior_size = suspect_types.size
-
+            restricted_type = get_type_error(prog_wrap, err, tenvdict, suspect_types, correct_types) #BR look for and get the new type error.             
             if !restricted_type.nil?() 
               suspect_types.add(restricted_type)# BR add to the list of restricted types.  
-            end
-            
-            
-            if prior_size < suspect_types.size   # reassign values for each suspect type program if there is a new suspect type that is. 
-              generated.each do |i|
+            end     
 
-                if i.type_suspect < 1  #BR no point in updating if it already has an error THIS MIGHT BE A MISTAKE AS WE MIGHT BE ABLE TO EXTRACT NEW ERRORS
-                  pass = CheckErrorPass.new([restricted_type])
-                  pass.process(i)
-                  if pass.contains_type
-                    i.type_suspect += 1
-                  end
-                end  
-              end
-            end
             next
 
           rescue StandardError => err
             flag = false
+            restricted_type = get_type_error(prog_wrap, err, tenvdict, suspect_types, correct_types) #BR look for and get the new type error.             
+            if !restricted_type.nil?() 
+              suspect_types.add(restricted_type)# BR add to the list of restricted types.  
+            end   
+               
             next
+
           end
 
           begin
@@ -111,6 +102,19 @@ module SynHelper
         
         }
 
+        if prior_size < suspect_types.size   # reassign values for each suspect type program if there is a new suspect type that is. 
+              generated.each do |i|
+
+                if i.type_suspect < 1  #BR no point in updating if it already has an error THIS MIGHT BE A MISTAKE AS WE MIGHT BE ABLE TO EXTRACT NEW ERRORS
+                  pass = CheckErrorPass.new([restricted_type])
+                  pass.process(i)
+                  if pass.contains_type
+                    i.type_suspect += 1
+                  end
+                end  
+              end
+            end
+
         # adding corect programs here: 
         if flag
           tester = InferCorrectPass.new([:+,], correct_types)
@@ -122,17 +126,18 @@ module SynHelper
         if test_outputs.all? true
           #puts "Number of ill typed dynamic programs removed: #{counterbad} out of #{countergood + counterbad} tested"
           correct_progs << prog_wrap
-          puts "final correct set size : #{correct_types.size}\n\n"
-          puts "with sets : "
-          correct_types.each {|i| puts "#{i.map {|j| j.to_s}}\n\n"}
-          puts "FOUND SOLUTION, RESTRICTED TYPES:"
+          puts "SLN FOUND!!!"
+          puts "CORRECT TYPES: "
+          correct_types.each {|i| puts "\n-----------------------\n#{i.map {|j| j.to_s}}-------------------------\n"}
+          puts  "\n--------------------------------\nRESTRICTED TYPES:\n\n"
           
 
           suspect_types.each do |i|
             puts "--------------------"
-            puts i
+            puts "#{i.map {|j| j.to_s}}"
             puts "--------------------"
           end
+          puts "\n\n"
 
           return prog_wrap unless return_all
         elsif ENV.key? 'DISABLE_EFFECTS'
