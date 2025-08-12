@@ -7,8 +7,10 @@ class TypedNode < Parser::AST::Node
     super(type, children)
   end
 
+
   # This is monkey patched. See original source in ast gem
   def updated(type=nil, children=nil, properties=nil)
+
     new_type       = type       || @type
     new_children   = children   || @children
 
@@ -18,6 +20,7 @@ class TypedNode < Parser::AST::Node
       self
     else
       original_dup.send :initialize, @ttype, new_type, *new_children
+      
     end
   end
 

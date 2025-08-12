@@ -4,49 +4,56 @@ class CheckErrorPass < ::AST::Processor
 
   def initialize(errs, successes)
 
-    @type_errs = errs
-    @type_successes = successes
-    @errors = 0
+    @type_info = type_info
 
+
+    @errors = 0
   end
 
-  def update_reset(type_errs, type_successes)
-    @type_errs = type_errs
-    @type_successes = type_successes
+  def update_info(type_info)
+    @type_info = type_info  
+  end
+
+
+  def reset()
     @errors = 0
   end
 
 
   def on_send(node)
-    
-    mth = node.children[1]
-    trecv = process(node.children[0]) 
-    return "error" if trecv.to_s == "error" 
+
+
+    m = @type_info[node.children[1]]
+
+      
+    trec = process(node.children[0]) 
+    return :except if trec == :except    
 
     targs = node.children[2 ..].map {|k|
 
       k.is_a?(TypedNode) ? process(k) : nil # this way of traversing will collect every error. 
       
     }
-    return "error" if targs.map {|i| i.to_s}.include?("error")
+    return :except if targs.include?(:except)
+      
     
-    signature = {:reciever => trecv, 
+    signature = {:reciever => trec, 
       :args => targs}
 
+    if m 
 
-    if @type_successes.keys.include?(mth)
-        # try to see if there is an error 
-      @type_errs[mth].each {|i|
-    
+      # try to see if there is an error 
+      m[:fail].each {|i|
+   
         if matches_err(i, signature)  
           @errors += 1
-          return "error"
+          return :except
         end
 
       }
 
-        # try to infer the type to pass up the tree
-      @type_successes[mth].each {|i|
+      # try to infer the type to pass up the tree
+      m[:success].each {|i|
         #BR See note 1
         if match_success(i, signature)
           return i[:result]
@@ -54,23 +61,25 @@ class CheckErrorPass < ::AST::Processor
 
       }
 
-      return RDL::Type::DynamicType.new() # if we havent gotten to this point yet
+      #puts "returned dynamic"
+      return RDL::Type::DynamicType.new() # well looks like we aren't sure what the type is boys. 
+    
       
     else
-
-      mthds = methods_of(trecv)
+      mth = node.children[1]
+      mthds = methods_of(trec)
       info = mthds[mth]
       tmeth = info[:type]
-
       begin
         tret = compute_tout(trecv, tmeth, targs)
         node.update_ttype(tret)
-        return tret
-      rescue Exception => e
-        puts "error in known types: #{e}"
-        return "error"
+      rescue
+        puts "error in known types"
+        return :except
       end
+
     end
+
   end
 
 
@@ -78,10 +87,7 @@ class CheckErrorPass < ::AST::Processor
     node.updated(nil, node.children.map { |k|
       k.is_a?(TypedNode) ? process(k) : k
     })
-
-    return node.ttype
   end
-
 
   def match_success(template, signature)
 
@@ -90,7 +96,6 @@ class CheckErrorPass < ::AST::Processor
     elsif !(signature[:reciever] <= template[:reciever])
       return false
     end  
-
     template[:args].zip(signature[:args]).each {|t,s|
       if !(s <= t)
         return false

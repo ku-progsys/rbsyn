@@ -305,7 +305,10 @@ def get_type_error(ast, error, tenvd, suspect_types, correct_types, test_name = 
   else
     err = err[0]
   end
-  #puts "checking bad type. "
+  
+
+  puts "error was at : #{suspect_types}"
+
   pass = InferTypeErrPass.new(err.to_sym, suspect_types, correct_types)
   pass.process(ast)
   pass.bad_type

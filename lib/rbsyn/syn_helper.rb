@@ -1,76 +1,56 @@
+def log(int)
+  puts "Here location #{int}"
+end
+
+
 require 'parser/current'
 require "set"
 module SynHelper
   include TypeOperations
-  require_relative 'error_assess'
-  require_relative 'ast/check_error_pass'
-  require_relative 'ast/infer_correct_types'
+  #require_relative 'error_assess'
+  #require_relative 'ast/check_error_pass'
+  #require_relative 'ast/infer_correct_types'
+  require_relative 'ast/infer_types'
+  
+
 
   def generate(seed_hole, preconds, postconds, return_all=false)
-    
-    moi = [:+,] #BR <<< methods of interest hard coded for now. 
-    tenvdict = @ctx.tenv.map {|k, v|
-      [k, v.name.to_sym]
-    }.to_h
 
-    suspect_types = Set.new
-    correct_types = Set.new
-    puts "Size of suspect types to start: #{suspect_types.size}\n\n"
+
+    #Methods of interest MOI
+    moi = [:+,] #BR <<< methods of interest hard coded for now. 
+
+    type_info = InferTypes.new(moi)
+
+    #hash of possible types and restrictions over methods of interest (MOI)
+
     correct_progs = []
-    
     work_list = [seed_hole]
+
     until work_list.empty?
+
       base = work_list.shift
       effect_needed = []
-      generated = base.build_candidates(suspect_types)
 
-      generated.each do |i| # this should be done in the generate section instead
-
-        pass = CheckErrorPass.new(suspect_types)
-        pass.process(i)
-        if pass.contains_type
-          i.type_suspect += 1
-        end
-        
-      end
-
+      generated = base.build_candidates()
       evaluable = generated.reject &:has_hole?
-      #counterbad =0
-      #countergood = 0
 
       evaluable.each { |prog_wrap|
-        prior_size = suspect_types.size
-        flag = true
-        restricted_type = nil
-
+   
+        #BLOCK BEGIN
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
-          
-
-            res, klass = eval_ast(@ctx, prog_wrap.to_ast, precond)
+            res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond, type_info)
 
           rescue RbSynError => err
-            flag = false
+
             raise err
-
           rescue TypeError => err
-            flag = false
-            restricted_type = get_type_error(prog_wrap, err, tenvdict, suspect_types, correct_types) #BR look for and get the new type error.             
-            if !restricted_type.nil?() 
-              suspect_types.add(restricted_type)# BR add to the list of restricted types.  
-            end     
 
             next
-
           rescue StandardError => err
-            flag = false
-            restricted_type = get_type_error(prog_wrap, err, tenvdict, suspect_types, correct_types) #BR look for and get the new type error.             
-            if !restricted_type.nil?() 
-              suspect_types.add(restricted_type)# BR add to the list of restricted types.  
-            end   
-               
-            next
 
+            next
           end
 
           begin
@@ -79,7 +59,6 @@ module SynHelper
             }
             klass.instance_exec res, &postcond
           rescue AssertionError => e
-
             orig_prog = prog_wrap.dup
             prog_wrap.passed_asserts = e.passed_count
             prog_wrap.look_for(:effect, e.read_set)
@@ -96,63 +75,63 @@ module SynHelper
 
             raise e
           rescue StandardError => e
-
+            #notypeerrors = false
             next
           end
-        
+          
         }
+        #BLOCK END
 
-        if prior_size < suspect_types.size   # reassign values for each suspect type program if there is a new suspect type that is. 
-              generated.each do |i|
-
-                if i.type_suspect < 1  #BR no point in updating if it already has an error THIS MIGHT BE A MISTAKE AS WE MIGHT BE ABLE TO EXTRACT NEW ERRORS
-                  pass = CheckErrorPass.new([restricted_type])
-                  pass.process(i)
-                  if pass.contains_type
-                    i.type_suspect += 1
-                  end
-                end  
-              end
-            end
-
-        # adding corect programs here: 
-        if flag
-          tester = InferCorrectPass.new([:+,], correct_types)
-          tester.process(prog_wrap)
-        end
-
-
-
+        # passes all tests
         if test_outputs.all? true
           #puts "Number of ill typed dynamic programs removed: #{counterbad} out of #{countergood + counterbad} tested"
           correct_progs << prog_wrap
           puts "SLN FOUND!!!"
           puts "CORRECT TYPES: "
-          correct_types.each {|i| puts "\n-----------------------\n#{i.map {|j| j.to_s}}-------------------------\n"}
+          type_info.type_successes.each {|i, j| 
+
+            j.each { |k|
+          
+            puts "\n-----------------------\n#{type_info.type_to_s(k)}\n-------------------------\n"
+
+            }
+          
+          }
           puts  "\n--------------------------------\nRESTRICTED TYPES:\n\n"
           
 
-          suspect_types.each do |i|
-            puts "--------------------"
-            puts "#{i.map {|j| j.to_s}}"
-            puts "--------------------"
+          type_info.type_errs.each do |i, j|
+            j.each { |k|
+              puts "--------------------\n#{type_info.type_to_s(k)}\n--------------------"
+            }
           end
           puts "\n\n"
 
           return prog_wrap unless return_all
         elsif ENV.key? 'DISABLE_EFFECTS'
+
           prog_wrap.passed_asserts = 0
+          prog_wrap.inferred_errors = 10000 #BR This is my addition this 
           prog_wrap.look_for(:effect, ['*'])
           effect_needed << prog_wrap
+
         end
 
       }
-
+      # done evaluating complete programs
 
       remainder_holes = generated.select { |prog_wrap|
         prog_wrap.has_hole? &&
-        prog_wrap.prog_size <= @ctx.max_prog_size }
+        prog_wrap.prog_size <= @ctx.max_prog_size 
+        
+      }
+
+      remainder_holes.map {|prog_wrap|
+        prog_wrap.inferred_errors = type_info.check_errors(prog_wrap)
+      }
+
       remainder_holes.push(*effect_needed)
+
 
       # Note: Invariant here is that the last candidate in the work list is
       # always a just hole, with next possible call chain length. If the
@@ -163,33 +142,17 @@ module SynHelper
       end
 
       work_list = [*work_list, *remainder_holes].sort { |a, b| comparator(a, b) }
-      #puts work_list.map {|i| ["solved: #{i.passed_asserts}", "size: #{i.prog_size}", "suspect: #{i.type_suspect}"]}
+
+
+      #puts work_list.map {|i| ["solved: #{i.passed_asserts}", "size: #{i.prog_size}", "suspect: #{i.inferred_errors}"]}
       work_list 
     end
     raise RbSynError, "No candidates found"
   end
-=begin
-  def comparator(a, b)
-    if a.type_suspect > b.type_suspect
-      1
-    elsif a.passed_asserts < b.passed_asserts
-      1
-    elsif a.passed_asserts == b.passed_asserts
-      if a.prog_size < b.prog_size
-        -1
-      elsif a.prog_size == b.prog_size
-        0
-      else
-        1
-      end
-    else
-      -1
-    end
-  end
-=end
+
   def comparator(a, b)
 
-    if a.type_suspect > b.type_suspect
+    if a.inferred_errors > b.inferred_errors
       1
     elsif a.passed_asserts < b.passed_asserts
       1

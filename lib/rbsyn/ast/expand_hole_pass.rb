@@ -16,6 +16,7 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def on_envref(node)
+
     ref = node.children[0]
     @visited_envrefs.add(ref)
     info = @env.get_expr(ref)
@@ -24,6 +25,7 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def on_hole(node)
+
     depth = node.children[0]
     @params = node.children[1]
     @no_bool_consts = !@params.fetch(:bool_consts, true)

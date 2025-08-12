@@ -2,8 +2,8 @@ class ProgWrapper
   include AST
   require_relative "ast/check_error_pass"
 
-  attr_reader :seed, :env, :exprs, :looking_for, :target, :type_suspect, :exprs
-  attr_accessor :passed_asserts, :type_suspect
+  attr_reader :seed, :env, :exprs, :looking_for, :target, :inferred_errors, :exprs
+  attr_accessor :passed_asserts, :inferred_errors, :ctx, :env
 
   def initialize(ctx, seed, env, exprs=RDL.type_cast([], 'Array<TypedNode>', force: true))
     @ctx = ctx
@@ -12,7 +12,7 @@ class ProgWrapper
     @exprs = exprs
     @passed_asserts = 0
     @looking_for = :type
-    @type_suspect = 0
+    @inferred_errors = 0
     # add the ranking for types here
   end
 
@@ -66,7 +66,7 @@ class ProgWrapper
     @exprs << expr
   end
 
-  def build_candidates(prhb)
+  def build_candidates()
     update_types_pass = RefineTypesPass.new
     case @looking_for
     when :type
@@ -84,10 +84,10 @@ class ProgWrapper
         prog_wrap.passed_asserts = @passed_asserts
         #puts "progwrap: #{prog_wrap.to_ast}"
         #tchecker.contains_type = false #reset the type_checker
-        tchecker = CheckErrorPass.new(prhb) 
-        tchecker.process(prog_wrap)
+        #tchecker = CheckErrorPass.new(prhb) 
+        #tchecker.process(prog_wrap)
         #puts "contains type: #{tchecker.contains_type}"
-        prog_wrap.type_suspect = @type_suspect + (tchecker.contains_type ? 1 : 0) # if the type is bad add a 1 to the appropriate attr
+        #prog_wrap.inferred_errors = @inferred_errors + (tchecker.contains_type ? 1 : 0) # if the type is bad add a 1 to the appropriate attr
         prog_wrap
       }
     when :effect

@@ -11,7 +11,7 @@ describe "noTypes" do
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.type :BasicObject, :!, '() -> %bool'
-    RDL.type :BasicObject, :+, "(%dyn) -> Integer" # for some reason it won't work if I don't provide the output type
+    RDL.type :BasicObject, :+, "(%dyn) -> %dyn" # for some reason it won't work if I don't provide the output type
     # it can synthesize the solution branch but it can't find the solution when attempting to integrate them in the 
     # second step. 
     
