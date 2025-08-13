@@ -111,3 +111,34 @@ Please file an issue on Github if you have problem running RbSyn. Feel free to s
 
 _Logo derived from icon by [ultimatearm](https://www.flaticon.com/authors/ultimatearm) from [www.flaticon.com](https://www.flaticon.com/)._
 
+## BRYAN ADDED FILES
+
+* `lib/rbsyn/ast/check_error_pass.rb` : checks for errors in incomplete terms based upon the emperically determined types. 
+* `lib/rbsyn/ast/infer_types.rb` : Class that contains instrument method and type recording / comparison functions.
+* `lib/rbsyn/ast/track_rewrite.rb` :  Used to rewrite ast with the instrument wrapper placed around any methods of interest. 
+* `test/benchmark/noTypes/sumTwo_benchmark.rb` : Contains test benchmark for new funcitonality, this version creates an error that needs to be understood
+* `test/benchmark/noTypes/sumTwo_nobug.rb` : Contains test benchmark for new funcitonality, this version is constrained to show functionallity without bug. 
+
+
+## BRYAN AUGMENTED FILES 
+
+* `Rakefile` : Added new benchmarks for quick testing. 
+* `lib/rbsyn/ast.rb` : Added method `eval_ast_second(ctx, ast, precond, mth)` inserts the provided instrument class "mth" using "track_rewrite" before executing a candidate. 
+* `lib/rbsyn/syn_helper.rb` : Changed sorting method to use the new error count to penalize candidates + command line logging for ease of debugging + implemented "eval_ast_second" where there was formerly "eval ast".
+* `lib/rbsyn/prog_wrapper.rb` : Added the atrribute + accessor `inferred_errors` for sorting purposes. 
+
+
+## BR To Run
+
+* To run the benchmark that reveals the error : CONSOLE_LOG=1 DISABLE_EFFECTS=1 bundle exec rake notypes
+* To run the benchmark that is constrained to show the existing functionallity : CONSOLE_LOG=1 DISABLE_EFFECTS=1 bundle exec rake notypes_nobug
+
+## BR NOTES and TODOS
+
+* The bug appears when line 14 in the benchmark has `RDL.type :BasicObject, :+, "(%dyn) -> %dyn"` the last `$dyn` as opposed to `Integer` is what is revealing the error. 
+* The sorting may not be working as intended, it might be re-inserting completed programs that have failed the test, on `lines 133 and 144` and the programs that have 
+already been tested do not have a penalty score assigned to them, therefore prioritizing these over exploration. An easy way to fix this might be to add between lines 115 and 116
+`prog_wrap.inferred_errors += 10000` artifically asigning them an arbitrarially high score. 
+* My current error assignment method only assigns an error score to the newest generated terms on line `129` (IE it doesn't backtrack to update older terms with newly discovered information)
+this may be a bad approach, I would like to consider, instead, inserting the new terms into the worklist and then re-checking for type errors across the entire list before sorting near line `144`.
+* I am currently using explicit string casts to compare RDL types in many places, this is only because of my own limitations in understanding, this will be best updated to directly compare types. 

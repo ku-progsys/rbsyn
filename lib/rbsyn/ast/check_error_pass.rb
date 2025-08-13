@@ -64,7 +64,7 @@ class CheckErrorPass < ::AST::Processor
 
       begin
         tret = compute_tout(trecv, tmeth, targs)
-        node.update_ttype(tret)
+        #node.update_ttype(tret)  # uncomment if you would like the type to be updated with the emperical  types
         return tret
       rescue Exception => e
         puts "error in known types: #{e}"
