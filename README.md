@@ -142,3 +142,7 @@ already been tested do not have a penalty score assigned to them, therefore prio
 * My current error assignment method only assigns an error score to the newest generated terms on line `129` (IE it doesn't backtrack to update older terms with newly discovered information)
 this may be a bad approach, I would like to consider, instead, inserting the new terms into the worklist and then re-checking for type errors across the entire list before sorting near line `144`.
 * I am currently using explicit string casts to compare RDL types in many places, this is only because of my own limitations in understanding, this will be best updated to directly compare types. 
+
+
+
+* TODO add support for dynamic types in the reachability file and the typeops file. 

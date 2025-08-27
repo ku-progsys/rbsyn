@@ -44,16 +44,21 @@ class Reachability
     curr_depth = 0
     types = types_from_tenv(@initial_tenv)
     queue = types.map { |t| CallChain.new([t], types) }
-
+  
     until curr_depth == depth do
       new_queue = []
       queue.each { |path|
         trecv = path.last
+
+        #puts "\n\ntrecv: #{trecv}"
         mthds = methods_of(trecv)
         mthds.delete(:__getobj__)
+        
         mthds.each { |mthd, info|
+          #puts "-------------method: #{mthd}"
           tmeth = info[:type]
           targs = compute_targs(trecv, tmeth)
+
           next if targs.any? { |t| t.is_a? RDL::Type::BotType }
           tout = compute_tout(trecv, tmeth, targs)
           # convert :self types to actual object
@@ -61,6 +66,7 @@ class Reachability
           new_tenv = make_new_tenv(tout, path.tenv)
           new_queue << CallChain.new(path.path + [mthd, tout], new_tenv)
         }
+        
       }
       queue = new_queue
       curr_depth += 1

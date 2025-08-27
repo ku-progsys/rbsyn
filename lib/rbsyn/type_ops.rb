@@ -23,16 +23,24 @@ module TypeOperations
     return RDL::Type::DynamicType.new if ENV.key? 'DISABLE_TYPES'
 
     tret = type.ret
+    #puts "compute tout with : #{trec.to_s}, #{tmeth.to_s}, #{targs.each {|i| i.to_s}}: ret of : #{tret} of class: #{tret.class}"
     case tret
     when RDL::Type::ComputedType
       bind = Class.new.class_eval { binding }
       bind.local_variable_set(:trec, trec)
       bind.local_variable_set(:targs, targs)
       tret.compute(bind)
+    
+    when RDL::Type::DynamicType
+      #puts "here" 
+      RDL::Type::DynamicType.new()
+
     when RDL::Type::VarType
       if tret.name == :self
         trec
       else
+        puts "==> #{tmeth}"
+        puts "==> #{trec}"
         params = RDL::Wrap.get_type_params(trec.base.to_s)[0]
         idx = params.index(tret.name)
         raise RbSynError, "unexpected" if idx.nil?
@@ -66,13 +74,18 @@ module TypeOperations
     when RDL::Type::OptionalType
       parents_of trecv.type
     when RDL::Type::NominalType
+      #puts "is nominal #{trecv}"
+      #puts "types: #{RDL::Util.to_class(trecv.name).ancestors.map { |klass| klass.to_s }}"
       RDL::Util.to_class(trecv.name).ancestors.map { |klass| klass.to_s }
     when RDL::Type::FiniteHashType
       Hash.ancestors.map { |klass| klass.to_s }
     when RDL::Type::BotType
       []
-    when RDL::Type::DynamicType
-      RDL::Globals.info.info.keys
+    when RDL::Type::DynamicType 
+      #hard coded maks progress
+      things = [parents_of(RDL::Type::NominalType.new("Integer")), parents_of(RDL::Globals.types[:bool]), "BasicObject"]
+      #RDL::Globals.info.info.keys
+      things #BR MY addition, idea is that we can't build with what we haven't declared or s
     else
       raise RbSynError, "unhandled type #{trecv.inspect}"
     end
@@ -107,6 +120,8 @@ module TypeOperations
       else
         raise RbSynError, "unhandled type #{targ.inspect}"
       end
+    
+  
     }
   end
 
@@ -115,7 +130,15 @@ module TypeOperations
   end
 
   def methods_of(trecv)
+    
     Hash[*parents_of(trecv).map { |klass|
+        #puts "generating methods of : #{klass.to_s}"
+        #v = RDL::Globals.info.info[klass] 
+        #if !v.nil? 
+          #v.each { |i| 
+            #puts "------------#{i[0]}"
+          #}
+        #end
         RDL::Globals.info.info[klass]
       }.reject(&:nil?).collect { |h| h.to_a }.flatten]
   end

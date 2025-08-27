@@ -142,7 +142,10 @@ module SynHelper
       end
 
       work_list = [*work_list, *remainder_holes].sort { |a, b| comparator(a, b) }
-
+      #puts "\n\nworklist" 
+      #work_list.each do |i|
+      #  puts i.to_ast
+      #end
 
       #puts work_list.map {|i| ["solved: #{i.passed_asserts}", "size: #{i.prog_size}", "suspect: #{i.inferred_errors}"]}
       work_list 
