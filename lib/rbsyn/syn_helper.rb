@@ -86,7 +86,7 @@ module SynHelper
         if test_outputs.all? true
           #puts "Number of ill typed dynamic programs removed: #{counterbad} out of #{countergood + counterbad} tested"
           correct_progs << prog_wrap
-          puts "SLN FOUND!!!"
+          puts "SLN FOUND!!!: #{prog_wrap.to_ast}\n\n"
           puts "CORRECT TYPES: "
           type_info.type_successes.each {|i, j| 
 
