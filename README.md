@@ -146,3 +146,5 @@ this may be a bad approach, I would like to consider, instead, inserting the new
 
 
 * TODO add support for dynamic types in the reachability file and the typeops file. 
+UPDATE: This task is partially complete, I used a magic number to hardcode the types that are available to the system, I need to figure out if 
+puting "Basic Object" in parents of receiver in line 86 of type_ops.rb will be sufficient or if I will need to collect the types manually? 

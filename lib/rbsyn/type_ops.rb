@@ -83,9 +83,9 @@ module TypeOperations
       []
     when RDL::Type::DynamicType 
       #hard coded maks progress
-      things = [parents_of(RDL::Type::NominalType.new("Integer")), parents_of(RDL::Globals.types[:bool]), "BasicObject"]
+      magic_type = [parents_of(RDL::Type::NominalType.new("Integer")), parents_of(RDL::Globals.types[:bool]), "BasicObject"]
       #RDL::Globals.info.info.keys
-      things #BR MY addition, idea is that we can't build with what we haven't declared or s
+      magic_type #BR MY addition, idea is that we can't build with what we haven't declared or s
     else
       raise RbSynError, "unhandled type #{trecv.inspect}"
     end
