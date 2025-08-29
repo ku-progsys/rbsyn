@@ -223,6 +223,7 @@ class ExpandHolePass < ::AST::Processor
 
   def fn_call(path)
     tokens = path.path.to_enum
+    
     accum = nil
     loop {
       begin
