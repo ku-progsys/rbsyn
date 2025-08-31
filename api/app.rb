@@ -20,10 +20,13 @@ post '/run_rbsyn' do
     stdout = stdout.encode('UTF-8', invalid: :replace, undef: :replace)
     stderr = stderr.encode('UTF-8', invalid: :replace, undef: :replace)
 
+    last_line = stdout.lines.last&.chomp
+
     result = {
       command: command,
       exit_status: status.exitstatus,
       output: stdout.strip,
+      main_output: last_line.strip,
       error: stderr.strip
     }
 
