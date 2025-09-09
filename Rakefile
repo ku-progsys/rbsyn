@@ -38,7 +38,18 @@ Rake::TestTask.new(:notypes) do |t|
   t.libs << "lib"
   t.libs << "models"
   t.test_files = FileList["test/benchmark/noTypes/sumTwo_benchmark.rb"]
+
 end
+
+Rake::TestTask.new(:twospecs) do |t|
+
+  t.libs << "test"
+  t.libs << "lib"
+  t.libs << "models"
+  t.test_files = FileList["test/benchmark/noTypes/two_specs.rb"]
+
+end
+
 
 Rake::TestTask.new(:notypes_nobug) do |t|
 
