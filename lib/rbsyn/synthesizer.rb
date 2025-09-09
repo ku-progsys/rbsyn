@@ -12,6 +12,7 @@ class Synthesizer
   end
 
   def run
+    ENV["bug"] = "0"
     if ENV.key? 'EFFECT_PREC'
       eff_prec = ENV['EFFECT_PREC'].strip.to_i
     else
@@ -46,6 +47,9 @@ class Synthesizer
       seed.look_for(:type, RDL::Globals.types[:bool])
 
       #BR THIS IS WHERE IT IS FAILING
+      #puts "gets here: #\n\n"
+      #ENV["bug"] = "true"
+      #puts "prog_cache: #{prog_cache.cache.size}"
       branches = generate(seed, [precond], [TRUE_POSTCOND], true)
 
       cond = BoolCond.new
