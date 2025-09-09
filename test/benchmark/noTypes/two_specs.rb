@@ -4,6 +4,15 @@ include RDL::Annotate
 #require_relative "../../../lib/rbsyn/helpermodule"
 #include Helpermod
 
+class Helper 
+  
+  attr_accessor :l
+
+  def initialize()
+    @l = []
+  end
+end
+
 describe "noTypes" do
   it "sums first two numbers and multiplies result by third" do
 
@@ -11,9 +20,7 @@ describe "noTypes" do
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.type :BasicObject, :!, '() -> %bool'
-    RDL.type :Integer , :+, "(Integer) -> Integer " # for some reason it won't work if I don't provide the output type
-    # it can synthesize the solution branch but it can't find the solution when attempting to integrate them in the 
-    # second step. 
+    RDL.type :Integer , :+, "(Integer) -> Integer "
     RDL.type :Integer, :*, "(Integer) -> Integer "
 
     #RDL::Globals.module_eval.types[:object].each {|i| puts i}
@@ -25,27 +32,59 @@ describe "noTypes" do
       spec "Might multiply by first or third" do
 
         setup {
-          sumMult(2, 3, 2)
+          temp = Helper.new()
+          temp.l.append(sumMult(2,4,3))
+          temp.l.append(sumMult(3,2,4))
+          temp.l.append(sumMult(2,3,4))
+          temp.l.append(sumMult(4,2,3))
+          temp
         }
 
-        post { |result|
+        post { |h|
 
-          assert {result ==  10}
+          assert {h.l[0] ==  18}
+          assert {h.l[1] ==  20}
+          assert {h.l[2] ==  20}
+          assert {h.l[3] ==  18}
         }
       end
-
+=begin
       spec "might be multiplying by the second or third number " do
       
         setup {
-          sumMult(3,2,2)
+          sumMult(3,2,4)
         }
 
         post {|result|
-          assert {result == 10}
+          assert {result == 20}
         }
 
       end
 
+      spec "must be multiplying by 3rd" do
+      
+        setup {
+          sumMult(2,3,4)
+        }
+
+        post {|result|
+          assert {result == 20}
+        }
+
+      end
+
+      spec "might be multiplying by asdfasdfthe second or third number " do
+      
+        setup {
+          sumMult(4,2,3)
+        }
+
+        post {|result|
+          assert {result == 18}
+        }
+
+      end
+=end
 
       generate_program
     end
