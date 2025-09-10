@@ -3,11 +3,13 @@ require 'logger'
 class Context
   attr_accessor :max_prog_size, :components, :preconds, :postconds, :mth_name,
     :reset_func, :functype, :tenv, :max_hash_size, :max_arg_length, :max_hash_depth,
-    :curr_binding, :constants, :enable_and, :enable_constants, :enable_nil
+    :curr_binding, :constants, :enable_and, :enable_constants, :enable_nil, :moi
 
-  attr_reader :logger
+  attr_reader :logger, :desc
 
   def initialize
+    magicmoi = [:+,]
+    @moi = magicmoi
     @max_prog_size = 0
     @components = []
     @preconds = []
@@ -22,6 +24,7 @@ class Context
     @next_ref = 0
     @ref_map = {}
     @curr_binding = nil
+    @desc = []
     @constants = {
       string: [''],
       integer: [0, 1]
@@ -42,6 +45,10 @@ class Context
   def add_example(precond, postcond)
     @preconds << precond
     @postconds << postcond
+  end
+
+  def add_desc(desc)
+    @desc.append(desc)
   end
 
   def load_tenv!

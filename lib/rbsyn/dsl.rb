@@ -1,8 +1,9 @@
 class SpecProxy
-  attr_reader :pre_blk, :post_blk
+  attr_reader :pre_blk, :post_blk, :desc
 
-  def initialize(mth_name)
+  def initialize(mth_name, desc = "")
     @mth_name = mth_name
+    @desc = desc
   end
 
   def setup(&blk)
@@ -38,7 +39,7 @@ class SynthesizerProxy
   end
 
   def spec(desc, &blk)
-    spc = SpecProxy.new @mth_name
+    spc = SpecProxy.new @mth_name, desc
     spc.instance_eval(&blk)
     @specs << spc
   end
@@ -56,6 +57,7 @@ class SynthesizerProxy
     Timeout::timeout(timeout) {
       @specs.each { |spec|
         @ctx.add_example(spec.pre_blk, spec.post_blk)
+        @ctx.add_desc(spec.desc)
       }
       syn = Synthesizer.new(@ctx)
       max_args = @ctx.functype.args.size
