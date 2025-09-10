@@ -19,7 +19,7 @@ class CheckErrorPass < ::AST::Processor
       }
     }
     if temp.size > 1
-      puts "set: #{temp}"
+
       @dyn_returns = RDL::Type::UnionType.new(temp.to_a)
     elsif temp.size == 1
       @dyn_returns = temp.to_a[0]
@@ -42,7 +42,7 @@ class CheckErrorPass < ::AST::Processor
       }
     }
     if temp.size > 1
-      puts "set: #{temp}"
+     
       @dyn_returns = RDL::Type::UnionType.new(temp.to_a)
     elsif temp.size == 1
       @dyn_returns = temp.to_a[0]
@@ -92,15 +92,7 @@ class CheckErrorPass < ::AST::Processor
 
 
       # if neither error nor sucesses have been seen with this type return dynamic (this may hide bugs so inspect this carefuly)
-      #puts "\n\nmade it to dynamic type for ast: #{node} with types:\n\n"
-      #node.children.each {|i|
-      #  if i.is_a?(TypedNode)
-      #    puts "type: #{i.ttype}"
-      #  else
-      #    puts i
-      #  end
-      #}  
-      #puts "---------------\n\n"
+      
       
       return RDL::Type::DynamicType.new() 
       
@@ -115,7 +107,6 @@ class CheckErrorPass < ::AST::Processor
         node.update_ttype(tret)  # uncomment if you would like the type to be updated with the emperical  types
         return tret
       rescue Exception => e
-        puts "error in known types: #{e}"
         return "error"
       end
     end
@@ -132,13 +123,12 @@ class CheckErrorPass < ::AST::Processor
 
 
   def match_success(template, signature)
-    #puts "\n\nsuccess test"
-    #puts "template: #{template}"
-    #puts "signature: #{signature}"
+
     
     if template[:args].size != signature[:args].size
       return false
     elsif !(signature[:receiver] <= template[:receiver])  # comment if you want it to be non-conservative in what it rejects
+      # TODO clean comment and put in readme or experiemental log
       # we aren't using liskov, we are not trying to find out if an unknown function
       # is a subtype, we are trying to find out if a known function is being used 
       # as an instance of a known type. So if it is not a subtype it doesn't match
@@ -150,11 +140,12 @@ class CheckErrorPass < ::AST::Processor
         return false
       end
     }
-    #puts "returning true\n\n"
+
     return true
 
   end
-  #BR START HERE YOU JUST ADDED SOMETHING THAT TREATS EACH DYN TYPE AS A UNION OF ALL OF
+  #TODO: clean experimental notes
+  #YOU JUST ADDED SOMETHING THAT TREATS EACH DYN TYPE AS A UNION OF ALL OF
   #ITS OBSERVED OUTPUTS BUT THAT WAS WRONG YOU NEED IT TO BE LITERALLY ANY OUTPUT
   #BUT DON'T ASSUME THAT IT IS THE BAD THING???? THIS IS SOMETHING TO DEBATE.
   #OH!!! WOW WELL YOU SEE, YOU MIGHT NEED TO SEE IF IT IS POSSIBLE FOR IT TO 

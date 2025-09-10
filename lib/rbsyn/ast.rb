@@ -78,19 +78,16 @@ module AST
     klass.instance_variable_set(:@mth, mth)
 
     begin
-      #puts "beginning with ast :\n#{ast}\n\n"
+      
       mth.reset_instrumentation()
       result = klass.instance_eval(&precond) unless precond.nil?
-      #puts "success:"
-      #puts "#{mth.type_to_s(mth.type_successes[:+].to_a[-1])} "
+      
       
     rescue Exception => e
-      #puts "fail: "
-      #puts "#{mth.type_to_s(mth.type_errs[:+].to_a[-1])} "
-      #puts "end ----------------------------------\n\n"
+      
       raise e
     end
-    #puts "end ----------------------------------\n\n"
+    
 
     [result, klass]
   end

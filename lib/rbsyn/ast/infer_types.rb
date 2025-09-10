@@ -59,14 +59,14 @@ class InferTypes
 
 
   def update_errlist(trace)
-    #puts "trace: #{trace}"
+
     @type_errs[trace[:method]].each{|i|
-      #puts "i: #{i}"
+
       if type_to_s(i) == type_to_s(trace)
         return
       end
     }
-    #puts "-----------\n\n"
+
     @updated = true
     @type_errs[trace[:method]].append(trace)
 

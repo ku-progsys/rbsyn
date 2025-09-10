@@ -18,7 +18,7 @@ describe "noTypes" do
     
     define :sumMult, "(Integer, Integer, Integer) -> Integer", [], consts: :true do
       
-
+      
       spec "spec1" do
 
         setup {

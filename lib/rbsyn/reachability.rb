@@ -49,13 +49,11 @@ class Reachability
       new_queue = []
       queue.each { |path|
         trecv = path.last
-
-        #puts "\n\ntrecv: #{trecv}"
         mthds = methods_of(trecv)
         mthds.delete(:__getobj__)
         
         mthds.each { |mthd, info|
-          #puts "-------------method: #{mthd}"
+          
           tmeth = info[:type]
           targs = compute_targs(trecv, tmeth)
 

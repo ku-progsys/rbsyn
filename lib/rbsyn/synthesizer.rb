@@ -88,15 +88,11 @@ class Synthesizer
 
 
     # if there is only one generated, there is nothing to merge, we return the first synthesized program
-    #puts "num progconds: #{progconds.size}"
+    
 
     return progconds[0].prog if progconds.size == 1
     
-    progconds.each do |i|
-      puts "cond\n\n"
-      @ctx.logger.debug(i)
-      puts "\\\\\\\\\\\\\\\\\\\\\n\n"
-    end
+
     # progconds = merge_same_progs(progconds).map { |progcond| [progcond] }
     progconds.map! { |progcond| [progcond] }
 

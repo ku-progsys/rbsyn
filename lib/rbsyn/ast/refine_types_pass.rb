@@ -12,7 +12,7 @@ class RefineTypesPass < ::AST::Processor
     info = mthds[mth]
     tmeth = info[:type]
     targs = node.children[2..].map &:ttype
-    # puts "#{trecv}, #{mth} (#{targs.join(', ')}) -> #{node.ttype}"
+    
     begin
       tret = compute_tout(trecv, tmeth, targs)
       node.update_ttype(tret)

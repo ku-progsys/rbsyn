@@ -1,6 +1,3 @@
-def log(int)
-  puts "Here location #{int}"
-end
 
 
 require 'parser/current'

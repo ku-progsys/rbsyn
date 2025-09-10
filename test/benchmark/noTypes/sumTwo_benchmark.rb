@@ -14,9 +14,6 @@ describe "noTypes" do
     RDL.type :BasicObject , :+, "(%dyn) -> %dyn " # for some reason it won't work if I don't provide the output type
     # it can synthesize the solution branch but it can't find the solution when attempting to integrate them in the 
     # second step. 
-    
-
-    #RDL::Globals.module_eval.types[:object].each {|i| puts i}
 
     
     define :sumTwo, "(Integer, Integer) -> Integer", [], consts: :true do

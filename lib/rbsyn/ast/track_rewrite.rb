@@ -10,7 +10,7 @@ class TrackerRewrite < ::AST::Processor
   def on_send(node)
     
     if node.is_a?(TypedNode) && @methods.include?(node.children[1])
-      #puts "ndoe children#{node.children[2]}: #{node.children[2].ttype}"
+      
       node.updated(nil, ([TypedNode.new(:ivar, :ivar, :@mth)] + [:w_instrument] + [node.children[0]] + [TypedNode.new(:sym, :sym, node.children[1])] + node.children[2 .. ]).map { |k|
         k.is_a?(TypedNode) ? process(k) : k
       })

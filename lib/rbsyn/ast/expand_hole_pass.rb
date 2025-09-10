@@ -91,7 +91,6 @@ class ExpandHolePass < ::AST::Processor
       # synthesize function calls
       r = Reachability.new(@ctx.tenv)
       paths = r.paths_to_type(node.ttype, depth, @variance)
-      #puts "method"
       expanded.concat paths.map { |path| fn_call(path) }
 
     elsif depth == 1 && @effect

@@ -82,12 +82,7 @@ class ProgWrapper
         prog_wrap = ProgWrapper.new(@ctx, program, new_env)
         prog_wrap.look_for(:type, @target)
         prog_wrap.passed_asserts = @passed_asserts
-        #puts "progwrap: #{prog_wrap.to_ast}"
-        #tchecker.contains_type = false #reset the type_checker
-        #tchecker = CheckErrorPass.new(prhb) 
-        #tchecker.process(prog_wrap)
-        #puts "contains type: #{tchecker.contains_type}"
-        #prog_wrap.inferred_errors = @inferred_errors + (tchecker.contains_type ? 1 : 0) # if the type is bad add a 1 to the appropriate attr
+        
         prog_wrap
       }
     when :effect
