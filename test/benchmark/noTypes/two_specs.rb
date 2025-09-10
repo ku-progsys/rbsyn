@@ -1,17 +1,8 @@
 # augmented: true
 require "test_helper"
 include RDL::Annotate
-#require_relative "../../../lib/rbsyn/helpermodule"
-#include Helpermod
 
-class Helper 
-  
-  attr_accessor :l
 
-  def initialize()
-    @l = []
-  end
-end
 
 describe "noTypes" do
   it "sums first two numbers and multiplies result by third" do
@@ -20,36 +11,27 @@ describe "noTypes" do
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.type :BasicObject, :!, '() -> %bool'
+    RDL.type :BasicObject, :"==", '() -> %bool'
     RDL.type :Integer , :+, "(Integer) -> Integer "
     RDL.type :Integer, :*, "(Integer) -> Integer "
-
-    #RDL::Globals.module_eval.types[:object].each {|i| puts i}
 
     
     define :sumMult, "(Integer, Integer, Integer) -> Integer", [], consts: :true do
       
 
-      spec "Might multiply by first or third" do
+      spec "spec1" do
 
         setup {
-          temp = Helper.new()
-          temp.l.append(sumMult(2,4,3))
-          temp.l.append(sumMult(3,2,4))
-          temp.l.append(sumMult(2,3,4))
-          temp.l.append(sumMult(4,2,3))
-          temp
+          sumMult(2,4,3)
         }
 
-        post { |h|
-
-          assert {h.l[0] ==  18}
-          assert {h.l[1] ==  20}
-          assert {h.l[2] ==  20}
-          assert {h.l[3] ==  18}
+        post { |result|
+          assert {result == 18}
         }
       end
-=begin
-      spec "might be multiplying by the second or third number " do
+      
+      
+      spec "spec2" do
       
         setup {
           sumMult(3,2,4)
@@ -61,7 +43,7 @@ describe "noTypes" do
 
       end
 
-      spec "must be multiplying by 3rd" do
+      spec "spec3" do
       
         setup {
           sumMult(2,3,4)
@@ -73,7 +55,7 @@ describe "noTypes" do
 
       end
 
-      spec "might be multiplying by asdfasdfthe second or third number " do
+      spec "spec4" do
       
         setup {
           sumMult(4,2,3)
@@ -84,7 +66,6 @@ describe "noTypes" do
         }
 
       end
-=end
 
       generate_program
     end
