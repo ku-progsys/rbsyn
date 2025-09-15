@@ -7,7 +7,7 @@ module SynHelper
   include TypeOperations
   
   
-  def generate(seed_hole, preconds, postconds, return_all=false, type_info: InferTypes.new([]))
+  def generate(seed_hole, preconds, postconds, return_all=false)
 
 
     correct_progs = []
@@ -24,7 +24,7 @@ module SynHelper
         #BLOCK BEGIN
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
-            res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond, type_info)
+            res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
 
           rescue RbSynError => err
 
@@ -89,7 +89,7 @@ module SynHelper
       }
 
       remainder_holes.map {|prog_wrap|
-        prog_wrap.inferred_errors = type_info.check_errors(prog_wrap)
+        prog_wrap.inferred_errors = @ctx.type_info.check_errors(prog_wrap)
       }
 
       remainder_holes.push(*effect_needed)

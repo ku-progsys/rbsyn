@@ -22,7 +22,7 @@ class SynthesizerProxy
 
   attr_accessor :assertions
 
-  def initialize(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil)
+  def initialize(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, moi)
     @ctx = Context.new
     @ctx.max_prog_size = prog_size
     @ctx.components = components
@@ -31,7 +31,7 @@ class SynthesizerProxy
     @ctx.enable_constants = consts
     @ctx.enable_nil = enable_nil
     raise RbSynError, "expected method type" unless @ctx.functype.is_a? RDL::Type::MethodType
-
+    @ctx.moi = moi
     @mth_name = mth_name.to_sym
     @ctx.mth_name = @mth_name
     @specs = []
@@ -77,8 +77,8 @@ class SynthesizerProxy
 end
 
 module SpecDSL
-  def define(mth_name, type, components, prog_size: 5, max_hash_size: 1, consts: false, enable_nil: false, &blk)
-    syn_proxy = SynthesizerProxy.new(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil)
+  def define(mth_name, type, components, prog_size: 5, max_hash_size: 1, consts: false, enable_nil: false, moi: [], &blk)
+    syn_proxy = SynthesizerProxy.new(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, moi)
     syn_proxy.instance_eval(&blk)
   end
 end

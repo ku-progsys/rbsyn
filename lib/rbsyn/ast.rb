@@ -1,5 +1,5 @@
 require_relative "./ast/track_rewrite"
-
+require "pp"
 module AST
   def s(ttype, type, *children)
     TypedNode.new(ttype, type, *children)
@@ -31,9 +31,14 @@ module AST
         s(RDL::Globals.types[:top], :arg, arg)
       }), ast)
 
-
+    #puts "pp"
+    #puts func.inspect
+    #puts "\n\ndone\n"
     klass.instance_eval Unparser.unparse(func)
+    #puts "unparse:"
 
+    #puts Unparser.unparse(func)
+    #puts "\n\n"
     result = klass.instance_eval(&precond) unless precond.nil?
 
     [result, klass]
@@ -41,8 +46,7 @@ module AST
 
 
 
-  def eval_ast_second(ctx, ast, precond, mth)
-
+  def eval_ast_second(ctx, ast, precond)
 
     max_args = ctx.functype.args.size
     args = max_args.times.map { |i| "arg#{i}".to_sym }
@@ -64,7 +68,7 @@ module AST
       }), ast)
 
 
-    rewriter = TrackerRewrite.new(mth.moi)
+    rewriter = TrackerRewrite.new(ctx.moi)
     ast = rewriter.process(ast)
 
     func = s(ctx.functype, :def, ctx.mth_name,
@@ -72,14 +76,12 @@ module AST
       s(RDL::Globals.types[:top], :arg, arg)
     }), ast)
 
-
-    klass.instance_eval Unparser.unparse(func)
-   
-    klass.instance_variable_set(:@mth, mth)
+    klass.instance_eval Unparser.unparse(func) 
+    klass.instance_variable_set(:@mth, ctx.type_info)
 
     begin
       
-      mth.reset_instrumentation()
+      ctx.type_info.reset_instrumentation()
       result = klass.instance_eval(&precond) unless precond.nil?
       
       

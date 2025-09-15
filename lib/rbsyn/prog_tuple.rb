@@ -4,7 +4,7 @@ class ProgTuple
   include Utils
 
   attr_reader :ctx, :branch, :preconds, :postconds
-  attr_accessor :prog
+  attr_accessor :prog, :cond
 
   def initialize(ctx, prog, branch, preconds, postconds)
     @ctx = ctx

@@ -51,7 +51,8 @@ class BoolCond
 
   def implies(other)
     @solver = MiniSat::Solver.new
-    @intermediates = RDL.type_cast({}, 'Hash<TypedNode, MiniSat::Var>')
+    #@intermediates = RDL.type_cast({}, 'Hash<TypedNode, MiniSat::Var>')
+    @intermediates = {}
     # self => other means check !a || b
     a = bool_vars(@conds)
     b = bool_vars(other.conds)

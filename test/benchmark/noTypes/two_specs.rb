@@ -11,22 +11,23 @@ describe "noTypes" do
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.type :BasicObject, :!, '() -> %bool'
-    RDL.type :BasicObject, :"==", '() -> %bool'
-    RDL.type :Integer , :+, "(Integer) -> Integer "
-    RDL.type :Integer, :*, "(Integer) -> Integer "
+    RDL.type :BasicObject, :">=", '() -> %bool'
+    RDL.type :BasicObject, :"<=", '() -> %bool'
+    RDL.type :Integer , :+, "(%dyn) -> %dyn "
+    RDL.type :Integer, :*, "(%dyn) -> %dyn "
 
     
-    define :sumMult, "(Integer, Integer, Integer) -> Integer", [], consts: :true do
+    define :sumMult, "(Integer, Integer, Integer) -> Integer", [], consts: :true, moi: [:*, :+] do
       
       
       spec "spec1" do
 
         setup {
-          sumMult(2,4,3)
+          sumMult(3,4,10)
         }
 
         post { |result|
-          assert {result == 18}
+          assert {result == 22}
         }
       end
       
@@ -34,11 +35,11 @@ describe "noTypes" do
       spec "spec2" do
       
         setup {
-          sumMult(3,2,4)
+          sumMult(3,4,15)
         }
 
         post {|result|
-          assert {result == 20}
+          assert {result == 12+15}
         }
 
       end
@@ -46,11 +47,11 @@ describe "noTypes" do
       spec "spec3" do
       
         setup {
-          sumMult(2,3,4)
+          sumMult(5,3,18)
         }
 
         post {|result|
-          assert {result == 20}
+          assert {result == 5*3 + 18}
         }
 
       end
@@ -58,11 +59,11 @@ describe "noTypes" do
       spec "spec4" do
       
         setup {
-          sumMult(4,2,3)
+          sumMult(4,3,14)
         }
 
         post {|result|
-          assert {result == 18}
+          assert {result == 12 + 14}
         }
 
       end

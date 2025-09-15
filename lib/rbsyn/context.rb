@@ -3,13 +3,13 @@ require 'logger'
 class Context
   attr_accessor :max_prog_size, :components, :preconds, :postconds, :mth_name,
     :reset_func, :functype, :tenv, :max_hash_size, :max_arg_length, :max_hash_depth,
-    :curr_binding, :constants, :enable_and, :enable_constants, :enable_nil, :moi
+    :curr_binding, :constants, :enable_and, :enable_constants, :enable_nil, :moi, :type_info
 
   attr_reader :logger, :desc
 
   def initialize
-    magicmoi = [:+,]
-    @moi = magicmoi
+    @type_info = nil
+    @moi = []
     @max_prog_size = 0
     @components = []
     @preconds = []

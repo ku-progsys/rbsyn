@@ -11,7 +11,8 @@ class Synthesizer
 
   def initialize(ctx)
     @ctx = ctx
-    @type_info = InferTypes.new(@ctx.moi) # type finding class
+    @ctx.type_info = InferTypes.new(@ctx.moi) # type finding class
+    #@type_info = InferTypes.new(@ctx.moi) # type finding class
   end
 
   def run
@@ -41,11 +42,12 @@ class Synthesizer
         seed.look_for(:type, @ctx.functype.ret)
 
 
-        prog = generate(seed, [precond], [postcond], false, type_info: @type_info) 
+        prog = generate(seed, [precond], [postcond], false) 
 
 
         prog_cache.add(prog)
         @ctx.logger.debug("Synthesized program:\n#{format_ast(prog.to_ast)}")
+        @ctx.logger.debug("Synthesized: #{prog.to_ast}")
       else
 
         @ctx.logger.debug("Found program in cache:\n#{format_ast(prog.to_ast)}")
@@ -58,7 +60,7 @@ class Synthesizer
       seed.look_for(:type, RDL::Globals.types[:bool])
 
       
-      branches = generate(seed, [precond], [TRUE_POSTCOND], true, type_info: @type_info) 
+      branches = generate(seed, [precond], [TRUE_POSTCOND], true) 
 
       cond = BoolCond.new
       branches.each { |b| cond << update_types_pass.process(b.to_ast) }
@@ -70,16 +72,16 @@ class Synthesizer
     }
 
     log = "Type Sucesses"
-    @type_info.type_successes.each {|i, j| 
+    @ctx.type_info.type_successes.each {|i, j| 
       j.each { |k|
-        log = log + "\n--- #{@type_info.type_to_s(k)}"
+        log = log + "\n--- #{@ctx.type_info.type_to_s(k)}"
       }
     }
     log2 = "Type Failures"
 
-    @type_info.type_errs.each do |i, j|
+    @ctx.type_info.type_errs.each do |i, j|
       j.each { |k|
-        log2 = log2 + "\n--- #{@type_info.type_to_s(k)}"
+        log2 = log2 + "\n--- #{@ctx.type_info.type_to_s(k)}"
       }
     end
       
