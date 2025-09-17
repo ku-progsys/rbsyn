@@ -28,6 +28,7 @@ class CheckErrorPass < ::AST::Processor
   end
 
   def update_reset(type_errs, type_successes)
+
     @type_errs = type_errs
     @type_successes = type_successes
     @errors = 0
@@ -51,13 +52,11 @@ class CheckErrorPass < ::AST::Processor
 
 
   def on_send(node)
-    
     mth = node.children[1]
     trecv = process(node.children[0]) 
     return "error" if trecv.to_s == "error" #expecting a string for errors, for now
 
     targs = node.children[2 ..].map {|k|
-
       k.is_a?(TypedNode) ? process(k) : nil # this way of traversing will collect every error. 
       
     }
@@ -67,11 +66,9 @@ class CheckErrorPass < ::AST::Processor
       :args => targs,
       :method => mth}
 
-
+    
     if @type_successes.keys.include?(mth) # pass for when method is a method of interest (successes is initalized with all moi)
-      
-        @type_successes[mth].each {|i|
-       
+      @type_successes[mth].each {|i|
         if match_success(i, signature)
           #node.update_ttype(i[:result])  # uncomment if you would like the type to be updated with the emperical  types
           return i[:result]
@@ -89,22 +86,21 @@ class CheckErrorPass < ::AST::Processor
       }
 
       # try to infer the type to pass up the tree using previously seen sucesses
-
-
       # if neither error nor sucesses have been seen with this type return dynamic (this may hide bugs so inspect this carefuly)
-      
-      
       return RDL::Type::DynamicType.new() 
       
     else  # this is not a moi
-
       mthds = methods_of(trecv)
       info = mthds[mth]
+      if info.nil?
+        return "error" 
+      end
+
       tmeth = info[:type]
 
       begin
         tret = compute_tout(trecv, tmeth, targs)
-        node.update_ttype(tret)  # uncomment if you would like the type to be updated with the emperical  types
+        #node.update_ttype(tret)  # uncomment if you would like the type to be updated with the emperical  types
         return tret
       rescue Exception => e
         return "error"
@@ -114,6 +110,7 @@ class CheckErrorPass < ::AST::Processor
 
 
   def handler_missing(node)
+
     node.updated(nil, node.children.map { |k|
       k.is_a?(TypedNode) ? process(k) : k
     })
@@ -144,13 +141,6 @@ class CheckErrorPass < ::AST::Processor
     return true
 
   end
-  #TODO: clean experimental notes
-  #YOU JUST ADDED SOMETHING THAT TREATS EACH DYN TYPE AS A UNION OF ALL OF
-  #ITS OBSERVED OUTPUTS BUT THAT WAS WRONG YOU NEED IT TO BE LITERALLY ANY OUTPUT
-  #BUT DON'T ASSUME THAT IT IS THE BAD THING???? THIS IS SOMETHING TO DEBATE.
-  #OH!!! WOW WELL YOU SEE, YOU MIGHT NEED TO SEE IF IT IS POSSIBLE FOR IT TO 
-  #BE ANYTHING THAT COULD BE BAD AND STILL COUNT SLIGHTLY AGAINST IT??
-  #OR PERHAPS IT NEEDS TO BE ANYTHING THAT IS POSSIBLE TO TO GOOD. 
 
   def matches_err(template, signature)
 

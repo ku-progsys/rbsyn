@@ -19,7 +19,7 @@ describe "noTypes" do
     #RDL::Globals.module_eval.types[:object].each {|i| puts i}
 
     
-    define :sumTwoWorking, "(Integer, Integer) -> Integer", [], consts: :true do
+    define :sumTwoWorking, "(Integer, Integer) -> Integer", [], consts: :true, moi: [:+] do
       
 
       spec "Should Sum Results but will throw error" do

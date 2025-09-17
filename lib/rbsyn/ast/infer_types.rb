@@ -1,9 +1,16 @@
 require "set"
 require_relative "check_error_pass"
 
+
+
+
+
+
 class InferTypes
 
   attr_reader :type_errs, :type_successes, :moi
+
+
 
   def initialize(moi)
     @moi = moi
@@ -19,14 +26,16 @@ class InferTypes
     @set_exception = false
   end
 
+  def compare_hashes(left, right)
+    return left.reject { |k, _| [:result, :except].include?(k) } == right.reject { |k, _| [:result, :except].include?(k) }
+  end
+
 
   def reset_instrumentation()
     @updated = false
     @typestack = []
     @set_exception = false
   end
-
-
 
   def w_instrument(receiver, meth, *args)
     trace = {:method => meth,:receiver => RDL::Type::NominalType.new(receiver.class.to_s),
@@ -62,7 +71,7 @@ class InferTypes
 
     @type_errs[trace[:method]].each{|i|
 
-      if type_to_s(i) == type_to_s(trace)
+      if compare_hashes(i, trace)
         return
       end
     }
@@ -77,8 +86,8 @@ class InferTypes
 
 
     @type_successes[trace[:method]].each{|i|
-  
-      if type_to_s(i) == type_to_s(trace)
+    
+      if compare_hashes(i, trace)
         return
       end
     }

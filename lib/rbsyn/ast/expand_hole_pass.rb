@@ -44,11 +44,13 @@ class ExpandHolePass < ::AST::Processor
       end
 
       # boolean constants
+
       if node.ttype <= RDL::Globals.types[:bool] && !@no_bool_consts
         expanded.concat bool_const
       end
 
       # and of 2 boolean expressions
+      
       if node.ttype <= RDL::Globals.types[:bool] && @no_bool_consts && @ctx.enable_and
         expanded << s(RDL::Globals.types[:bool], :and,
           s(RDL::Globals.types[:bool], :hole, 0, { bool_consts: false }),
@@ -89,6 +91,7 @@ class ExpandHolePass < ::AST::Processor
       expanded.concat envref(node.ttype)
     elsif depth > 0 && !@effect #MODIFY THIS NEXT BR
       # synthesize function calls
+
       r = Reachability.new(@ctx.tenv)
       paths = r.paths_to_type(node.ttype, depth, @variance)
       expanded.concat paths.map { |path| fn_call(path) }

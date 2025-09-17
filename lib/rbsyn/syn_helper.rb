@@ -3,6 +3,14 @@
 require 'parser/current'
 require "set"
 require_relative 'ast/infer_types'
+
+def test_ordering(worklist)
+  is_sorted = worklist.each_cons(2).all? { |a, b| a.inferred_errors <= b.inferred_errors }
+  if !is_sorted
+    raise "Not sorted"
+  end
+end
+
 module SynHelper
   include TypeOperations
   
@@ -12,28 +20,31 @@ module SynHelper
 
     correct_progs = []
     work_list = [seed_hole]
-
+#    templist = []
     until work_list.empty?
 
       base = work_list.shift
       effect_needed = []  
+
       generated = base.build_candidates()
+ 
       evaluable = generated.reject &:has_hole?
+      tempbool = false
       evaluable.each { |prog_wrap|
-   
+        tempbool = false
         #BLOCK BEGIN
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
             res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
 
           rescue RbSynError => err
-
             raise err
           rescue TypeError => err
-
-            next
+#            templist.append(prog_wrap)
+            tempbool = true
+            break
           rescue StandardError => err
-
+            #templist.append(prog_wrap)
             next
           end
 
@@ -42,6 +53,7 @@ module SynHelper
               @params = postcond.parameters.map &:last
             }
             klass.instance_exec res, &postcond
+
           rescue AssertionError => e
             orig_prog = prog_wrap.dup
             prog_wrap.passed_asserts = e.passed_count
@@ -55,28 +67,33 @@ module SynHelper
             end
 
           rescue RbSynError => e
-
             raise e
+
           rescue StandardError => e
+            #templist.append(prog_wrap)
             next
           end
           
         }
         #BLOCK END
-
+        if tempbool
+          #type error encountered this expression should not be added back into the worklist for 
+          #further effect expansions. 
+          next
+        end
         # passes all tests
         if test_outputs.all? true
           correct_progs << prog_wrap
-    
-
           return prog_wrap unless return_all
-        elsif ENV.key? 'DISABLE_EFFECTS'
 
+        elsif ENV.key? 'DISABLE_EFFECTS'
           prog_wrap.passed_asserts = 0
           prog_wrap.inferred_errors = 10000 #BR This is my addition this 
           prog_wrap.look_for(:effect, ['*'])
+#          if templist.include?(prog_wrap)
+#             raise "Program with type error getting into worklist"
+#          end
           effect_needed << prog_wrap
-
         end
 
       }
@@ -104,7 +121,7 @@ module SynHelper
       end
 
       work_list = [*work_list, *remainder_holes].sort { |a, b| comparator(a, b) }
-
+#      test_ordering(work_list)
       work_list
     end
     raise RbSynError, "No candidates found"

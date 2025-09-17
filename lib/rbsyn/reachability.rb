@@ -41,24 +41,34 @@ class Reachability
   end
 
   def paths_to_type(target, depth, variance=COVARIANT)
+
     curr_depth = 0
     types = types_from_tenv(@initial_tenv)
     queue = types.map { |t| CallChain.new([t], types) }
   
     until curr_depth == depth do
+
       new_queue = []
       queue.each { |path|
         trecv = path.last
         mthds = methods_of(trecv)
         mthds.delete(:__getobj__)
-        
+
         mthds.each { |mthd, info|
-          
-          tmeth = info[:type]
+
+          tmeth = info[:type] 
+
           targs = compute_targs(trecv, tmeth)
 
           next if targs.any? { |t| t.is_a? RDL::Type::BotType }
-          tout = compute_tout(trecv, tmeth, targs)
+          begin
+            tout = compute_tout(trecv, tmeth, targs)
+          rescue NoMethodError => e
+            #puts "fixed #{e}"
+            #puts "type: #{trecv},\ntmeth: #{tmeth},\ntargs: #{targs}"
+            #puts "methd: #{mthd}n\n\n"
+            next
+          end
           # convert :self types to actual object
           tout = trecv if tout.is_a?(RDL::Type::VarType) && tout.name == :self
           new_tenv = make_new_tenv(tout, path.tenv)

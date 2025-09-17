@@ -16,7 +16,7 @@ describe "noTypes" do
     # second step. 
 
     
-    define :sumTwo, "(Integer, Integer) -> Integer", [], consts: :true do
+    define :sumTwo, "(Integer, Integer) -> Integer", [], consts: :true, moi: [:+] do
       
 
       spec "Should Sum Results but will throw error" do

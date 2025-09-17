@@ -87,7 +87,7 @@ define :username_available?, "(String) -> %bool" do
     }
   end
 
-  puts generate_program
+  #puts generate_program
 end
 ```
 
@@ -135,16 +135,18 @@ _Logo derived from icon by [ultimatearm](https://www.flaticon.com/authors/ultima
 
 ## BR NOTES and TODOS
 
-* The bug appears when line 14 in the benchmark has `RDL.type :BasicObject, :+, "(%dyn) -> %dyn"` the last `$dyn` as opposed to `Integer` is what is revealing the error. 
-* The sorting may not be working as intended, it might be re-inserting completed programs that have failed the test, on `lines 133 and 144` and the programs that have 
-already been tested do not have a penalty score assigned to them, therefore prioritizing these over exploration. An easy way to fix this might be to add between lines 115 and 116
-`prog_wrap.inferred_errors += 10000` artifically asigning them an arbitrarially high score. 
-* My current error assignment method only assigns an error score to the newest generated terms on line `129` (IE it doesn't backtrack to update older terms with newly discovered information)
-this may be a bad approach, I would like to consider, instead, inserting the new terms into the worklist and then re-checking for type errors across the entire list before sorting near line `144`.
-* I am currently using explicit string casts to compare RDL types in many places, this is only because of my own limitations in understanding, this will be best updated to directly compare types. 
 
+* My current error assignment method only assigns an error score to the newest generated terms on line `129` (IE it doesn't backtrack to update older terms with newly discovered information this may be a bad approach, I would like to consider, instead, inserting the new terms into the worklist and then re-checking for type errors across the entire list before sorting near line `144`.
 
+* TODO: Create file with alternative program structure where all ast's are parenthesized, at least for some arithmatic code 
+the alteration to the ast that allows logging forces an infix evaluation order which is not necessarialy preserved in the original ast, 
+due to precidence operations in the Unparse file. 
+Alternatively we could attempt to simply redefine any operators that we are interested in on the fly, but this might be challanging for c-lib
+ops. 
 
-* TODO add support for dynamic types in the reachability file and the typeops file. 
-UPDATE: This task is partially complete, I used a magic number to hardcode the types that are available to the system, I need to figure out if 
-puting "Basic Object" in parents of receiver in line 86 of type_ops.rb will be sufficient or if I will need to collect the types manually? 
+* TODO: Today I put some rescue blocks around find parents of and get trecv, this is because dyn types were being used with bad types. 
+I expanded the generalizability of the system by letting the find parents of function use the list from the globals.info.info.keys but with 
+types I know to be useless removed. Discuss with Sankha 
+
+* TODO: I need to test on more testcases. 
+

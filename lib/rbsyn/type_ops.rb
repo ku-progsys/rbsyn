@@ -1,4 +1,5 @@
 module TypeOperations
+  require_relative "../typeslist.rb"
   def compute_targs(trec, tmeth)
     # TODO: we use only the first definition, ignoring overloaded method definitions
     type = tmeth[0]
@@ -51,6 +52,7 @@ module TypeOperations
   end
 
   def parents_of(trecv)
+
     case trecv
     when RDL::Type::SingletonType
       cls = trecv.val
@@ -80,10 +82,15 @@ module TypeOperations
     when RDL::Type::BotType
       []
     when RDL::Type::DynamicType 
-      #hard coded makes progress
-      #TODO
-      magic_type = [parents_of(RDL::Type::NominalType.new("Integer")), parents_of(RDL::Globals.types[:bool]), "BasicObject"]
-      magic_type #BR MY addition, idea is that we can't build with what we haven't declared or s
+      
+      if TypesList.typeslist.nil?
+
+        RDL::Globals.info.info.keys
+      else
+        
+        TypesList.typeslist
+      end
+
     else
       raise RbSynError, "unhandled type #{trecv.inspect}"
     end
@@ -128,7 +135,6 @@ module TypeOperations
   end
 
   def methods_of(trecv)
-    
     Hash[*parents_of(trecv).map { |klass|
         
         RDL::Globals.info.info[klass]
