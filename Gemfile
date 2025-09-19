@@ -7,3 +7,6 @@ gem "rdl", :git => "https://github.com/ngsankha/rdl", :branch => "rbsyn"
 # gem "rdl", :path => "../rdl"
 
 gem "warning", "~> 1.4"
+
+gem "rackup", "~> 2.2"
+gem "puma", "~> 7.0"

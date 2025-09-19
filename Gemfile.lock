@@ -93,6 +93,9 @@ GEM
       equalizer (~> 0.0.9)
       ice_nine (~> 0.11.1)
       procto (~> 0.0.2)
+    mustermann (3.0.4)
+      ruby2_keywords (~> 0.0.1)
+    nio4r (2.7.4)
     parser (2.7.2.0)
       ast (~> 2.4.1)
     procto (0.0.3)
@@ -102,15 +105,37 @@ GEM
     pry-byebug (3.10.1)
       byebug (~> 11.0)
       pry (>= 0.13, < 0.15)
+    puma (7.0.3)
+      nio4r (~> 2.0)
     racc (1.8.1)
+    rack (3.2.1)
+    rack-protection (4.1.1)
+      base64 (>= 0.1.0)
+      logger (>= 1.6.0)
+      rack (>= 3.0.0, < 4)
+    rack-session (2.1.1)
+      base64 (>= 0.1.0)
+      rack (>= 3.0.0)
+    rackup (2.2.1)
+      rack (>= 3)
     rake (13.2.1)
     rouge (4.4.0)
     ruby-progressbar (1.13.0)
+    ruby2_keywords (0.0.5)
     securerandom (0.3.1)
+    sinatra (4.1.1)
+      logger (>= 1.6.0)
+      mustermann (~> 3.0)
+      rack (>= 3.0.0, < 4)
+      rack-protection (= 4.1.1)
+      rack-session (>= 2.0.0, < 3)
+      tilt (~> 2.0)
     sql-parser (0.0.2)
       racc
-    sqlite3 (2.2.0-arm64-darwin)
+    sqlite3 (2.7.3-arm64-darwin)
+    sqlite3 (2.7.3-x86_64-linux-gnu)
     thread_safe (0.3.6)
+    tilt (2.6.1)
     timeout (0.4.2)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
@@ -129,7 +154,6 @@ GEM
 
 PLATFORMS
   arm64-darwin-21
-  x86_64-darwin-19
   x86_64-linux
 
 DEPENDENCIES
@@ -140,9 +164,12 @@ DEPENDENCIES
   minitest-reporters
   pry
   pry-byebug
+  puma (~> 7.0)
+  rackup (~> 2.2)
   rake (~> 13.0)
   rbsyn!
   rdl!
+  sinatra
   warning (~> 1.4)
 
 BUNDLED WITH

@@ -1,3 +1,4 @@
 test_log.json
 
-tmp_bench/
+synthesized_scripts/
+unsynthesized_scripts/

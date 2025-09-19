@@ -1,36 +1,33 @@
 require 'sinatra'
 require 'open3'
 require 'json'
+require_relative 'local_run'
 
-FileUtils.mkdir_p(File.join(File.expand_path("..", Dir.pwd), "tmp_bench"))
+scripts_folder = "unsynthesized_scripts"
+
+FileUtils.mkdir_p(File.join(File.expand_path("..", __dir__), scripts_folder))
+
+syntheis_folder = "synthesized_scripts"
+
+FileUtils.mkdir_p(File.join(File.expand_path("..", __dir__), syntheis_folder))
 
 post '/run_rbsyn' do
   content_type :json
 
   if params[:file] && params[:file][:tempfile]
-    filename = "script_#{Time.now.strftime("%Y%m%d_%H%M%S")}_#{params[:file][:filename]}"
-    filepath = File.join(File.expand_path("..", Dir.pwd), "tmp_bench", filename)
+    filename = "unsynthesized_#{Time.now.strftime("%Y%m%d_%H%M%S")}_#{params[:file][:filename]}"
+    filepath = File.join(File.expand_path("..", __dir__), scripts_folder, filename)
 
     File.open(filepath, "wb") { |f| f.write(params[:file][:tempfile].read) }
 
-    command = "bundle exec rake bench TEST=\"#{filepath}\""
-    stdout, stderr, status = Open3.capture3(command)
+    synthesized_filename = "synthesized_#{Time.now.strftime("%Y%m%d_%H%M%S")}_#{params[:file][:filename]}"
+    synthesized_filepath = File.join(File.expand_path("..", __dir__), syntheis_folder, synthesized_filename)
 
-    # Force UTF-8
-    stdout = stdout.encode('UTF-8', invalid: :replace, undef: :replace)
-    stderr = stderr.encode('UTF-8', invalid: :replace, undef: :replace)
+    synthesized_code(filepath, synthesized_filepath)
 
-    last_line = stdout.lines.last&.chomp
-
-    result = {
-      command: command,
-      exit_status: status.exitstatus,
-      output: stdout.strip,
-      main_output: last_line.strip,
-      error: stderr.strip
-    }
-
-    return result.to_json
+    content = File.read(synthesized_filepath)
+    content_type 'text/plain', :charset => 'utf-8'
+    return content
   else
     status 400
     return { error: "No file uploaded" }.to_json
