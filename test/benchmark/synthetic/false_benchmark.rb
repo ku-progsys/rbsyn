@@ -1,22 +1,14 @@
-require "test_helper"
+load_typedefs :stdlib, :active_record
 
-describe "Synthetic" do
-  it "false" do
-    load_typedefs :stdlib, :active_record
+define :just_false, "(String) -> %bool", [User, UserEmail] do
 
-    define :just_false, "(String) -> %bool", [User, UserEmail] do
+  spec "returns false" do
+    setup {
+      just_false 'hello'
+    }
 
-      spec "returns false" do
-        setup {
-          just_false 'hello'
-        }
-
-        post { |result|
-          assert { result == false }
-        }
-      end
-
-      generate_program
-    end
+    post { |result|
+      assert { result == false }
+    }
   end
 end

@@ -1,22 +1,14 @@
-require "test_helper"
+load_typedefs :stdlib, :active_record
 
-# describe "Synthetic" do
-#   it "lvar" do
-    load_typedefs :stdlib, :active_record
+define :identity, "(String) -> String", [User, UserEmail] do
 
-    define :identity, "(String) -> String", [User, UserEmail] do
+  spec "returns same value" do
+    setup {
+      identity 'hello'
+    }
 
-      spec "returns same value" do
-        setup {
-          identity 'hello'
-        }
-
-        post { |result|
-          assert { result == 'hello' }
-        }
-      end
-
-      # generate_program
-    end
-#   end
-# end
+    post { |result|
+      assert { result == 'hello' }
+    }
+  end
+end

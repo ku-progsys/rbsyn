@@ -7,6 +7,7 @@ def synthesized_code(rb_src)
   $LOAD_PATH.unshift File.expand_path("../test", __dir__)
   $LOAD_PATH.unshift File.expand_path("../models", __dir__)
 
+  rb_src = 'require "test_helper"' + "\n" + rb_src unless rb_src.include?('require "test_helper"')
   b = binding
   b.eval(rb_src)
   return b.instance_eval do
@@ -23,7 +24,6 @@ if __FILE__ == $0
   end
 
   script_path = ARGV[0]
-  output_path = ARGV[1] || './synthesized_code.rb'
 
   unless File.exist?(script_path)
     puts "Error: File not found - #{script_path}"
