@@ -4,7 +4,8 @@ module Utils
   def format(prog)
     formatter = Rouge::Formatters::Terminal256.new
     lexer = Rouge::Lexers::Ruby.new
-    formatter.format(lexer.lex(prog))
+    # formatter.format(lexer.lex(prog))
+    prog
   end
 
   def format_ast(ast)

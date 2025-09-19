@@ -14,6 +14,14 @@ class SpecProxy
   end
 end
 
+class RbSynGlobal
+  @@syn_task = []
+
+  def self.syn_task
+    @@syn_task
+  end
+end
+
 class SynthesizerProxy
   include AST
   require "minitest/assertions"
@@ -41,6 +49,18 @@ class SynthesizerProxy
     spc = SpecProxy.new @mth_name
     spc.instance_eval(&blk)
     @specs << spc
+  end
+
+  def reset_ctx
+    ctx = Context.new
+    ctx.max_prog_size = @ctx.max_prog_size
+    ctx.components = @ctx.components
+    ctx.functype = @ctx.functype
+    ctx.max_hash_size = @ctx.max_hash_size
+    ctx.enable_constants = @ctx.enable_constants
+    ctx.enable_nil = @ctx.enable_nil
+    ctx.mth_name = @mth_name
+    @ctx = ctx
   end
 
   def reset(&blk)
@@ -78,5 +98,6 @@ module SpecDSL
   def define(mth_name, type, components, prog_size: 5, max_hash_size: 1, consts: false, enable_nil: false, &blk)
     syn_proxy = SynthesizerProxy.new(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil)
     syn_proxy.instance_eval(&blk)
+    RbSynGlobal.syn_task  << syn_proxy
   end
 end
