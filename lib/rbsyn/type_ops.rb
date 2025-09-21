@@ -82,7 +82,7 @@ module TypeOperations
     when RDL::Type::BotType
       []
     when RDL::Type::DynamicType 
-      
+=begin      
       if TypesList.typeslist.nil?
 
         RDL::Globals.info.info.keys
@@ -90,7 +90,17 @@ module TypeOperations
         
         TypesList.typeslist
       end
+=end
+      # require 'pry'
+      # binding.pry
+      #RDL::Globals.info.info.keys
+      ["Integer", "Bool", "BasicObject"]
 
+      #       ["UserEmail",
+#  "User",
+#  "BasicObject",
+#  "[s]ActiveRecord::Base",
+#  "ActiveRecord_Relation"]
     else
       raise RbSynError, "unhandled type #{trecv.inspect}"
     end

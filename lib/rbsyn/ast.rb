@@ -1,5 +1,8 @@
 require_relative "./ast/track_rewrite"
-require "pp"
+require_relative "./ast/parenthesize"
+require 'unparser'
+require 'parser/current'
+
 module AST
   def s(ttype, type, *children)
     TypedNode.new(ttype, type, *children)
@@ -26,24 +29,22 @@ module AST
 
     ctx.reset_func.call unless ctx.reset_func.nil?
 
+    rewriter = Parens.new(ctx.moi)
     func = s(ctx.functype, :def, ctx.mth_name,
       s(RDL::Globals.types[:top], :args, *args.map { |arg|
         s(RDL::Globals.types[:top], :arg, arg)
-      }), ast)
+      }), rewriter.process(ast))#rewriter.proces(ast))
 
-    #puts "pp"
-    #puts func.inspect
-    #puts "\n\ndone\n"
+    # require 'pry'
+    # binding.pry
+    # raise Exception
     klass.instance_eval Unparser.unparse(func)
-    #puts "unparse:"
 
-    #puts Unparser.unparse(func)
-    #puts "\n\n"
+
     result = klass.instance_eval(&precond) unless precond.nil?
 
     [result, klass]
   end
-
 
 
   def eval_ast_second(ctx, ast, precond)
@@ -62,12 +63,6 @@ module AST
     DBUtils.reset
     ctx.reset_func.call unless ctx.reset_func.nil?
     
-    func = s(ctx.functype, :def, ctx.mth_name,
-      s(RDL::Globals.types[:top], :args, *args.map { |arg|
-        s(RDL::Globals.types[:top], :arg, arg)
-      }), ast)
-
-
     rewriter = TrackerRewrite.new(ctx.moi)
     ast = rewriter.process(ast)
 
@@ -77,7 +72,7 @@ module AST
     }), ast)
 
     klass.instance_eval Unparser.unparse(func) 
-    klass.instance_variable_set(:@mth, ctx.type_info)
+    klass.instance_variable_set(:@dummyclass, ctx.type_info)
 
     begin
       
@@ -90,7 +85,6 @@ module AST
       raise e
     end
     
-
     [result, klass]
   end
 

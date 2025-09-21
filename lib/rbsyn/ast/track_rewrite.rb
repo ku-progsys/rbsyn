@@ -11,7 +11,7 @@ class TrackerRewrite < ::AST::Processor
     
     if node.is_a?(TypedNode) && @methods.include?(node.children[1])
       
-      node.updated(nil, ([TypedNode.new(:ivar, :ivar, :@mth)] + [:w_instrument] + [node.children[0]] + [TypedNode.new(:sym, :sym, node.children[1])] + node.children[2 .. ]).map { |k|
+      node.updated(nil, ([TypedNode.new(:ivar, :ivar, :@dummyclass)] + [:w_instrument] + [node.children[0]] + [TypedNode.new(:sym, :sym, node.children[1])] + node.children[2 .. ]).map { |k|
         k.is_a?(TypedNode) ? process(k) : k
       })
 

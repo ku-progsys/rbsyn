@@ -146,7 +146,7 @@ ops.
 
 * TODO: Today I put some rescue blocks around find parents of and get trecv, this is because dyn types were being used with bad types. 
 I expanded the generalizability of the system by letting the find parents of function use the list from the globals.info.info.keys but with 
-types I know to be useless removed. Discuss with Sankha 
+types I know to be useless removed. Discuss with Sankha, especially as this is signifigantly increasing the time to solve.  
 
 * TODO: I need to test on more testcases. 
 

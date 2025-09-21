@@ -18,28 +18,28 @@ describe "noTypes" do
     RDL.type :Integer , :+, "(%dyn) -> %dyn "
     RDL.type :Integer, :*, "(%dyn) -> %dyn "
 
-    to_subtract = [
-      EmailToken, DiasporaPod, DiasporaUser, InvitationCode,
-      GitlabDiscussion, GitlabMergeRequest, GitlabNote, GitlabUser,
-      GitlabIssue, DemoUser, Post, AnotherUser, UserEmail, User, "[s]RDL::Type::Type" , "[s]RDL::Globals" , RDL::Type::Parser,  "[s]RDL::Config", RDL::Config
-    ].map(&:to_s)
+    # to_subtract = [
+    #   EmailToken, DiasporaPod, DiasporaUser, InvitationCode,
+    #   GitlabDiscussion, GitlabMergeRequest, GitlabNote, GitlabUser,
+    #   GitlabIssue, DemoUser, Post, AnotherUser, UserEmail, User, "[s]RDL::Type::Type" , "[s]RDL::Globals" , RDL::Type::Parser,  "[s]RDL::Config", RDL::Config
+    # ].map(&:to_s)
 
-    expansiontypes = RDL::Globals.info.info.keys.reject do |(klass, _meth, _kind), _val|
-      to_subtract.include?(klass.to_s)
-    end
+    # expansiontypes = RDL::Globals.info.info.keys.reject do |(klass, _meth, _kind), _val|
+    #   to_subtract.include?(klass.to_s)
+    # end
 
-    TypesList.typeslist = expansiontypes
+    # TypesList.typeslist = expansiontypes
 
     define :sumMult, "(Integer, Integer, Integer) -> Integer", [], consts: :true, moi: [:*, :+] do
       
       spec "spec1" do
 
         setup {
-          sumMult(3,4,10)
+          sumMult(4,10,3)
         }
 
         post { |result|
-          assert {result == 22}
+          assert {result == (4+10)*3}
         }
       end
       
@@ -51,7 +51,7 @@ describe "noTypes" do
         }
 
         post {|result|
-          assert {result == 12+15}
+          assert {result == (3+4)*15}
         }
 
       end
@@ -63,7 +63,7 @@ describe "noTypes" do
         }
 
         post {|result|
-          assert {result == 5*3 + 18}
+          assert {result == (5+3)*18}
         }
 
       end
@@ -75,7 +75,7 @@ describe "noTypes" do
         }
 
         post {|result|
-          assert {result == 12 + 14}
+          assert {result == (4+3)*14}
         }
 
       end

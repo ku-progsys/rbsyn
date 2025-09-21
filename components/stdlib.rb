@@ -20,9 +20,9 @@ def output_type(trec, targs)
         val.is_a?(RDL::Type::OptionalType) ? val.type : val
       })
     else
-      raise RuntimeError, "unhandled type"
+      raise RuntimeError, "unhandled type #{targ}"
     end
   else
-    raise RuntimeError, "unhandled type"
+    raise RuntimeError, "unhandled type #{trec}"
   end
 end

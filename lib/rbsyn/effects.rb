@@ -85,6 +85,8 @@ class EffectAnalysis
         else
           raise RbSynError, "unhandled type #{klass}"
         end
+      # when RDL::Type::DynamicType
+      #   ['*']
       else
         raise RbSynError, "unhandled type #{klass}"
       end

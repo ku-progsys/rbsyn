@@ -16,14 +16,14 @@ def load_typedefs(*categories)
     when :stdlib
       RDL.nowrap :BasicObject
       RDL.type :BasicObject, :!, '() -> %bool', effect: [:+, :+]
-      # RDL.type :BasicObject, :==, '(self) -> %bool', effect: [:+, :+]
+      # # RDL.type :BasicObject, :==, '(self) -> %bool', effect: [:+, :+]
 
-      RDL.nowrap :Array
-      RDL.type_params :Array, [:t], :all?
+      # RDL.nowrap :Array
+      # RDL.type_params :Array, [:t], :all?
 
       RDL.nowrap :Hash
       RDL.type_params :Hash, [:k, :v], :all?
-      RDL.type :Hash, :[], '(``any_or_k(trec)``) -> ``output_type(trec, targs)``', effect: [:+, :+]
+      # RDL.type :Hash, :[], '(``any_or_k(trec)``) -> ``output_type(trec, targs)``', effect: [:+, :+]
 
     when :active_record
 
@@ -31,12 +31,12 @@ def load_typedefs(*categories)
         extend RDL::Annotate
 
         # type 'self.create', "(``DBTypes.schema_type(trec)``) -> self", wrap: false, write: ['self']
-        type 'self.where', "(``DBTypes.schema_type(trec)``) -> ``DBTypes.array_schema(trec)``", wrap: false
-        type 'self.exists?', "(``DBTypes.schema_type(trec)``) -> %bool", wrap: false
-        type 'self.joins', "(``DBTypes.joins_input_type(trec)``) -> ``DBTypes.joins_output_type(trec, targs)``", wrap: false
+        #type 'self.where', "(``DBTypes.schema_type(trec)``) -> ``DBTypes.array_schema(trec)``", wrap: false
+        type 'self.exists?', "(%dyn) -> %dyn", wrap: false
+        #type 'self.joins', "(``DBTypes.joins_input_type(trec)``) -> ``DBTypes.joins_output_type(trec, targs)``", wrap: false
 
-        type :where, "(``DBTypes.schema_type(trec)``) -> ``DBTypes.array_schema(trec)``", wrap: false
-        type :save, '() -> %bool', wrap: false, write: ['*']
+        #type :where, "(``DBTypes.schema_type(trec)``) -> ``DBTypes.array_schema(trec)``", wrap: false
+        #type :save, '() -> %bool', wrap: false, write: ['*']
       end
 
       # ActiveRecord::Querying.class_eval do
@@ -62,9 +62,9 @@ def load_typedefs(*categories)
 
         type_params [:t], :dummy
 
-        type :exists?, "(``DBTypes.schema_type(trec)``) -> %bool", wrap: false
-        type :first, "() -> ``DBTypes.rec_to_nominal(trec)``", wrap: false
-        type :count, "() -> Integer", wrap: false
+        type :exists?, "(%dyn) -> %dyn", wrap: false
+        # type :first, "() -> ``DBTypes.rec_to_nominal(trec)``", wrap: false
+        # type :count, "() -> Integer", wrap: false
         # type :empty?, "() -> %bool", wrap: false
         # type :pluck, "(``DBTypes.pluck_input_type(trec)``) -> ``DBTypes.pluck_output_type(trec, targs)``", wrap: false
         # type :not, "(``DBTypes.schema_type(trec)``) -> ``DBTypes.array_schema(trec)``", wrap: false
