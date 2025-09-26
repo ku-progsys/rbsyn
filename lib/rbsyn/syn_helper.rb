@@ -1,5 +1,6 @@
 
-
+require "pry"
+require 'pry-byebug'
 require 'parser/current'
 require "set"
 require_relative 'ast/infer_types'
@@ -20,16 +21,19 @@ module SynHelper
 
     correct_progs = []
     work_list = [seed_hole]
-#    templist = []
+#   templist = []
     until work_list.empty?
+      work_list = work_list.sort { |a, b| comparator(a, b) }
 
       base = work_list.shift
+      #binding.pry
       effect_needed = []  
 
       generated = base.build_candidates()
- 
+      
       evaluable = generated.reject &:has_hole?
       tempbool = false
+
       evaluable.each { |prog_wrap|
         tempbool = false
         #BLOCK BEGIN
@@ -37,10 +41,20 @@ module SynHelper
           begin
             res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
 
+            if ENV["TESTON"] == '1'
+              resparen, klassparen = eval_ast(@ctx, prog_wrap.to_ast, precond)
+            
+              if resparen != res
+                raise TestException.new("AST interpretation methods not the same:\n
+                Output with tracking AST: #{resparen}\n Output without tracking AST #{res}\n
+                Non-Parenthesized AST:\n#{prog_wrap.to_ast}\n")
+              end
+
+            end
           rescue RbSynError => err
             raise err
           rescue TypeError => err
-#            templist.append(prog_wrap)
+#           templist.append(prog_wrap)
             tempbool = true
             break
           rescue StandardError => err
@@ -131,18 +145,28 @@ module SynHelper
 
     if a.inferred_errors > b.inferred_errors
       1
-    elsif a.inferred_errors < b.inferred_errors
-      -1
-    elsif a.passed_asserts < b.passed_asserts
-      1
-    elsif a.passed_asserts == b.passed_asserts
-      if a.prog_size < b.prog_size
-        -1
-      elsif a.prog_size == b.prog_size
-        0
-      else
+    elsif a.inferred_errors == b.inferred_errors
+
+
+      if a.passed_asserts < b.passed_asserts
         1
+      elsif a.passed_asserts == b.passed_asserts
+
+
+        if a.prog_size < b.prog_size
+          -1
+        elsif a.prog_size == b.prog_size
+          0
+        else
+          1
+        end
+
+
+      else
+        -1
       end
+
+
     else
       -1
     end

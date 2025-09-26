@@ -4,6 +4,8 @@ TRUE_POSTCOND = Proc.new { |result|
   result == true }
 
 class Synthesizer
+  require "pry"
+  require 'pry-byebug'
   require_relative 'ast/infer_types'
   include AST
   include SynHelper
@@ -41,9 +43,9 @@ class Synthesizer
         seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref), env)
         seed.look_for(:type, @ctx.functype.ret)
 
-
+        puts "\n\nsynthesizer generate 1 START\n\n"
         prog = generate(seed, [precond], [postcond], false) 
-
+        puts "\n\nsynthesizer generate 1 DONE\n\n"
 
         prog_cache.add(prog)
         @ctx.logger.debug("Synthesized program:\n#{format_ast(prog.to_ast)}")
@@ -57,18 +59,21 @@ class Synthesizer
       env = LocalEnvironment.new
       branch_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))
       seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, branch_ref), env)
-      seed.look_for(:type, RDL::Globals.types[:bool])
+      bool_or_any = RDL::Type::UnionType.new(RDL::Globals.types[:bool], RDL::Globals.types[:any])
 
-      
+      seed.look_for(:type, bool_or_any)
+
+      puts "\n\nsynthesizer generate2 START\n\n"
       branches = generate(seed, [precond], [TRUE_POSTCOND], true) 
-
+      puts "\n\nsynthesizer generate2 DONE\n\n"
       cond = BoolCond.new
       branches.each { |b| cond << update_types_pass.process(b.to_ast) }
 
       @ctx.logger.debug("Synthesized branch: #{format_ast(cond.to_ast)}")
       @ctx.logger.debug("\n\\\\\\\\\\\\\\\\\\\\\\\\\n\n")
-      ProgTuple.new(@ctx, prog, cond, [precond], [postcond])
-      
+      k = ProgTuple.new(@ctx, prog, cond, [precond], [postcond])
+      #binding.pry
+      k
     }
 
     log = "Type Sucesses"
@@ -124,7 +129,13 @@ class Synthesizer
       ast = progcond.to_ast
       test_outputs = @ctx.preconds.zip(@ctx.postconds).map { |precond, postcond|
         begin
+          # puts "\n\nARE THE EVAL METHODS THE SAME??"
+          # resnp, klassnp = eval_ast_not_parenthesized(@ctx, ast, precond)
+          # ressnd, klasssnd = eval_ast_second(@ctx, ast, precond)
           res, klass = eval_ast(@ctx, ast, precond)
+          # puts "not-paren vs parenthesized: #{resnp == ressnd}"
+          # puts "not-paren vs tracking: #{resnp == res}"
+          # puts "parenthesized vs tracking: #{ressnd == res}\n\n"
         rescue RbSynError => err
           raise err
         rescue StandardError => err

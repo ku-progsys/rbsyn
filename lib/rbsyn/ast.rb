@@ -33,7 +33,7 @@ module AST
     func = s(ctx.functype, :def, ctx.mth_name,
       s(RDL::Globals.types[:top], :args, *args.map { |arg|
         s(RDL::Globals.types[:top], :arg, arg)
-      }), rewriter.process(ast))#rewriter.proces(ast))
+      }), rewriter.process(ast))
 
     # require 'pry'
     # binding.pry
@@ -45,6 +45,44 @@ module AST
 
     [result, klass]
   end
+
+
+  # def eval_ast_not_parenthesized(ctx, ast, precond)
+
+  #   max_args = ctx.functype.args.size
+
+  #   args = max_args.times.map { |i| "arg#{i}".to_sym }
+  #   klass = Class.new
+  #   klass.instance_eval {
+  #     @count = 0
+  #     @passed_count = 0
+  #     @ctx = ctx
+  #     extend Assertions
+  #   }
+
+  #   bind = klass.instance_eval { binding }
+
+  #   ctx.curr_binding = bind
+
+  #   DBUtils.reset
+
+  #   ctx.reset_func.call unless ctx.reset_func.nil?
+
+  #   func = s(ctx.functype, :def, ctx.mth_name,
+  #     s(RDL::Globals.types[:top], :args, *args.map { |arg|
+  #       s(RDL::Globals.types[:top], :arg, arg)
+  #     }), ast)
+
+  #   # require 'pry'
+  #   # binding.pry
+  #   # raise Exception
+  #   klass.instance_eval Unparser.unparse(func)
+
+
+  #   result = klass.instance_eval(&precond) unless precond.nil?
+
+  #   [result, klass]
+  # end
 
 
   def eval_ast_second(ctx, ast, precond)
