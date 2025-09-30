@@ -148,7 +148,12 @@ class CheckErrorPass < ::AST::Processor
     #dyn = RDL::Type::DynamicType.new()
 
     # this might be a mistake as there might be variable size arguments. 
-
+    if template[:args] == :ALL #this is where there is a method missing error
+      if template[:receiver] == signature[:receiver]
+        #puts "testing function on template: #{template}\n\n\nsignature: #{signature}\n\n"
+        return true
+      end
+    end
     if template[:args].size != signature[:args].size
       # for now I can't think of how to handle a vararg
       return false

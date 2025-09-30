@@ -160,7 +160,7 @@ class ProgTuple
   end
 
   def merge_impl(first, second)
-    puts "here we are"
+    puts "HERE 1"
     puts "first branch nil?(#{first.branch.nil?}): #{first.branch.to_ast}\n\n"
     puts"second branch nil?(#{second.branch.nil?}): #{second.branch.to_ast}"
     puts "first implies second?? #{first.branch.implies(second.branch)}"
@@ -174,6 +174,7 @@ class ProgTuple
         [*first.preconds, *second.preconds],
         [*first.postconds, *second.postconds])]
     elsif first.prog != second.prog && !first.branch.implies(second.branch)
+      puts "HERE 2"
       new_cond = BoolCond.new
       new_cond << first.branch.to_ast
       new_cond << second.branch.to_ast
@@ -181,8 +182,10 @@ class ProgTuple
         [*first.preconds, *second.preconds],
         [*first.postconds, *second.postconds])]
     else
+      puts "HERE 3"
       # prog different branch same, need to discover a new path condition
       # TODO: make a function that returns the post cond for booleans
+      
       output1 = (Array.new(first.preconds.size, true) + Array.new(second.preconds.size, false)).map { |item|
         Proc.new { |result| RDL.type_cast(result, '%bool') == item } }
       env = LocalEnvironment.new
@@ -190,8 +193,9 @@ class ProgTuple
       seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, b1_ref), env)
       seed.look_for(:type, RDL::Globals.types[:bool])
       puts "prog_tuple generate 1 START\n\n"
-      #BR NOTE this is where it is failing, so it is correctly identifying that 
-      #the conditional found is too weak. 
+      ENV["TESTON"] = "1"
+      # BR NOTE this is where it is failing, so it is correctly identifying that 
+      # the conditional found is too weak. 
       bsyn1 = generate(seed, [*first.preconds, *second.preconds], output1, true)
       puts "prog_tuple generate 1 DONE\n\n"
 

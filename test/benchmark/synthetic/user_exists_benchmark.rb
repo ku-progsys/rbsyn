@@ -4,7 +4,7 @@ describe "Synthetic" do
   it "user exists" do
     load_typedefs :stdlib, :active_record
 
-    define :username_exists?, "(String) -> %bool", [User, UserEmail], moi: ["self.exists?",] do
+    define :username_exists?, "(String) -> %bool", [User, UserEmail], moi: [:exists?,] do
 
       spec "returns false when user doesn't exist" do
         setup {

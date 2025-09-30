@@ -1,16 +1,11 @@
 require "set"
 require_relative "check_error_pass"
-
-
-
-
-
+require "pry"
+require "pry-byebug"
 
 class InferTypes
 
   attr_reader :type_errs, :type_successes, :moi
-
-
 
   def initialize(moi)
     @moi = moi
@@ -30,7 +25,6 @@ class InferTypes
     return left.reject { |k, _| [:result, :except].include?(k) } == right.reject { |k, _| [:result, :except].include?(k) }
   end
 
-
   def reset_instrumentation()
     @updated = false
     @typestack = []
@@ -42,17 +36,74 @@ class InferTypes
       :args => args.map {|i| RDL::Type::NominalType.new(i.class.to_s)}, :result => nil, :except => nil}
       
     begin
+      # puts "params"
+      # puts "#params: #{receiver.method(meth).parameters}"
       result = receiver.public_send(meth, *args)
       
     rescue TypeError => e
       if !@set_exception 
+
+      #   puts "type error for : #{meth}"
+      #   binding.pry
+      #   ENV["MYFLAG"]="TRUE"
+
         trace[:except] = e
+        update_errlist(trace)
+        @set_exception = true
+      end
+      raise e
+      #this is technically something that you should put in. 
+    rescue NoMethodError => e
+      if !@set_exception 
+
+          puts "noMethodError for #{meth} over #{receiver.class}"
+           
+          ENV["MYFLAG"]="TRUE"
+      #    puts "Locals: #{e.local_variables.inspect}"
+      #    binding.pry
+
+        trace[:except] = e
+        trace[:args] = :ALL
+        update_errlist(trace)
+        @set_exception = true
+      end
+      raise e
+
+    rescue NameError => e
+      if !@set_exception 
+        if e.to_s.downcase.include?("undefined method")
+          puts "noMethodError for #{meth} over #{receiver.class}"
+          ENV["MYFLAG"]="TRUE"
+      #    puts "Locals: #{e.local_variables.inspect}"
+      #    binding.pry
+          trace[:except] = e
+          trace[:args] = :ALL
+          update_errlist(trace)
+        end
+        @set_exception = true
+      end
+      raise e
+    rescue ArgumentError => e
+       if !@set_exception 
+ 
+        puts "ArgumentError for #{meth}"
+        binding.pry
+        ENV["MYFLAG"]="TRUE"
+  
+        trace[:except] = e
+        trace[:args] = :ALL
         update_errlist(trace)
         @set_exception = true
       end
       raise e
     rescue StandardError => e
       if !@set_exception 
+
+        puts "standard error for : #{meth}"
+        binding.pry
+        ENV["MYFLAG"]="TRUE"
+      
+
         trace[:except] = e
         update_errlist(trace)
         @set_exception = true
@@ -60,9 +111,13 @@ class InferTypes
       raise e
     end
 
-      trace[:result] = RDL::Type::NominalType.new(result.class.to_s)
-      update_success(trace)
-      result
+    
+    ENV["MYFLAG"]="TRUE"
+    
+    
+    trace[:result] = RDL::Type::NominalType.new(result.class.to_s)
+    update_success(trace)
+    result
 
   end
 
@@ -116,10 +171,14 @@ class InferTypes
       t = "#{t} :#{type[:method]}"
     end 
     
-
-    type[:args].each {|i|
+    if type[:args] == :ALL
+      t = "#{t} => #{type[:args].to_s}"
+    
+    else 
+      type[:args].each {|i|
       t = "#{t} => #{i.to_s}"
-    }
+      }
+    end
 
     if !type[:result].nil?
       t = "#{t} => #{type[:result].to_s}"

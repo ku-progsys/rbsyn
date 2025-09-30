@@ -34,11 +34,22 @@ module SynHelper
       evaluable = generated.reject &:has_hole?
       tempbool = false
 
+      # if !ENV["TESTON"].nil? && ENV["TESTON"] == '1'
+      #   binding.pry
+      # end
+
       evaluable.each { |prog_wrap|
+        if format_ast(prog_wrap.to_ast) == "def username_exists?(arg0)\n  User.exists?(username: arg0)\nend"
+          puts "HERE!!!! found: #{format_ast(prog_wrap.to_ast)}"
+          raise Exception
+        end
         tempbool = false
         #BLOCK BEGIN
+        ENV['MYFLAG'] = 'FALSE'
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
+            
+            ENV['MYFLAG'] = 'FALSE'
             res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
 
             if ENV["TESTON"] == '1'
@@ -52,12 +63,28 @@ module SynHelper
 
             end
           rescue RbSynError => err
+            # if ENV["MYFLAG"] == "TRUE"
+            #   puts ":exists? rbsynerror in : #{prog_wrap.to_ast}"
+            #   puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
+            #   binding.pry
+            # end
             raise err
           rescue TypeError => err
+            if ENV["MYFLAG"] == "TRUE"
+              puts ":exists? typeerror in : #{prog_wrap.to_ast}"
+              puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
+              binding.pry
+            end
 #           templist.append(prog_wrap)
             tempbool = true
             break
           rescue StandardError => err
+            # if ENV["MYFLAG"] == "TRUE"
+            #   puts ":exists? stderror in : #{prog_wrap.to_ast}"
+            #   puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
+            #   #puts "error was: #{err}"
+            #   binding.pry
+            # end
             #templist.append(prog_wrap)
             next
           end
@@ -69,6 +96,7 @@ module SynHelper
             klass.instance_exec res, &postcond
 
           rescue AssertionError => e
+
             orig_prog = prog_wrap.dup
             prog_wrap.passed_asserts = e.passed_count
             prog_wrap.look_for(:effect, e.read_set)
@@ -81,6 +109,11 @@ module SynHelper
             end
 
           rescue RbSynError => e
+            # if ENV["MYFLAG"] == "TRUE"
+            #   puts ":exists? rbsynerror2 in : #{prog_wrap.to_ast}"
+            #   puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
+            #   binding.pry
+            # end
             raise e
 
           rescue StandardError => e
@@ -97,7 +130,12 @@ module SynHelper
         end
         # passes all tests
         if test_outputs.all? true
-          correct_progs << prog_wrap
+          if ENV["MYFLAG"] == "TRUE"
+            puts "found prog of: #{prog_wrap.to_ast}"
+            puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
+            binding.pry
+          end
+            correct_progs << prog_wrap
           return prog_wrap unless return_all
 
         elsif ENV.key? 'DISABLE_EFFECTS'
@@ -109,7 +147,11 @@ module SynHelper
 #          end
           effect_needed << prog_wrap
         end
-
+        # if ENV["MYFLAG"] == "TRUE"
+        #   puts "found prog of: #{prog_wrap.to_ast} FAILED ASSERTS"
+        #   puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
+        #   binding.pry
+        # end
       }
       # done evaluating complete programs
 

@@ -94,13 +94,13 @@ module TypeOperations
       # require 'pry'
       # binding.pry
       #RDL::Globals.info.info.keys
-      ["Integer", "Bool", "BasicObject"]
+      #["Integer", "Bool", "BasicObject"]
 
-      #       ["UserEmail",
-#  "User",
-#  "BasicObject",
-#  "[s]ActiveRecord::Base",
-#  "ActiveRecord_Relation"]
+   ["UserEmail",
+   "User",
+   "BasicObject",
+   "[s]ActiveRecord::Base",
+   "ActiveRecord_Relation"]
     else
       raise RbSynError, "unhandled type #{trecv.inspect}"
     end
