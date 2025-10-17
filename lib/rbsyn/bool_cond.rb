@@ -41,11 +41,14 @@ class BoolCond
 
   def inverse?(other)
     @solver = MiniSat::Solver.new
-    @intermediates = RDL.type_cast({}, 'Hash<TypedNode, MiniSat::Var>')
+    @intermediates = RDL.type_cast({}, 'Hash<TypedNode, MiniSat::Var>', force: true) #BRTODO this is a problem? BR
+    #@intermediates = {}
+    #binding.pry
     a = bool_vars(@conds)
     b = bool_vars(other.conds)
     @solver << a
     @solver << b
+  
     !@solver.satisfied?
   end
 
@@ -72,6 +75,7 @@ class BoolCond
   def bool_vars(conds)
     constructed = RDL.type_cast([], 'Array<MiniSat::Var>', force: true)
     conds.each { |cond|
+
       stripped, nots = strip_not cond
       negate = nots % 2 == 1
       unless @intermediates.key? stripped

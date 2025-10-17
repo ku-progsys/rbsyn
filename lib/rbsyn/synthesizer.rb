@@ -43,9 +43,7 @@ class Synthesizer
         seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref), env)
         seed.look_for(:type, @ctx.functype.ret)
 
-        puts "\n\nsynthesizer generate 1 START\n\n"
         prog = generate(seed, [precond], [postcond], false) 
-        puts "\n\nsynthesizer generate 1 DONE\n\n"
 
         prog_cache.add(prog)
         @ctx.logger.debug("Synthesized program:\n#{format_ast(prog.to_ast)}")
@@ -54,7 +52,7 @@ class Synthesizer
 
         @ctx.logger.debug("Found program in cache:\n#{format_ast(prog.to_ast)}")
       end
-
+      
       
       env = LocalEnvironment.new
       branch_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))
@@ -63,19 +61,17 @@ class Synthesizer
 
       seed.look_for(:type, bool_or_any)
 
-      puts "\n\nsynthesizer generate2 START\n\n"
       branches = generate(seed, [precond], [TRUE_POSTCOND], true) 
-      puts "\n\nsynthesizer generate2 DONE\n\n"
       cond = BoolCond.new
       branches.each { |b| cond << update_types_pass.process(b.to_ast) }
 
       @ctx.logger.debug("Synthesized branch: #{format_ast(cond.to_ast)}")
       @ctx.logger.debug("\n\\\\\\\\\\\\\\\\\\\\\\\\\n\n")
       k = ProgTuple.new(@ctx, prog, cond, [precond], [postcond])
-      #binding.pry
       k
     }
 
+    
     log = "Type Sucesses"
     @ctx.type_info.type_successes.each {|i, j| 
       j.each { |k|
@@ -93,32 +89,34 @@ class Synthesizer
     @ctx.logger.debug(log)
     @ctx.logger.debug(log2 + "\n")
 
-
+ 
     # if there is only one generated, there is nothing to merge, we return the first synthesized program
-    
+
 
     return progconds[0].prog if progconds.size == 1
     
 
     # progconds = merge_same_progs(progconds).map { |progcond| [progcond] }
-    progconds.map! { |progcond| [progcond] }
+    progconds.map! { |progcond| [progcond] } #in-place version of map
 
     # TODO: we need to merge only the program with different body
     # (same programs with different branch conditions are wasted work?)
-    completed = progconds.reduce { |merged_prog, progcond|
+    completed = progconds.reduce { |merged_prog, progcond| # inject and reduce are aliases if no memo object is passed the first element becomes the vairable folded over. 
 
       results = []
       merged_prog.each { |mp|
-
+        
         progcond.each { |pp|
+
           possible = (mp + pp)
 
           possible.map &:prune_branches
-  
+          
           results.push(*possible)
 
         }
       }
+      
       
       results = ELIMINATION_ORDER.inject(results) { |memo, strategy| strategy.eliminate memo }
       results.sort { |a, b| flat_comparator(a, b) }
@@ -129,13 +127,9 @@ class Synthesizer
       ast = progcond.to_ast
       test_outputs = @ctx.preconds.zip(@ctx.postconds).map { |precond, postcond|
         begin
-          # puts "\n\nARE THE EVAL METHODS THE SAME??"
-          # resnp, klassnp = eval_ast_not_parenthesized(@ctx, ast, precond)
-          # ressnd, klasssnd = eval_ast_second(@ctx, ast, precond)
+
           res, klass = eval_ast(@ctx, ast, precond)
-          # puts "not-paren vs parenthesized: #{resnp == ressnd}"
-          # puts "not-paren vs tracking: #{resnp == res}"
-          # puts "parenthesized vs tracking: #{ressnd == res}\n\n"
+
         rescue RbSynError => err
           raise err
         rescue StandardError => err
@@ -145,11 +139,15 @@ class Synthesizer
         begin
           klass.instance_eval { @params = postcond.parameters.map &:last }
           klass.instance_exec res, &postcond
+        
+        rescue AssertionError => e
+          nil
         rescue RbSynError => e
           raise e
         rescue StandardError => e
           nil
         end
+        
       }
 
       return ast if test_outputs.all? true

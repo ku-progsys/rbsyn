@@ -1,4 +1,6 @@
 class BranchCount < ::AST::Processor
+  require 'pry'
+  require 'pry-byebug'
   attr_reader :branches
 
   def self.branches(node)
@@ -12,6 +14,7 @@ class BranchCount < ::AST::Processor
   end
 
   def on_if(node)
+
     if node.children.size == 2
       @branches += 1 unless node.children[1].type == :if
       process(node.children[1])
@@ -26,6 +29,7 @@ class BranchCount < ::AST::Processor
   end
 
   def handler_missing(node)
+
     node.children.map { |k|
       k.is_a?(node.class) ? process(k) : k
     }

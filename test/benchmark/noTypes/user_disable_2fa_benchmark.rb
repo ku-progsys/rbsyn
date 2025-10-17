@@ -6,7 +6,7 @@ describe 'Gitlab' do
   it 'user#disable_two_factor!' do
     load_typedefs :stdlib, :active_record
 
-    define :disable_two_factor!, '(GitlabUser) -> %bot', [GitlabUser], enable_nil: true do
+    define :disable_two_factor!, '(GitlabUser) -> %bot', [GitlabUser], moi: [encrypted_otp_secret, encrypted_otp_secret_iv] ,enable_nil: true do
       spec "clears all 2FA-related fields" do
         setup {
           @user = Fabricate(:two_factor_user)

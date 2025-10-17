@@ -2,6 +2,8 @@ class ProgTuple
   include AST
   include SynHelper
   include Utils
+  require 'pry'
+  require 'pry-byebug'
 
   attr_reader :ctx, :branch, :preconds, :postconds
   attr_accessor :prog, :cond
@@ -35,6 +37,7 @@ class ProgTuple
   end
 
   def +(other)
+
     raise RbSynError, "expected another ProgTuple" if other.class != self.class
 
     if current_prog_passes?(other) && has_same_prog?(other) && guess_branch_same?(other)
@@ -138,6 +141,7 @@ class ProgTuple
 
   private
   def merge_rec(first, second)
+
     @ctx.logger.debug("Merge programs:")
     @ctx.logger.debug("Candidate 1:\n#{format_ast(first.to_ast)}")
     @ctx.logger.debug("Candidate 2:\n#{format_ast(second.to_ast)}")
@@ -160,10 +164,7 @@ class ProgTuple
   end
 
   def merge_impl(first, second)
-    puts "HERE 1"
-    puts "first branch nil?(#{first.branch.nil?}): #{first.branch.to_ast}\n\n"
-    puts"second branch nil?(#{second.branch.nil?}): #{second.branch.to_ast}"
-    puts "first implies second?? #{first.branch.implies(second.branch)}"
+    #binding.pry
     if first.prog == second.prog && first.branch.implies(second.branch)
       return [ProgTuple.new(@ctx, first.prog, first.branch, [*first.preconds, *second.preconds], [*first.postconds, *second.postconds])]
     elsif first.prog == second.prog && !first.branch.implies(second.branch)
@@ -174,7 +175,7 @@ class ProgTuple
         [*first.preconds, *second.preconds],
         [*first.postconds, *second.postconds])]
     elsif first.prog != second.prog && !first.branch.implies(second.branch)
-      puts "HERE 2"
+
       new_cond = BoolCond.new
       new_cond << first.branch.to_ast
       new_cond << second.branch.to_ast
@@ -182,7 +183,7 @@ class ProgTuple
         [*first.preconds, *second.preconds],
         [*first.postconds, *second.postconds])]
     else
-      puts "HERE 3"
+
       # prog different branch same, need to discover a new path condition
       # TODO: make a function that returns the post cond for booleans
       
@@ -192,12 +193,9 @@ class ProgTuple
       b1_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))
       seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, b1_ref), env)
       seed.look_for(:type, RDL::Globals.types[:bool])
-      puts "prog_tuple generate 1 START\n\n"
-      ENV["TESTON"] = "1"
-      # BR NOTE this is where it is failing, so it is correctly identifying that 
-      # the conditional found is too weak. 
+      #binding.pry
       bsyn1 = generate(seed, [*first.preconds, *second.preconds], output1, true)
-      puts "prog_tuple generate 1 DONE\n\n"
+     
 
       output2 = (Array.new(first.preconds.size, false) + Array.new(second.preconds.size, true)).map { |item|
         Proc.new { |result| RDL.type_cast(result, '%bool', force: true) == item }}
@@ -210,9 +208,8 @@ class ProgTuple
         b2_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))
         seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, b2_ref), env)
         seed.look_for(:type, RDL::Globals.types[:bool])
-        puts "prog_tuple generate 2 START\n\n"
         bsyn2 = generate(seed, [*first.preconds, *second.preconds], output2, true)
-        puts "prog_tuple generate 2 DONE\n\n"
+
       end
 
       tuples = RDL.type_cast([], 'Array<ProgTuple>', force: true)

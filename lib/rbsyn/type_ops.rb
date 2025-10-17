@@ -1,9 +1,11 @@
 module TypeOperations
-  require_relative "../typeslist.rb"
+
   def compute_targs(trec, tmeth)
+
     # TODO: we use only the first definition, ignoring overloaded method definitions
     type = tmeth[0]
     targs = type.args
+  
     return targs.map { |targ| RDL::Type::DynamicType.new } if ENV.key? 'DISABLE_TYPES'
 
     targs.map { |targ|
@@ -82,25 +84,16 @@ module TypeOperations
     when RDL::Type::BotType
       []
     when RDL::Type::DynamicType 
-=begin      
-      if TypesList.typeslist.nil?
 
-        RDL::Globals.info.info.keys
-      else
-        
-        TypesList.typeslist
-      end
-=end
-      # require 'pry'
-      # binding.pry
-      #RDL::Globals.info.info.keys
-      #["Integer", "Bool", "BasicObject"]
-
-   ["UserEmail",
-   "User",
-   "BasicObject",
-   "[s]ActiveRecord::Base",
-   "ActiveRecord_Relation"]
+    #["Integer", "Bool", "BasicObject"]
+    #["Integer", "Bool"]
+  #  ["UserEmail",
+  #  "User",
+  #  "BasicObject",
+  #  "[s]ActiveRecord::Base",
+  #  "ActiveRecord_Relation",
+  #   ]
+      RDL::Globals.info.info.keys()
     else
       raise RbSynError, "unhandled type #{trecv.inspect}"
     end

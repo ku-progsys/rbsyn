@@ -36,16 +36,18 @@ class InferTypes
       :args => args.map {|i| RDL::Type::NominalType.new(i.class.to_s)}, :result => nil, :except => nil}
       
     begin
-      # puts "params"
-      # puts "#params: #{receiver.method(meth).parameters}"
+
+      # puts "constants: \n\n"
+      # puts reciever.instance_variable_get(:columns_hash)
+      # receiver.instance_variables.each do |i|
+      #   puts i
+      # end
+      # puts "\n\n\n\n"
       result = receiver.public_send(meth, *args)
       
     rescue TypeError => e
       if !@set_exception 
 
-      #   puts "type error for : #{meth}"
-      #   binding.pry
-      #   ENV["MYFLAG"]="TRUE"
 
         trace[:except] = e
         update_errlist(trace)
@@ -53,14 +55,11 @@ class InferTypes
       end
       raise e
       #this is technically something that you should put in. 
-    rescue NoMethodError => e
+    rescue NoMethodError => e # BR TODO TEST THIS NEW FUNCITONALITY
       if !@set_exception 
-
-          puts "noMethodError for #{meth} over #{receiver.class}"
            
           ENV["MYFLAG"]="TRUE"
-      #    puts "Locals: #{e.local_variables.inspect}"
-      #    binding.pry
+
 
         trace[:except] = e
         trace[:args] = :ALL
@@ -69,13 +68,12 @@ class InferTypes
       end
       raise e
 
-    rescue NameError => e
+    rescue NameError => e # BR TODO TEST THIS NEW FUNCTIONALLITY
       if !@set_exception 
         if e.to_s.downcase.include?("undefined method")
-          puts "noMethodError for #{meth} over #{receiver.class}"
+          
           ENV["MYFLAG"]="TRUE"
-      #    puts "Locals: #{e.local_variables.inspect}"
-      #    binding.pry
+
           trace[:except] = e
           trace[:args] = :ALL
           update_errlist(trace)
@@ -83,11 +81,10 @@ class InferTypes
         @set_exception = true
       end
       raise e
-    rescue ArgumentError => e
-       if !@set_exception 
+    rescue ArgumentError => e #BR TODO TEST THIS NEW FUNCITONALITY
+       if !@set_exception  
  
-        puts "ArgumentError for #{meth}"
-        binding.pry
+
         ENV["MYFLAG"]="TRUE"
   
         trace[:except] = e
@@ -99,8 +96,6 @@ class InferTypes
     rescue StandardError => e
       if !@set_exception 
 
-        puts "standard error for : #{meth}"
-        binding.pry
         ENV["MYFLAG"]="TRUE"
       
 

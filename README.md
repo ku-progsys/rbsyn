@@ -144,9 +144,15 @@ due to precidence operations in the Unparse file.
 Alternatively we could attempt to simply redefine any operators that we are interested in on the fly, but this might be challanging for c-lib
 ops. 
 
-* TODO: Today I put some rescue blocks around find parents of and get trecv, this is because dyn types were being used with bad types. 
-I expanded the generalizability of the system by letting the find parents of function use the list from the globals.info.info.keys but with 
-types I know to be useless removed. Discuss with Sankha, especially as this is signifigantly increasing the time to solve.  
 
 * TODO: I need to test on more testcases. 
+
+## Big Todo
+
+  We need to fix it so that it can use either hashes or computed types, but the problems with computed types is that it will need some arbitrary function or 
+  program to run, 
+
+  And the problem with hashes is that it will require some arbitrary key list, 
+
+  The easier part to solve will be the hashes, but so far the only solution is a list of hashes that are avaialble to use. That isn't very helpful to us as far as stories go. 
 

@@ -233,9 +233,25 @@ class ExpandHolePass < ::AST::Processor
         mth = tokens.next
         mthds = methods_of(trecv)
         info = mthds[mth]
+        # if mth == :exists? 
+  
+        #   tmeth = [RDL::Type::MethodType.new(
+        #     [RDL::Type::ComputedType.new("DBTypes.schema_type(trec)")],
+        #     nil,
+        #     RDL::Type::DynamicType.new)]
+        # else
         tmeth = info[:type]
+        # end
+
+        # begin
         targs = compute_targs(trecv, tmeth)
         tret = compute_tout(trecv, tmeth, targs)
+        # rescue Exception => e  
+          
+        #   next
+        # end
+
+        
         hole_args = targs.map { |targ| s(targ, :hole, 0, {hash_depth: @curr_hash_depth, method_arg: true}) }
         if accum.nil?
           accum = s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),

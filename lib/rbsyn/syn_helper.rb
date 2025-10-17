@@ -21,71 +21,32 @@ module SynHelper
 
     correct_progs = []
     work_list = [seed_hole]
-#   templist = []
+
     until work_list.empty?
       work_list = work_list.sort { |a, b| comparator(a, b) }
 
       base = work_list.shift
-      #binding.pry
       effect_needed = []  
 
       generated = base.build_candidates()
       
       evaluable = generated.reject &:has_hole?
+
       tempbool = false
-
-      # if !ENV["TESTON"].nil? && ENV["TESTON"] == '1'
-      #   binding.pry
-      # end
-
       evaluable.each { |prog_wrap|
-        if format_ast(prog_wrap.to_ast) == "def username_exists?(arg0)\n  User.exists?(username: arg0)\nend"
-          puts "HERE!!!! found: #{format_ast(prog_wrap.to_ast)}"
-          raise Exception
-        end
         tempbool = false
-        #BLOCK BEGIN
-        ENV['MYFLAG'] = 'FALSE'
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
-            
-            ENV['MYFLAG'] = 'FALSE'
+
             res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
 
-            if ENV["TESTON"] == '1'
-              resparen, klassparen = eval_ast(@ctx, prog_wrap.to_ast, precond)
-            
-              if resparen != res
-                raise TestException.new("AST interpretation methods not the same:\n
-                Output with tracking AST: #{resparen}\n Output without tracking AST #{res}\n
-                Non-Parenthesized AST:\n#{prog_wrap.to_ast}\n")
-              end
-
-            end
           rescue RbSynError => err
-            # if ENV["MYFLAG"] == "TRUE"
-            #   puts ":exists? rbsynerror in : #{prog_wrap.to_ast}"
-            #   puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
-            #   binding.pry
-            # end
             raise err
           rescue TypeError => err
-            if ENV["MYFLAG"] == "TRUE"
-              puts ":exists? typeerror in : #{prog_wrap.to_ast}"
-              puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
-              binding.pry
-            end
-#           templist.append(prog_wrap)
             tempbool = true
             break
           rescue StandardError => err
-            # if ENV["MYFLAG"] == "TRUE"
-            #   puts ":exists? stderror in : #{prog_wrap.to_ast}"
-            #   puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
-            #   #puts "error was: #{err}"
-            #   binding.pry
-            # end
-            #templist.append(prog_wrap)
+            tempbool = true
             next
           end
 
@@ -109,32 +70,23 @@ module SynHelper
             end
 
           rescue RbSynError => e
-            # if ENV["MYFLAG"] == "TRUE"
-            #   puts ":exists? rbsynerror2 in : #{prog_wrap.to_ast}"
-            #   puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
-            #   binding.pry
-            # end
             raise e
 
           rescue StandardError => e
-            #templist.append(prog_wrap)
+            
             next
           end
           
         }
         #BLOCK END
         if tempbool
-          #type error encountered this expression should not be added back into the worklist for 
-          #further effect expansions. 
+          # type error encountered, we should not add to the worklist
           next
         end
         # passes all tests
         if test_outputs.all? true
-          if ENV["MYFLAG"] == "TRUE"
-            puts "found prog of: #{prog_wrap.to_ast}"
-            puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
-            binding.pry
-          end
+            #puts "correct program \n#{format_ast(prog_wrap.to_ast)}"
+
             correct_progs << prog_wrap
           return prog_wrap unless return_all
 
@@ -142,16 +94,12 @@ module SynHelper
           prog_wrap.passed_asserts = 0
           prog_wrap.inferred_errors = 10000 #BR This is my addition this 
           prog_wrap.look_for(:effect, ['*'])
-#          if templist.include?(prog_wrap)
-#             raise "Program with type error getting into worklist"
-#          end
+
           effect_needed << prog_wrap
         end
-        # if ENV["MYFLAG"] == "TRUE"
-        #   puts "found prog of: #{prog_wrap.to_ast} FAILED ASSERTS"
-        #   puts "aka: \n#{format_ast(prog_wrap.to_ast)}"
-        #   binding.pry
-        # end
+        if ENV["MYFLAG"] == "TRUE"
+
+        end
       }
       # done evaluating complete programs
 
