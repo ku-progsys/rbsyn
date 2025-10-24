@@ -1,5 +1,6 @@
 COVARIANT = :+
 CONTRAVARIANT = :-
+require 'fileutils'
 TRUE_POSTCOND = Proc.new { |result| result == true }
 
 class Synthesizer
@@ -67,29 +68,42 @@ class Synthesizer
       ProgTuple.new(@ctx, prog, cond, [precond], [postcond])
     }
 
-    # if there is only one generated, there is nothing to merge, we return the first synthesized program
-    return progconds[0].prog if progconds.size == 1
+    completed = if progconds.size == 1
+      # if there is only one generated, there is nothing to merge
+      [progconds[0]]
+    else
+      # progconds = merge_same_progs(progconds).map { |progcond| [progcond] }
+      progconds.map! { |progcond| [progcond] }
 
-    # progconds = merge_same_progs(progconds).map { |progcond| [progcond] }
-    progconds.map! { |progcond| [progcond] }
-
-    # TODO: we need to merge only the program with different body
-    # (same programs with different branch conditions are wasted work?)
-    completed = progconds.reduce { |merged_prog, progcond|
-      results = []
-      merged_prog.each { |mp|
-        progcond.each { |pp|
-          possible = (mp + pp)
-          possible.map &:prune_branches
-          results.push(*possible)
+      # TODO: we need to merge only the program with different body
+      # (same programs with different branch conditions are wasted work?)
+      progconds.reduce { |merged_prog, progcond|
+        results = []
+        merged_prog.each { |mp|
+          progcond.each { |pp|
+            possible = (mp + pp)
+            possible.map &:prune_branches
+            results.push(*possible)
+          }
         }
+
+        results = ELIMINATION_ORDER.inject(results) { |memo, strategy| strategy.eliminate memo }
+        results.sort { |a, b| flat_comparator(a, b) }
       }
+    end
 
-      results = ELIMINATION_ORDER.inject(results) { |memo, strategy| strategy.eliminate memo }
-      results.sort { |a, b| flat_comparator(a, b) }
-    }
+    all_candidates_dir = 'synth_candidates/candidates'
+    FileUtils.mkdir_p(all_candidates_dir)
+    FileUtils.rm_rf(Dir.glob("#{all_candidates_dir}/*")) # Clear previous candidates
+    completed.each_with_index do |progcond, i|
+      ast = progcond.to_ast
+      src = Unparser.unparse(ast)
+      File.open(File.join(all_candidates_dir, "candidate_#{i + 1}.rb"), "w") do |f|
+        f.puts(src)
+      end
+    end
 
-    completed.each { |progcond|
+    completed.each_with_index { |progcond, i|
       ast = progcond.to_ast
       test_outputs = @ctx.preconds.zip(@ctx.postconds).map { |precond, postcond|
         begin
@@ -110,7 +124,16 @@ class Synthesizer
         end
       }
 
-      return ast if test_outputs.all? true
+      if test_outputs.all? true
+        successful_candidate_dir = 'synth_candidates/success'
+        FileUtils.mkdir_p(successful_candidate_dir)
+        FileUtils.rm_rf(Dir.glob("#{successful_candidate_dir}/*")) # Clear previous successful candidate
+        src = Unparser.unparse(ast)
+        File.open(File.join(successful_candidate_dir, "success.rb"), "w") do |f|
+          f.puts(src)
+        end
+        return ast
+      end
     }
     raise RbSynError, "No candidates found"
   end

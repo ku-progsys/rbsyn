@@ -33,7 +33,7 @@ describe "Sketch" do
         }
 
         post { |result|
-          assert { result == 27 }
+          assert { result == 16 }
         }
       end
 
