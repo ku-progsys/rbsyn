@@ -15,31 +15,37 @@ end
 module SynHelper
   include TypeOperations
   
-  
   def generate(seed_hole, preconds, postconds, return_all=false)
-
 
     correct_progs = []
     work_list = [seed_hole]
 
     until work_list.empty?
       work_list = work_list.sort { |a, b| comparator(a, b) }
-
       base = work_list.shift
       effect_needed = []  
 
       generated = base.build_candidates()
-      
       evaluable = generated.reject &:has_hole?
 
       tempbool = false
+      
+      # if evaluable.size > 0 && evaluable[0].prog_size >= 4
+      #   evaluable.each do |i|
+      #     puts i.to_ast
+      #     puts "\n\n"
+      #   end
+      #   binding.pry
+      # end
+      
       evaluable.each { |prog_wrap|
         tempbool = false
+
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
+          # puts prog_wrap.to_ast
+          # binding.pry
           begin
-
             res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
-
           rescue RbSynError => err
             raise err
           rescue TypeError => err
@@ -57,7 +63,6 @@ module SynHelper
             klass.instance_exec res, &postcond
 
           rescue AssertionError => e
-
             orig_prog = prog_wrap.dup
             prog_wrap.passed_asserts = e.passed_count
             prog_wrap.look_for(:effect, e.read_set)
@@ -73,12 +78,12 @@ module SynHelper
             raise e
 
           rescue StandardError => e
-            
             next
           end
           
         }
         #BLOCK END
+        
         if tempbool
           # type error encountered, we should not add to the worklist
           next
@@ -97,9 +102,7 @@ module SynHelper
 
           effect_needed << prog_wrap
         end
-        if ENV["MYFLAG"] == "TRUE"
-
-        end
+        
       }
       # done evaluating complete programs
 

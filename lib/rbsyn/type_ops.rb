@@ -1,7 +1,10 @@
+
 module TypeOperations
 
-  def compute_targs(trec, tmeth)
+  require_relative 'type_helper'
 
+  def compute_targs(trec, tmeth)
+    # BR you should probably modify this so that we don't have to declare type params
     # TODO: we use only the first definition, ignoring overloaded method definitions
     type = tmeth[0]
     targs = type.args
@@ -87,13 +90,16 @@ module TypeOperations
 
     #["Integer", "Bool", "BasicObject"]
     #["Integer", "Bool"]
-  #  ["UserEmail",
-  #  "User",
-  #  "BasicObject",
-  #  "[s]ActiveRecord::Base",
-  #  "ActiveRecord_Relation",
-  #   ]
-      RDL::Globals.info.info.keys()
+    #  ["UserEmail",
+    #  "User",
+    #  "BasicObject",
+    #  "[s]ActiveRecord::Base",
+    #  "ActiveRecord_Relation",
+    #   ]
+      
+      
+      ParentsHelper.getParents()
+      #["Node", "BasicObject", "Integer", "String", "State"]
     else
       raise RbSynError, "unhandled type #{trecv.inspect}"
     end

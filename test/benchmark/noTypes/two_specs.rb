@@ -8,8 +8,9 @@ require_relative "../../../lib/typeslist"
 describe "noTypes" do
   it "sums first two numbers and multiplies result by third" do
 
-    
+    # this one is having a strange error regarding the effects, specifically the self.effect_of function doesn't seem to have a handler for self being a %dyn type
 
+    ParentsHelper.init_list()
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.type :BasicObject, :!, '() -> %bool'
@@ -17,6 +18,9 @@ describe "noTypes" do
     RDL.type :BasicObject, :"<=", '() -> %bool'
     RDL.type :Integer , :+, "(%dyn) -> %dyn "
     RDL.type :Integer, :*, "(%dyn) -> %dyn "
+    ParentsHelper.subtract()
+
+    # not yet working
 
     # to_subtract = [
     #   EmailToken, DiasporaPod, DiasporaUser, InvitationCode,

@@ -85,8 +85,9 @@ class EffectAnalysis
         else
           raise RbSynError, "unhandled type #{klass}"
         end
-      # when RDL::Type::DynamicType
-      #   ['*']
+      when RDL::Type::DynamicType
+        # return all method names over all types. 
+        #ParentsHelper.getParents()
       else
         raise RbSynError, "unhandled type #{klass}"
       end
@@ -97,6 +98,7 @@ class EffectAnalysis
         when RDL::Type::NominalType, RDL::Type::SingletonType
           eff.gsub('self', klass.to_s)
         else
+
           raise RbSynError, "unhandled type"
         end
       }

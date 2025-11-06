@@ -25,10 +25,17 @@ class Context
     @ref_map = {}
     @curr_binding = nil
     @desc = []
+    if ENV["EXCONSTS"] == "TRUE"
+      @constants = {
+        string: ['', " ", "(", ")", "-"],
+        integer: [0, 1, 2, 3, 4, 5]
+      }
+    else
     @constants = {
       string: [''],
       integer: [0, 1]
     }
+    end
     @enable_and = false
     @enable_constants = false
     @enable_nil = false

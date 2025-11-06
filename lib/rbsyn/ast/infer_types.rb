@@ -58,7 +58,7 @@ class InferTypes
     rescue NoMethodError => e # BR TODO TEST THIS NEW FUNCITONALITY
       if !@set_exception 
            
-          ENV["MYFLAG"]="TRUE"
+
 
 
         trace[:except] = e
@@ -71,8 +71,7 @@ class InferTypes
     rescue NameError => e # BR TODO TEST THIS NEW FUNCTIONALLITY
       if !@set_exception 
         if e.to_s.downcase.include?("undefined method")
-          
-          ENV["MYFLAG"]="TRUE"
+      
 
           trace[:except] = e
           trace[:args] = :ALL
@@ -85,7 +84,6 @@ class InferTypes
        if !@set_exception  
  
 
-        ENV["MYFLAG"]="TRUE"
   
         trace[:except] = e
         trace[:args] = :ALL
@@ -96,8 +94,6 @@ class InferTypes
     rescue StandardError => e
       if !@set_exception 
 
-        ENV["MYFLAG"]="TRUE"
-      
 
         trace[:except] = e
         update_errlist(trace)
@@ -107,7 +103,6 @@ class InferTypes
     end
 
     
-    ENV["MYFLAG"]="TRUE"
     
     
     trace[:result] = RDL::Type::NominalType.new(result.class.to_s)
@@ -150,7 +145,7 @@ class InferTypes
 
 
   def check_errors(ast)
-    @checker.update_reset(@type_errs, @type_successes)
+    @checker.update_reset(@type_errs, @type_successes) # resetting the checker
     @checker.process(ast) # the # of errors 
     @checker.errors
 

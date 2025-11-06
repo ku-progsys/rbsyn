@@ -8,22 +8,23 @@ class CheckErrorPass < ::AST::Processor
     @type_errs = errs
     @type_successes = successes
     @errors = 0
-    temp = Set[]
+    # temp = Set[]
 
-    @type_successes.each {|i|
- 
-      #for each method
-      i[1].each {|j|
-        #for each success in each method
-        temp.add(j[:result])
-      }
-    }
-    if temp.size > 1
+    # @type_successes.each {|i|
+      
+      
+    #   #for each method
+    #   i[1].each {|j|
+    #     #for each success in each method
+    #     temp.add(j[:result])
+    #   }
+    # }
+    # if temp.size > 1
 
-      @dyn_returns = RDL::Type::UnionType.new(temp.to_a)
-    elsif temp.size == 1
-      @dyn_returns = temp.to_a[0]
-    end
+    #   @dyn_returns = RDL::Type::UnionType.new(temp.to_a)
+    # elsif temp.size == 1
+    #   @dyn_returns = temp.to_a[0]
+    # end
 
   end
 
@@ -32,22 +33,24 @@ class CheckErrorPass < ::AST::Processor
     @type_errs = type_errs
     @type_successes = type_successes
     @errors = 0
-    temp = Set[]
+    # temp = Set[]
+    
+    # @type_successes.each {|i|
+    #   puts "type success: #{i}"
+    #   #for each method
+    #   i[1].each {|j|
+    #     #for each success in each method
+    #     temp.add(j[:result])
+    #   }
+    # }
+    # puts "---------------\n\n"
+    # if temp.size > 1
 
-    @type_successes.each {|i|
- 
-      #for each method
-      i[1].each {|j|
-        #for each success in each method
-        temp.add(j[:result])
-      }
-    }
-    if temp.size > 1
-     
-      @dyn_returns = RDL::Type::UnionType.new(temp.to_a)
-    elsif temp.size == 1
-      @dyn_returns = temp.to_a[0]
-    end
+    #   @dyn_returns = RDL::Type::UnionType.new(temp.to_a)
+    # elsif temp.size == 1
+    #   @dyn_returns = temp.to_a[0]
+    # end
+
   end
 
 

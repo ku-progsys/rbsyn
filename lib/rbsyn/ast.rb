@@ -8,7 +8,7 @@ module AST
     TypedNode.new(ttype, type, *children)
   end
 
-  def eval_ast(ctx, ast, precond)
+  def eval_ast(ctx, ast, precond) #modified by me to parenthesize
 
     max_args = ctx.functype.args.size
 
@@ -24,7 +24,9 @@ module AST
     bind = klass.instance_eval { binding }
 
     ctx.curr_binding = bind
-
+    #require 'pry'
+    #require 'pry-byebug'
+    #binding.pry
     DBUtils.reset
 
     ctx.reset_func.call unless ctx.reset_func.nil?
@@ -35,11 +37,8 @@ module AST
         s(RDL::Globals.types[:top], :arg, arg)
       }), rewriter.process(ast))
 
-    # require 'pry'
-    # binding.pry
-    # raise Exception
+    #require pry
     klass.instance_eval Unparser.unparse(func)
-
 
     result = klass.instance_eval(&precond) unless precond.nil?
 
@@ -61,6 +60,7 @@ module AST
     }
 
     bind = klass.instance_eval { binding }
+    
 
     ctx.curr_binding = bind
 
@@ -73,11 +73,7 @@ module AST
         s(RDL::Globals.types[:top], :arg, arg)
       }), ast)
 
-    # require 'pry'
-    # binding.pry
-    # raise Exception
     klass.instance_eval Unparser.unparse(func)
-
 
     result = klass.instance_eval(&precond) unless precond.nil?
 
@@ -100,7 +96,6 @@ module AST
     ctx.curr_binding = bind
     DBUtils.reset
     ctx.reset_func.call unless ctx.reset_func.nil?
-    
     rewriter = TrackerRewrite.new(ctx.moi)
     ast = rewriter.process(ast)
 
@@ -108,9 +103,10 @@ module AST
     s(RDL::Globals.types[:top], :args, *args.map { |arg|
       s(RDL::Globals.types[:top], :arg, arg)
     }), ast)
+  
 
-    klass.instance_eval Unparser.unparse(func) 
-    klass.instance_variable_set(:@dummyclass, ctx.type_info)
+      klass.instance_eval Unparser.unparse(func) 
+      klass.instance_variable_set(:@dummyclass, ctx.type_info)
 
     begin
       

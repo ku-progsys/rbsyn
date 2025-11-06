@@ -22,16 +22,17 @@ describe "noTypes" do
   it "clamp function" do
 
 
+    RDL.nowrap :"%bool"
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.type :BasicObject, :!, '() -> %bool'
-    RDL.type :Integer, :>, "(Integer) -> %bool"
-    RDL.type :Integer, :==, '(Integer) -> %bool'
-    RDL.type :Integer, :<, "(Integer) -> %bool"
+    RDL.type :Integer, :">=", "(%dyn) -> %dyn"
+    RDL.type :Integer, :==, '(%dyn) -> %dyn'
+    RDL.type :Integer, :<=, "(%dyn) -> %dyn"
     #RDL.type :BasicObject , :+, "(%dyn) -> %dyn "
 
     
-    define :clamp, "(Integer, Integer, Integer) -> Integer", [], consts: :true, moi: [] do
+    define :clamp, "(Integer, Integer, Integer) -> Integer", [], consts: :true, moi: [:">=", :==, :"<="] do
       
 
       spec "Lower range const returned" do

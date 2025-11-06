@@ -4,8 +4,8 @@ TRUE_POSTCOND = Proc.new { |result|
   result == true }
 
 class Synthesizer
-  require "pry"
-  require 'pry-byebug'
+  # require "pry"
+  # require 'pry-byebug'
   require_relative 'ast/infer_types'
   include AST
   include SynHelper
@@ -18,7 +18,7 @@ class Synthesizer
   end
 
   def run
-    ENV["bug"] = "0"
+
     if ENV.key? 'EFFECT_PREC'
       eff_prec = ENV['EFFECT_PREC'].strip.to_i
     else
@@ -35,7 +35,8 @@ class Synthesizer
     update_types_pass = RefineTypesPass.new
     progconds = @ctx.preconds.zip(@ctx.postconds, @ctx.desc).map { |precond, postcond, desc|
       @ctx.logger.debug("Finding sln for subspec: #{desc}")
-      prog = prog_cache.find_prog([precond], [postcond])
+      prog = prog_cache.find_prog(precond, postcond)
+      #binding.pry
       if prog.nil?
 
         env = LocalEnvironment.new
@@ -46,6 +47,7 @@ class Synthesizer
         prog = generate(seed, [precond], [postcond], false) 
 
         prog_cache.add(prog)
+
         @ctx.logger.debug("Synthesized program:\n#{format_ast(prog.to_ast)}")
         @ctx.logger.debug("Synthesized: #{prog.to_ast}")
       else
@@ -71,7 +73,7 @@ class Synthesizer
       k
     }
 
-    
+    #binding.pry
     log = "Type Sucesses"
     @ctx.type_info.type_successes.each {|i, j| 
       j.each { |k|
