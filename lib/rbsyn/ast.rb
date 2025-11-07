@@ -3,7 +3,7 @@ module AST
     TypedNode.new(ttype, type, *children)
   end
 
-  def eval_ast(ctx, ast, precond)
+  def eval_ast(ctx, ast, precond, branch_ast: nil)
     max_args = ctx.functype.args.size
     args = max_args.times.map { |i| "arg#{i}".to_sym }
     klass = Class.new
@@ -26,8 +26,12 @@ module AST
         }), ast)
       # puts Unparser.unparse(func)
     end
-    klass.instance_eval Unparser.unparse(func)
-    result = klass.instance_eval(&precond) unless precond.nil?
+    klass.instance_eval(Unparser.unparse(func))
+    if branch_ast
+      result = klass.instance_eval(Unparser.unparse(branch_ast))
+    else
+      result = klass.instance_eval(&precond) unless precond.nil?
+    end
     [result, klass]
   end
 end

@@ -67,7 +67,9 @@ module SynHelper
           end
 
           correct_progs << prog_wrap
-          return prog_wrap unless return_all
+          if !return_all && test_outputs.all?(true)
+            return prog_wrap
+          end
         elsif ENV.key? 'DISABLE_EFFECTS'
           prog_wrap.passed_asserts = 0
           prog_wrap.look_for(:effect, ['*'])
@@ -90,7 +92,11 @@ module SynHelper
 
       work_list = [*work_list, *remainder_holes].sort { |a, b| comparator(a, b) }
     end
-    raise RbSynError, "No candidates found"
+    if correct_progs.empty?
+      raise RbSynError, "No candidates found"
+    else
+      return correct_progs
+    end
   end
 
   def comparator(a, b)

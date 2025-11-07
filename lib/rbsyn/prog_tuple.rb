@@ -9,12 +9,10 @@ class ProgTuple
   def initialize(ctx, prog, branch, preconds, postconds)
     @ctx = ctx
     if branch.is_a? BoolCond
-      @branch = RDL.type_cast(branch, 'BoolCond')
-    else
-      raise RbSynError, "expected a TypedNode" unless branch.is_a? TypedNode
-      raise RbSynError, "expected branch condition to be a %bool" unless RDL.type_cast(branch, 'TypedNode').ttype <= RDL::Globals.types[:bool]
+      @branch = branch # Keep existing BoolCond if passed
+    else # If a TypedNode is passed, assume it's meant to be a true condition
       @branch = BoolCond.new
-      @branch << RDL.type_cast(branch, 'TypedNode')
+      @branch << s(RDL::Globals.types[:bool], :true) # Always set to true condition
     end
     raise RbSynError, "expected ProgWrapper" unless prog.is_a?(Array) || prog.is_a?(ProgWrapper)
     @prog = prog
@@ -47,7 +45,7 @@ class ProgTuple
 
   def guess_branch_same?(other)
     precond = other.preconds[0]
-    res, _klass = eval_ast(@ctx, @branch.to_ast, precond)
+    res, _klass = eval_ast(@ctx, to_ast, precond, branch_ast: @branch.to_ast)
     res == true
   end
 
@@ -90,25 +88,11 @@ class ProgTuple
   end
 
   def to_ast
-    if @prog.is_a? Array
-      prog_cast = RDL.type_cast(@prog, 'Array<ProgTuple>', force: true)
-      raise RbSynError, "expected <3 subtrees" unless prog_cast.size < 3
-      fragments = prog_cast.map { |t| t.to_ast }
-      branches = prog_cast.map { |program| program.branch }
-
-      if prog_cast.size == 1
-        prog_cast[0].to_ast
-      else
-        if branches[0].inverse?(branches[1])
-          s(fragments[0].ttype, :if, branches[0].to_ast, fragments[0], fragments[1])
-        else
-          s(fragments[0].ttype, :if, branches[0].to_ast, fragments[0],
-            s(fragments[1].ttype, :if, branches[1].to_ast, fragments[1]))
-        end
-      end
-    else
-      RDL.type_cast(@prog, 'ProgWrapper').to_ast
-    end
+    # With branching removed, @prog should always be a ProgWrapper.
+    # The ProgTuple itself now represents a single program, not a conditional structure.
+    # If @prog somehow becomes an array, it indicates an unexpected state in this non-branching mode.
+    raise RbSynError, "ProgTuple#to_ast expects ProgWrapper when branching is disabled" if @prog.is_a? Array
+    RDL.type_cast(@prog, 'ProgWrapper').to_ast
   end
 
   def prune_branches
