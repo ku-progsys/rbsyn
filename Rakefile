@@ -41,7 +41,8 @@ Rake::TestTask.new(:notypes) do |t|
     #'test/benchmark/noTypes/gets_num_connections.rb',
     #"test/benchmark/noTypes/sumTwo_benchmark.rb",
     #"test/benchmark/noTypes/two_specs.rb",
-    "test/benchmark/noTypes/treetest.rb"
+    #"test/benchmark/noTypes/treetest.rb",
+    "test/benchmark/noTypes/listops.rb"
     ]
 
 
