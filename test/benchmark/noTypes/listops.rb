@@ -25,42 +25,46 @@ describe "notypes" do
 
     ParentsHelper.init_list()
 
+    
     RDL.nowrap :Node
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.nowrap :Array
-    RDL.nowrap :Range
-    RDL.type :BasicObject, :!, '() -> %bool'
+    RDL.type_params Array, [:t], :all?
+    RDL.nowrap :String
+    RDL.type :BasicObject, :!, '() -> %bool' 
     RDL.type :BasicObject, :+, "(%dyn) -> Integer" 
-    RDL.type :Range, :initialize, '(Integer, Integer, %bool) -> Range'
-    RDL.type :Array, "[]", "(Range) -> Array<str>"
-    RDL.type :Array, :initialize, "() -> Array" # just need to be able to construct the empty list. 
+    RDL.type :Array, :find_index, "(Integer) -> Integer or nil"
+    RDL.type :Array, "[]", "(Integer, Integer) -> Array"
+    RDL.type :BasicObject, :nil?, '() -> %bool'
+    RDL.type :Integer, :<=, "(Integer) -> %bool"
+    RDL.type :Array, "self.new", "() -> Array" # just need to be able to construct the empty list. 
 
 
     ParentsHelper.subtract()
     #binding.pry
 
-    define :subList, "(Array<str>, str, str, str) -> str", [], consts: :true, moi: [] do
+    define :subList, "(Array, Integer, Integer, Integer) -> Array", [], consts: :true, moi: [] do
       
 
       spec "Should return list between a and c inclusive" do
 
         setup {
-          list = ["a", 'b', 'c', 'd', 'e', 'f']
-          sublist(list, 'a', 'c')
+          list = ['6', '5', '4', '7', '2', '2', '3', '12']
+          sublist(list, '2', '3')
 
         }
 
         post { |result|
-          assert (result == ['a', 'b', 'c'])
+          assert (result == ['2', '2', '3'])
         }
       end
 
       spec "If first reference is missing return empty list" do
 
         setup {
-          list = [ 'b', 'c', 'd', 'e', 'f']
-          sublist(list, 'a', 'c')
+          list = ['6', '5', '4', '7', '3', '12']
+          sublist(list, '2', '12')
 
         }
 
@@ -73,8 +77,8 @@ describe "notypes" do
       spec "If first second reference is missing return empty list" do
 
         setup {
-          list = ['a', 'b', 'd', 'e', 'f']
-          sublist(list, 'a', 'c')
+          list = ['6', '5', '4', '7', '2', '2', '12']
+          sublist(list, '2', '3')
 
         }
 
@@ -86,8 +90,8 @@ describe "notypes" do
       spec "If references are out of order return empty list" do
 
         setup {
-          list = ['c', 'b', 'a', 'd', 'e', 'f']
-          sublist(list, 'a', 'c')
+          list = ['6', '5', '3', '7', '2', '2', '12']
+          sublist(list, '2', '3')
 
         }
 
