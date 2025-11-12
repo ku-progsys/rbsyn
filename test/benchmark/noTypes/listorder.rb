@@ -34,7 +34,7 @@ describe "notypes" do
     RDL.nowrap :String
     RDL.type :BasicObject, :!, '() -> %bool' 
     RDL.type :BasicObject, :+, "(%dyn) -> Integer" 
-    RDL.type :Array, :find_index, "(Integer) -> Integer"
+    RDL.type :Array, :find_index, "(Integer) -> %dyn"
     RDL.type :BasicObject, :nil?, '() -> %bool'
     RDL.type :Integer, :<=, "(Integer) -> %bool"
     
@@ -43,7 +43,7 @@ describe "notypes" do
     ParentsHelper.subtract()
     #binding.pry
 
-    define :elementorder, "(Array, Integer, Integer) -> %bool", [], consts: :true, moi: [] do
+    define :elementorder, "(Array, Integer, Integer) -> %bool", [], consts: :true, moi: [:find_index] do
       
 
       spec "If first param before second param return true" do

@@ -16,17 +16,10 @@ require 'pry-byebug'
 describe "notypes" do
   it "sublist between elements" do
 
-    #binding.pry
-
-    # we will need this for building the slice Range.new(start, end, exclude_end = false)
-    # and this for the indexing:  RDL.type :Array, "[]", "(Range) -> Array<T>" I don't think I should allow the polymorphism for now. 
-    #RDL.type :Range, :new, '(Integer, Integer, ?Bool) -> Range<Integer>'
-
 
     ParentsHelper.init_list()
 
     
-    RDL.nowrap :Node
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.nowrap :Array
@@ -34,17 +27,17 @@ describe "notypes" do
     RDL.nowrap :String
     RDL.type :BasicObject, :!, '() -> %bool' 
     RDL.type :BasicObject, :+, "(%dyn) -> Integer" 
-    RDL.type :Array, :find_index, "(Integer) -> Integer or nil"
-    RDL.type :Array, "[]", "(Integer, Integer) -> Array"
+    RDL.type :Array, :find_index, "(Integer) -> %dyn"
+    RDL.type :Array, "[]", "(Integer, Integer) -> %dyn"
     RDL.type :BasicObject, :nil?, '() -> %bool'
-    RDL.type :Integer, :<=, "(Integer) -> %bool"
+    RDL.type :Integer, :<, "(Integer) -> %bool"
     RDL.type :Array, "self.new", "() -> Array" # just need to be able to construct the empty list. 
 
 
     ParentsHelper.subtract()
     #binding.pry
 
-    define :subList, "(Array, Integer, Integer, Integer) -> Array", [], consts: :true, moi: [] do
+    define :subList, "(Array, Integer, Integer, Integer) -> Array", [], consts: :true, moi: ["[]", :find_index] do
       
 
       spec "Should return list between a and c inclusive" do

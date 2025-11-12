@@ -43,7 +43,10 @@ Rake::TestTask.new(:notypes) do |t|
     #"test/benchmark/noTypes/two_specs.rb",
     #"test/benchmark/noTypes/treetest.rb",
     #"test/benchmark/noTypes/sublist.rb",
-    "test/benchmark/noTypes/listorder.rb"
+    # "test/benchmark/noTypes/listorder.rb",
+    # "test/benchmark/noTypes/interleave.rb",
+    #"test/benchmark/noTypes/amount_intersect.rb",
+    "test/benchmark/noTypes/ratio_intersect_union.rb"
     ]
 
 
