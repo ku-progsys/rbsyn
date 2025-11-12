@@ -40,6 +40,10 @@ class ExpandHolePass < ::AST::Processor
         expanded << nil_const
       end
 
+      # real program variables in the environment
+      expanded.concat lvar(node.ttype)
+
+
       # boolean constants
       if node.ttype <= RDL::Globals.types[:bool] && !@no_bool_consts
         expanded.concat bool_const
@@ -72,9 +76,6 @@ class ExpandHolePass < ::AST::Processor
         node.ttype.types.all? { |t| t.is_a?(RDL::Type::SingletonType) && t.val.is_a?(Symbol) }
         expanded.concat symbols(node.ttype.types)
       end
-
-      # real program variables in the environment
-      expanded.concat lvar(node.ttype)
 
       # hashes
       # receivers are not hashes for now

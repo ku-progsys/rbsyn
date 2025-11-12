@@ -8,6 +8,16 @@ describe "Sketch Basic Benchmark" do
 
     sketch src, :add_one, "(Integer) -> Integer", [], consts: true do
 
+      spec "6" do
+        setup {
+          add_one 6
+        }
+
+        post { |result|
+          assert { result == 7 }
+        }
+      end
+
       spec "5" do
         setup {
           add_one 5
