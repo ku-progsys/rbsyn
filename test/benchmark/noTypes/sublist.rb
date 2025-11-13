@@ -49,7 +49,7 @@ describe "notypes" do
         }
 
         post { |result|
-          assert (result == ['2', '2', '3'])
+          assert {result == ['2', '2', '3']}
         }
       end
 
@@ -62,7 +62,7 @@ describe "notypes" do
         }
 
         post { |result|
-          assert (result == [])
+          assert {result == []}
         }
       end
 
@@ -76,7 +76,7 @@ describe "notypes" do
         }
 
         post { |result|
-          assert (result == [])
+          assert {result == []}
         }
       end
 
@@ -89,7 +89,7 @@ describe "notypes" do
         }
 
         post { |result|
-          assert (result == [])
+          assert {result == []}
         }
       end
 

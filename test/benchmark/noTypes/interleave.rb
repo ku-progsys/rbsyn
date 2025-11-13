@@ -26,7 +26,7 @@ describe "notypes" do
     RDL.nowrap :String
     RDL.type :BasicObject, :!, '() -> %bool' 
     RDL.type :Array, :zip, '(Array) -> Array'
-    RDL.type :Array, :flatten, '(Integer) -> Array'
+    RDL.type :Array, :flatten, '() -> Array'
 
 
     ParentsHelper.subtract()
@@ -45,7 +45,7 @@ describe "notypes" do
         }
 
         post { |result|
-          assert (result == [1, 5, 2, 4, 3, 3, 4, 2, 5, 1])
+          assert {result == [1, 5, 2, 4, 3, 3, 4, 2, 5, 1]}
         }
       end
 

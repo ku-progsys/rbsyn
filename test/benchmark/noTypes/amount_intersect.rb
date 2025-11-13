@@ -46,7 +46,7 @@ describe "notypes" do
         }
 
         post { |result|
-          assert (result == 3)
+          assert {result == 3}
         }
       end
 
@@ -61,7 +61,7 @@ describe "notypes" do
         }
 
         post { |result|
-          assert (result == 6)
+          assert {result == 6}
         }
       end
 

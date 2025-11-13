@@ -47,7 +47,7 @@ describe "ratio_intersect" do
         }
 
         post { |result|
-          assert (result == (list & list2).size/(list | list2).size)
+          assert {result == (list & list2).size/(list | list2).size}
         }
       end
 
@@ -62,7 +62,7 @@ describe "ratio_intersect" do
         }
 
         post { |result|
-          assert (result == 1)
+          assert {result == 1}
         }
       end
 
@@ -90,7 +90,7 @@ describe "ratio_intersect" do
         }
 
         post { |result|
-          assert (result == 0)
+          assert {result == 0}
         }
       end
 
