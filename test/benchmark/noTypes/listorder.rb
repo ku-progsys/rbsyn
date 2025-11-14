@@ -33,10 +33,10 @@ describe "notypes" do
     RDL.type_params Array, [:t], :all?
     RDL.nowrap :String
     RDL.type :BasicObject, :!, '() -> %bool' 
-    RDL.type :BasicObject, :+, "(%dyn) -> Integer" 
-    RDL.type :Array, :find_index, "(Integer) -> %dyn"
-    RDL.type :BasicObject, :nil?, '() -> %bool'
-    RDL.type :Integer, :<=, "(Integer) -> %bool"
+
+    RDL.type :BasicObject, :find_index, "(%dyn) -> %dyn"
+    RDL.type :BasicObject, :nil?, '() -> %dyn'
+    RDL.type :BasicObject, :<=, "(%dyn) -> %dyn"
     
 
 
@@ -55,11 +55,11 @@ describe "notypes" do
         }
 
         post { |result|
-          assert (result == true)
+          assert {result == true}
         }
       end
 
-      spec "If second param before first param" do
+      spec "If second param before first param return false" do
 
         setup {
           list = ['6', '5', '4', '7', '3', '12']
@@ -68,7 +68,7 @@ describe "notypes" do
         }
 
         post { |result|
-          assert (result == false)
+          assert {result == false}
         }
       end
 

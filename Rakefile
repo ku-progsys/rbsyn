@@ -42,10 +42,10 @@ Rake::TestTask.new(:notypes) do |t|
     #"test/benchmark/noTypes/sumTwo_benchmark.rb",
     #"test/benchmark/noTypes/two_specs.rb",
     #"test/benchmark/noTypes/treetest.rb",
-    "test/benchmark/noTypes/sublist.rb",
-    # "test/benchmark/noTypes/listorder.rb",
-    #"test/benchmark/noTypes/interleave.rb", # WORKING WITH TYPES, UNTYPED UNTESTED
-    #"test/benchmark/noTypes/amount_intersect.rb",
+    #"test/benchmark/noTypes/sublist.rb", # NOT WORKING WITH TYPES BUT SOLUTION REQUIRES 4 BRANCHES AND A DEPTH OF 3 MINIMUM
+    #"test/benchmark/noTypes/listorder.rb", # WORKING WITH TYPES AT LEAST WITHOUT TYPES IS TAKING FOREVER AND REVEALING A """(eval):2: warning: comparison '<=' after comparison""" error
+    "test/benchmark/noTypes/interleave.rb", # WORKING WITH AND WITHOUT TYPES
+    #"test/benchmark/noTypes/amount_intersect.rb", # WORKING WITH AND WITHOUT TYPES
     #"test/benchmark/noTypes/ratio_intersect_union.rb"
     ]
 

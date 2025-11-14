@@ -25,11 +25,12 @@ describe "notypes" do
     RDL.type_params Array, [:t], :all?
     RDL.nowrap :String
     RDL.type :BasicObject, :!, '() -> %bool' 
-    RDL.type :Array, :&, "(Array) -> Array"
-    RDL.type :Array, :|, "(Array) -> Array"
-    RDL.type :Array, :size, "() -> Integer"
+    RDL.type :BasicObject, :&, "(%dyn) -> %dyn"
+    RDL.type :BasicObject, :|, "(%dyn) -> %dyn"
+    RDL.type :BasicObject, :size, "() -> %dyn"
 
-
+    #solution = 
+    #arg0.&(arg1).size
     ParentsHelper.subtract()
     #binding.pry
 
@@ -65,8 +66,6 @@ describe "notypes" do
         }
       end
 
-
-      
       generate_program
     end
     

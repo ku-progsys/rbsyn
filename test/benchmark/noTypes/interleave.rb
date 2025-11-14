@@ -24,9 +24,9 @@ describe "notypes" do
     RDL.nowrap :Array
     RDL.type_params Array, [:t], :all?
     RDL.nowrap :String
-    RDL.type :BasicObject, :!, '() -> %bool' 
-    RDL.type :Array, :zip, '(Array) -> Array'
-    RDL.type :Array, :flatten, '() -> Array'
+    RDL.type :BasicObject, :!, '() -> %dyn' 
+    RDL.type :BasicObject, :zip, '(%dyn) -> %dyn'
+    RDL.type :BasicObject, :flatten, '() -> %dyn'
 
 
     ParentsHelper.subtract()

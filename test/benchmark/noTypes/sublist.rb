@@ -15,8 +15,16 @@ require 'pry-byebug'
 
 describe "notypes" do
   it "sublist between elements" do
-
-
+    #solution:
+    #if !x.include?(arg1): 
+    # return []
+    #elif !x.include(arg2):
+    # return []
+    #elif x.find_index(arg2) < x.find_index(arg1)
+    # return []
+    #else 
+    # return arg0.[](arg0.find_index(arg1),x.find_index(arg2))
+    
     ParentsHelper.init_list()
 
     
@@ -27,8 +35,8 @@ describe "notypes" do
     RDL.nowrap :String
     RDL.type :BasicObject, :!, '() -> %bool' 
     RDL.type :BasicObject, :+, "(%dyn) -> Integer" 
-    RDL.type :Array, :find_index, "(Integer) -> %dyn"
-    RDL.type :Array, "[]", "(Integer, Integer) -> %dyn"
+    RDL.type :Array, :find_index, "(Integer) -> Integer"
+    RDL.type :Array, "[]", "(Integer, Integer) -> Array"
     RDL.type :BasicObject, :nil?, '() -> %bool'
     RDL.type :Integer, :<, "(Integer) -> %bool"
     RDL.type :Array, "self.new", "() -> Array" # just need to be able to construct the empty list. 
@@ -37,27 +45,27 @@ describe "notypes" do
     ParentsHelper.subtract()
     #binding.pry
 
-    define :subList, "(Array, Integer, Integer, Integer) -> Array", [], consts: :true, moi: ["[]", :find_index] do
+    define :subList, "(Array, Integer, Integer, Integer) -> Array", [], consts: :true, moi: [] do
       
 
       spec "Should return list between a and c inclusive" do
 
         setup {
-          list = ['6', '5', '4', '7', '2', '2', '3', '12']
-          sublist(list, '2', '3')
+          list = [6,5,4,7,2,2,3,12]
+          sublist(list, 2,3)
 
         }
 
         post { |result|
-          assert {result == ['2', '2', '3']}
+          assert {result == [2,2,3]}
         }
       end
 
       spec "If first reference is missing return empty list" do
 
         setup {
-          list = ['6', '5', '4', '7', '3', '12']
-          sublist(list, '2', '12')
+          list = [6,5,4,7,3,12]
+          sublist(list, 2,12)
 
         }
 
@@ -70,8 +78,8 @@ describe "notypes" do
       spec "If first second reference is missing return empty list" do
 
         setup {
-          list = ['6', '5', '4', '7', '2', '2', '12']
-          sublist(list, '2', '3')
+          list = [6,5,4,7,2,2,12]
+          sublist(list, 2,3)
 
         }
 
@@ -83,8 +91,8 @@ describe "notypes" do
       spec "If references are out of order return empty list" do
 
         setup {
-          list = ['6', '5', '3', '7', '2', '2', '12']
-          sublist(list, '2', '3')
+          list = [6,5,3,7,2,2,12]
+          sublist(list, 2,3)
 
         }
 
