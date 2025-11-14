@@ -14,17 +14,6 @@ module SynHelper
 
       evaluable.each { |prog_wrap|
         @candidate_counter += 1
-        realtime_all_dir = 'synth_candidates/realtime/all'
-        ast = prog_wrap.to_ast
-        src = Unparser.unparse(ast)
-        filename = "candidate_#{@candidate_counter}.rb"
-
-        all_candidates_dir = 'synth_candidates/candidates'
-        FileUtils.mkdir_p(all_candidates_dir)
-        File.open(File.join(all_candidates_dir, filename), "w") do |f|
-          f.puts(src)
-        end
-
 
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
@@ -60,12 +49,6 @@ module SynHelper
         }
 
         if test_outputs.all? true
-          success_dir = 'synth_candidates/success'
-          FileUtils.mkdir_p(success_dir)
-          File.open(File.join(success_dir, filename), "w") do |f|
-            f.puts(src)
-          end
-
           correct_progs << prog_wrap
           if !return_all && test_outputs.all?(true)
             return prog_wrap

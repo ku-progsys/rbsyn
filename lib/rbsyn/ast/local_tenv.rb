@@ -12,19 +12,22 @@ class LocalTEnv < ::AST::Processor
     args.each { |arg|
       @tenv[-1][arg.children[0]] = RDL::Globals.types[:integer]
     }
-    handler_missing(node)
+    n = handler_missing(node)
     @tenv.pop
+    n
   end
 
   def on_lvasgn(node)
+    n = handler_missing(node)
     @tenv[-1][node.children[0]] = RDL::Globals.types[:integer]
-    handler_missing(node)
+    n
   end
 
   def on_kwbegin(node)
     @tenv << {}
-    handler_missing(node)
+    n = handler_missing(node)
     @tenv.pop
+    n
   end
 
   def on_block(node)
@@ -33,21 +36,21 @@ class LocalTEnv < ::AST::Processor
     args.each { |arg|
       @tenv[-1][arg.children[0]] = RDL::Globals.types[:integer]
     }
-    handler_missing(node)
+    n = handler_missing(node)
     @tenv.pop
+    n
   end
 
   def on_hole(node)
-    out = @tenv[0].map { |k,v| "#{k}: #{v}" }.join(" ")
-    out2 = collapse_tenv().map { |k,v| "#{k}: #{v}" }.join(", ")
-    puts "Current TEnv: { #{out} }"
-    puts "  ^- Current LEnv: { #{out2} }"
+    tenv = collapse_tenv
+    TypedNode.new(node.ttype, :hole, 0, {ltenv: tenv })
   end
 
   def handler_missing(node)
-    node.children.map { |k|
+    children = node.children.map { |k|
       k.is_a?(TypedNode) ? process(k) : k
     }
+    TypedNode.new(node.ttype, node.type, *children)
   end
 
   def collapse_tenv()

@@ -88,18 +88,15 @@ module SpecDSL
   def sketch(src, mth_name, type, components, prog_size: 5, max_hash_size: 1, consts: false, enable_nil: false, &blk)
     sk_src = File.read(src)
     ast = Parser::CurrentRuby.parse(sk_src)
-    puts ast
     rewrite_holes = SketchToHolePass.new
     new_ast = rewrite_holes.process(ast)
-    puts "========="
-    puts new_ast
 
     gtenv_pass = GlobalTEnv.new
     gtenv_pass.process(new_ast)
     gtenv = gtenv_pass.tenv
 
     ltenv_pass = LocalTEnv.new(gtenv)
-    ltenv_pass.process(new_ast)
+    new_ast = ltenv_pass.process(new_ast)
 
     syn_proxy = SynthesizerProxy.new(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, new_ast)
     syn_proxy.instance_eval(&blk)

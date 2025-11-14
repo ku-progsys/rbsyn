@@ -32,6 +32,7 @@ class ExpandHolePass < ::AST::Processor
     @limit_depth = @params.fetch(:limit_depth, false)
     @variance = @params.fetch(:variance, COVARIANT)
     @recv = @params.fetch(:recv, false)
+    @ltenv = @params.fetch(:ltenv, {})
     expanded = []
 
     if depth == 0
@@ -207,8 +208,13 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def lvar(type)
-    @ctx.tenv.select { |k, v| v <= type }
-      .map { |k, v| s(v, :lvar, k) }
+    unless @ltenv.empty?
+      @ltenv.select { |k, v| v <= type }
+        .map { |k, v| s(v, :lvar, k) }
+    else
+      @ctx.tenv.select { |k, v| v <= type }
+        .map { |k, v| s(v, :lvar, k) }
+    end
   end
 
   def envref(type)

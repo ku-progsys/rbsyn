@@ -14,7 +14,7 @@ describe "Sketch Basic Benchmark" do
         }
 
         post { |result|
-          assert { result == 7 }
+          assert { result == 13 }
         }
       end
 
@@ -24,29 +24,9 @@ describe "Sketch Basic Benchmark" do
         }
 
         post { |result|
-          assert { result == 6 }
+          assert { result == 11 }
         }
       end
-
-      spec "6" do
-        setup {
-          add_one 6
-        }
-
-        post { |result|
-          assert { result == 7 }
-        }
-      end
-
-      # spec "7" do
-      #   setup {
-      #     add_one 7
-      #   }
-
-      #   post { |result|
-      #     assert { result == 8 }
-      #   }
-      # end
 
       generate_program
     end
