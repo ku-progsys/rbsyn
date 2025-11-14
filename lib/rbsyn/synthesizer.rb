@@ -23,29 +23,33 @@ class Synthesizer
     @ctx.load_tenv!
     prog_cache = ProgCache.new @ctx
 
-    update_types_pass = RefineTypesPass.new
-    progconds = @ctx.preconds.zip(@ctx.postconds).map { |precond, postcond|
-      prog = prog_cache.find_prog([precond], [postcond])
-      if prog.nil?
-        env = LocalEnvironment.new
-        if @ctx.seed_expr
-          # we are in a sketch
-          seed = ProgWrapper.new(@ctx, @ctx.seed_expr, env)
-          seed.look_for(:type, @ctx.functype.ret)
-          prog = generate(seed, [precond], [postcond], false)
-        else
-          prog_ref = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
-          seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref), env)
-          seed.look_for(:type, @ctx.functype.ret)
-          prog = generate(seed, [precond], [postcond], false)
-        end
-        # add to cache for future use
-        prog_cache.add(prog)
-        @ctx.logger.debug("Synthesized program:\n#{format_ast(prog.to_ast)}")
+    # update_types_pass = RefineTypesPass.new
+    # progconds = @ctx.preconds.zip(@ctx.postconds).map { |precond, postcond|
+    # prog = prog_cache.find_prog([precond], [postcond])
+    prog = prog_cache.find_prog(@ctx.preconds, @ctx.postconds)
+    if prog.nil?
+      env = LocalEnvironment.new
+      if @ctx.seed_expr
+        # we are in a sketch
+        seed = ProgWrapper.new(@ctx, @ctx.seed_expr, env)
+        seed.look_for(:type, @ctx.functype.ret)
+        # prog = generate(seed, [precond], [postcond], false)
+        prog = generate(seed, @ctx.preconds, @ctx.postconds, false)
       else
-        @ctx.logger.debug("Found program in cache:\n#{format_ast(prog.to_ast)}")
+        prog_ref = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
+        seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref), env)
+        seed.look_for(:type, @ctx.functype.ret)
+        # prog = generate(seed, [precond], [postcond], false)
+        prog = generate(seed, @ctx.preconds, @ctx.postconds, false)
       end
-
+      # add to cache for future use
+      prog_cache.add(prog)
+      @ctx.logger.debug("Synthesized program:\n#{format_ast(prog.to_ast)}")
+      # @ctx.logger.debug("Found program in cache:\n#{format_ast(prog.to_ast)}")
+      # add to cache for future use
+    else
+      @ctx.logger.debug("Found program in cache:\n#{format_ast(prog.to_ast)}")
+    end
       if @ctx.seed_expr
         cond = BoolCond.new
         cond << s(RDL::Globals.types[:bool], :true)
@@ -55,7 +59,13 @@ class Synthesizer
         branch_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: true}))
         seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, branch_ref), env)
         seed.look_for(:type, RDL::Globals.types[:bool])
-        branches = generate(seed, [precond], [TRUE_POSTCOND], true)
+        # branches = generate(seed, [precond], [TRUE_POSTCOND], true)
+        # cond = BoolCond.new
+        # branches.each { |b| cond << update_types_pass.process(b.to_ast) }
+        
+        # Since we now have a single program that satisfies all specs, we only need a single branch condition.
+        # We can use the first pre-condition as a representative for branch synthesis.
+        branches = generate(seed, [@ctx.preconds[0]], [TRUE_POSTCOND], true)
         cond = BoolCond.new
         branches.each { |b| cond << update_types_pass.process(b.to_ast) }
       end
@@ -65,32 +75,35 @@ class Synthesizer
       # puts "======"
 
       @ctx.logger.debug("Synthesized branch: #{format_ast(cond.to_ast)}")
-      ProgTuple.new(@ctx, prog, cond, [precond], [postcond])
-    }
+      progcond = ProgTuple.new(@ctx, prog, cond, @ctx.preconds, @ctx.postconds)
+    # }
+    # This merges the different branches, so this commented out to make all specs work at once.
+    # completed = if progconds.size == 1
+    #   # if there is only one generated, there is nothing to merge
+    #   [progconds[0]]
+      
+    # else
+    #   # progconds = merge_same_progs(progconds).map { |progcond| [progcond] }
+    #   progconds.map! { |progcond| [progcond] }
 
-    completed = if progconds.size == 1
-      # if there is only one generated, there is nothing to merge
-      [progconds[0]]
-    else
-      # progconds = merge_same_progs(progconds).map { |progcond| [progcond] }
-      progconds.map! { |progcond| [progcond] }
+    #   # TODO: we need to merge only the program with different body
+    #   # (same programs with different branch conditions are wasted work?)
+    #   progconds.reduce { |merged_prog, progcond|
+    #     results = []
+    #     merged_prog.each { |mp|
+    #       progcond.each { |pp|
+    #         possible = (mp + pp)
+    #         possible.map &:prune_branches
+    #         results.push(*possible)
+    #       }
+    #     }
 
-      # TODO: we need to merge only the program with different body
-      # (same programs with different branch conditions are wasted work?)
-      progconds.reduce { |merged_prog, progcond|
-        results = []
-        merged_prog.each { |mp|
-          progcond.each { |pp|
-            possible = (mp + pp)
-            possible.map &:prune_branches
-            results.push(*possible)
-          }
-        }
-
-        results = ELIMINATION_ORDER.inject(results) { |memo, strategy| strategy.eliminate memo }
-        results.sort { |a, b| flat_comparator(a, b) }
-      }
-    end
+    #     results = ELIMINATION_ORDER.inject(results) { |memo, strategy| strategy.eliminate memo }
+    #     results.sort { |a, b| flat_comparator(a, b) }
+    #   }
+    # end
+    
+    completed = [progcond]
 
     all_candidates_dir = 'synth_candidates/candidates'
     FileUtils.mkdir_p(all_candidates_dir)

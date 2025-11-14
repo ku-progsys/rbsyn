@@ -28,6 +28,16 @@ describe "Sketch Basic Benchmark" do
         }
       end
 
+      # spec "7" do
+      #   setup {
+      #     add_one 7
+      #   }
+
+      #   post { |result|
+      #     assert { result == 8 }
+      #   }
+      # end
+
       generate_program
     end
   end
