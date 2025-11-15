@@ -34,7 +34,7 @@ describe "ratio_intersect" do
     ParentsHelper.subtract()
     #binding.pry
 
-    define :ratio_intersect, "(Array, Array) -> Integer", [], consts: :true, moi: [] do
+    define :ratio_intersect, "(Array, Array) -> Float", [], consts: :true, moi: [] do
       
 
       spec "should return 9" do
@@ -45,9 +45,9 @@ describe "ratio_intersect" do
           ratio_intersect(list, list2)
 
         }
-
+#1/3.0
         post { |result|
-          assert {result == (list & list2).size/(list | list2).size}
+          assert {result == 1/3.0}
         }
       end
 
@@ -60,10 +60,10 @@ describe "ratio_intersect" do
           intersect_size(list, list2)
 
         }
-
+#1.0
         post { |result|
-          assert {result == 1}
-        }
+          assert {result == 1.0}
+      }
       end
 
       spec "should return 1" do
@@ -76,7 +76,7 @@ describe "ratio_intersect" do
         }
 
         post { |result|
-          assert (result == 0)
+          assert {result == 0.0}
         }
       end
 
@@ -90,7 +90,7 @@ describe "ratio_intersect" do
         }
 
         post { |result|
-          assert {result == 0}
+          assert {result == 0.0}
         }
       end
 
