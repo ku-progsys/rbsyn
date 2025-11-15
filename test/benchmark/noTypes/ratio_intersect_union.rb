@@ -25,16 +25,20 @@ describe "ratio_intersect" do
     RDL.nowrap :Float
     RDL.type_params Array, [:t], :all?
     RDL.type :BasicObject, :!, '() -> %bool' 
-    RDL.type :Array, :&, "(Array) -> Array"
-    RDL.type :Array, :|, "(Array) -> Array"
-    RDL.type :Array, :size, "() -> Integer"
-    RDL.type :Integer, :fdiv, "(Integer)-> Float"
+    # RDL.type :Array, :&, "(Array) -> Array"
+    # RDL.type :Array, :|, "(Array) -> Array"
+    # RDL.type :Array, :size, "() -> Integer"
+    # RDL.type :Integer, :fdiv, "(Integer)-> Float"
+    RDL.type :BasicObject, :&, "(%dyn) -> %dyn"
+    RDL.type :BasicObject, :|, "(%dyn) -> %dyn"
+    RDL.type :BasicObject, :size, "() -> %dyn"
+    RDL.type :BasicObject, :fdiv, "(%dyn)-> %dyn"
 
 
     ParentsHelper.subtract()
     #binding.pry
 
-    define :ratio_intersect, "(Array, Array) -> Float", [], consts: :true, moi: [] do
+    define :ratio_intersect, "(Array, Array) -> Float", [], consts: :true, moi: [:&, :|, :size, :fdiv] do
       
 
       spec "should return 9" do
@@ -57,7 +61,7 @@ describe "ratio_intersect" do
         setup {
           list = [1,2,3,4,5,6]
           list2 = [1,2,3,4,5,6]
-          intersect_size(list, list2)
+          ratio_intersect(list, list2)
 
         }
 #1.0
@@ -71,7 +75,7 @@ describe "ratio_intersect" do
         setup {
           list = [7,7]
           list2 = [1,2,3,4,5,6]
-          intersect_size(list2, list)
+          ratio_intersect(list2, list)
 
         }
 
@@ -85,7 +89,7 @@ describe "ratio_intersect" do
         setup {
           list = [7,7]
           list2 = [1,2,3,4,5,6]
-          intersect_size(list, list2)
+          ratio_intersect(list, list2)
 
         }
 

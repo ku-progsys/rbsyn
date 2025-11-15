@@ -34,7 +34,7 @@ describe "notypes" do
     ParentsHelper.subtract()
     #binding.pry
 
-    define :intersect_size, "(Array, Array) -> Integer", [], consts: :true, moi: [] do
+    define :intersect_size, "(Array, Array) -> Integer", [], consts: :true, moi: [:&, :|, :size] do
       
 
       spec "3 intersect" do

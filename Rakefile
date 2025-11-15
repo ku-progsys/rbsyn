@@ -45,8 +45,8 @@ Rake::TestTask.new(:notypes) do |t|
     #"test/benchmark/noTypes/sublist.rb", # SOLUTION REQUIRES 4 BRANCHES AND A DEPTH OF 3 MINIMUM WILL NEED LONGER TESTING TO DETERMINE SUCCESS.
     #"test/benchmark/noTypes/listorder.rb", # WORKING WITH AND WITHOUT TYPES: WARNING """(eval):2: warning: comparison '<=' after comparison""" error: NEED TO SEE IF THERE IS A WAY TO PREVENT THING <= THING <= THING DURING 
     #"test/benchmark/noTypes/interleave.rb", # WORKING WITH AND WITHOUT TYPES
-    #"test/benchmark/noTypes/amount_intersect.rb", # WORKING WITH AND WITHOUT TYPES
-    "test/benchmark/noTypes/ratio_intersect_union.rb" # Finding solution to first branch not identifying that it works for all branches. 
+    "test/benchmark/noTypes/amount_intersect.rb", # WORKING WITH AND WITHOUT TYPES
+    #"test/benchmark/noTypes/ratio_intersect_union.rb" # WORKING WITH TYPES TIMING OUT WITHOUT TYPES, FOLLOWUP NEEDED
     ]
 
 

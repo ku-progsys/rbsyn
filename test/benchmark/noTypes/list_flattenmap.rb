@@ -35,7 +35,7 @@ describe "treeTraverse" do
     RDL.type :BasicObject, :test_count, "(%dyn) -> %dyn"
     RDL.type :Tree
 
-    define :counter, "(Node) -> Integer", [], consts: :true, moi: [:id] do
+    define :counter, "(Node) -> Integer", [], consts: :true, moi: [:id, :test_count, :+] do
       
 
       spec "Should just emit the number of nodes seen so far" do

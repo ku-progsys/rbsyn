@@ -32,7 +32,7 @@ describe "notypes" do
     ParentsHelper.subtract()
     #binding.pry
 
-    define :interleave, "(Array, Array) -> Array", [], consts: :true, moi: [] do
+    define :interleave, "(Array, Array) -> Array", [], consts: :true, moi: [:zip, :flatten] do
       
 
       spec "Interleaves the array" do

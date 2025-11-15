@@ -43,7 +43,7 @@ describe "notypes" do
     ParentsHelper.subtract()
     #binding.pry
 
-    define :elementorder, "(Array, Integer, Integer) -> %bool", [], consts: :true, moi: [:find_index] do
+    define :elementorder, "(Array, Integer, Integer) -> %bool", [], consts: :true, moi: [:find_index, :nil?, :<=] do
       
 
       spec "If first param before second param return true" do
