@@ -48,9 +48,10 @@ describe "notypes" do
 
       spec "If first param before second param return true" do
 
+
         setup {
-          list = ['6', '5', '4', '7', '2', '2', '3', '12']
-          elementorder(list, '2', '3')
+          list = [6, 5, 4, 7, 2, 2, 3,12]
+          elementorder(list, 2,3)
 
         }
 
@@ -62,8 +63,8 @@ describe "notypes" do
       spec "If second param before first param return false" do
 
         setup {
-          list = ['6', '5', '4', '7', '3', '12']
-          elementorder(list, '3', '4')
+          list = [6, 5, 4,7, 3,12]
+          elementorder(list, 3, 4)
 
         }
 
