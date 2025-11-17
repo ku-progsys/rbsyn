@@ -52,6 +52,16 @@ Rake::TestTask.new(:notypes) do |t|
 
 end
 
+Rake::TestTask.new(:githubBenchmarks) do |t|
+
+  t.libs << "test"
+  t.libs << "lib"
+  t.libs << "models"
+  t.test_files = FileList["test/benchmark/githubBenchmarks/curry_guards.rb"
+    ]
+
+end
+
 Rake::TestTask.new(:twospecs) do |t|
 
   t.libs << "test"
