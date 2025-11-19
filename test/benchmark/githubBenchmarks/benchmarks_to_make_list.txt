@@ -1,0 +1,30 @@
+
+SPEC NAME [X IF BAD TEST]
+SOURCE OF FUNCTON
+SOURCE OF TEST
+DEPENDENCIES IF KNOWN
+NOTES
+
+
+
+>>>>>>>>>>FROM HAMSTER <<<<<<<<<<<<<<
+
+CYCLE - X
+FUNCTION: https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L458
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/cycle_spec.rb
+DEPENDENCIES --
+NOTES - DON'T DO THIS ONE IT REQUIRES RECURSION
+
+
+CONS
+FUNCTION: https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L192
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/cons_spec.rb
+DEPENDENCIES
+NOTES - NOT A LARGE FUNCTION BUT MIGHT BE A GOOD PRACTICE FOR HUNTING DOWN DEPENDENCIES
+
+
+POP
+FUNCTION: https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L339
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/pop_spec.rb
+DEPENDENCIES
+NOTES - THIS ONE LOOKS PROMISING 
