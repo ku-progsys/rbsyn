@@ -15,16 +15,63 @@ TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/cycle
 DEPENDENCIES --
 NOTES - DON'T DO THIS ONE IT REQUIRES RECURSION
 
-
-CONS
-FUNCTION: https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L192
-TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/cons_spec.rb
+ZIP - X
+FUNCTION: https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L409
+TEST: https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/zip_spec.rb
 DEPENDENCIES
-NOTES - NOT A LARGE FUNCTION BUT MIGHT BE A GOOD PRACTICE FOR HUNTING DOWN DEPENDENCIES
+NOTES - DONT DO THIS ONE IT REQUIRES A BLOCK PASSED
 
 
 POP
 FUNCTION: https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L339
 TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/pop_spec.rb
 DEPENDENCIES
-NOTES - THIS ONE LOOKS PROMISING 
+NOTES - DONT DO THIS ONE IT REQUIRES A BLOCK PASSED 
+
+
+PROMISING TESTS ----------------------------------------------------------------------
+
+
+ROTATE
+FUNCITON: https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L479
+TEST: https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/rotate_spec.rb
+DEPENDENCIES
+NOTES - INTERESTING
+
+
+SPAN
+FUNCTION https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L508
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/span_spec.rb
+DEPENDENCIES
+NOTES - THIS ONE MIGHT NOT WORK ONE OF THE ARGUMENTS IS A BLOCK BUT THAT PROBABLY ISN'T A PROBLEM 
+
+
+SPLIT_AT
+FUNCTION https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L495
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/split_at_spec.rb
+DEPENDENCIES
+NOTES - THIS ONE HAS A RELATIVELY SHORT FUNCTION, TRY THIS ONE FIRST
+
+
+
+INSERT
+FUNCTION https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L973
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/insert_spec.rb
+DEPENDENCIES
+NOTES - LONG TEST WITH LOTS OF BRANCHES GOOD TORTURE TEST
+
+
+PARTITION
+FUNCTION https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L1153
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/partition_spec.rb
+DEPENDENCIES
+NOTES - LONGER TEST SIMILAR TO SPAN SO MIGHT NOT WORK IF RBSYN COMPLAINS ABOUT BLOCKS AS ARGUMENTS
+
+
+SET DELETE
+FUNCTION https://github.com/hamstergem/hamster/blob/core/lib/hamster/set.rb#L133
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/set/delete_spec.rb
+DEPENDENCIES
+NOTES - VERY SHORT FUNCTION 
+
+
