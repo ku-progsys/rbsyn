@@ -75,3 +75,30 @@ DEPENDENCIES
 NOTES - VERY SHORT FUNCTION 
 
 
+EQL? HASH
+FUNCITON https://github.com/hamstergem/hamster/blob/core/lib/hamster/hash.rb#L735
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/hash/eql_spec.rb
+NOTES - SEEMS LIKE A PROMISING ONE
+
+
+CLEAR
+FUNCTION https://github.com/hamstergem/hamster/blob/core/lib/hamster/hash.rb#L723
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/hash/clear_spec.rb
+NOTES - MIGHT NEED SOME CONSTANTS MAYBEEEE???
+
+
+VALUES
+FUNCTION https://github.com/hamstergem/hamster/blob/core/lib/hamster/hash.rb#L617
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/hash/values_spec.rb
+NOTES - A BIT SHORTER
+
+
+
+GET
+FUNCTION https://github.com/hamstergem/hamster/blob/core/lib/hamster/hash.rb#L179
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/hash/get_spec.rb
+NOTES - LONG TESTS IN THIS ONE MAY NOT BE BEST
+
+
+
+
