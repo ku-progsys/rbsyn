@@ -109,13 +109,14 @@ describe "github_benchmarks" do
 # seq_args = func.parameters.count { |type, _| type.eql?(:req) || type.eql?(:opt) }
 # seq_args += 1 if func.parameters.any? { |type, _| type.eql?(:keyreq) }
     
-    define :count_args, "(Proc) -> Integer", [], consts: :true, moi: [] do
+    define :count_args, "(Helper, Proc) -> Integer", [], consts: :true, moi: [] do
       
 
       spec "Should return args + opts if no keywargs" do
 
         setup {
-          count_args(f_no_key)
+          h = Helper.new
+          count_args(h, f_no_key)
         }
 
         post { |result|
