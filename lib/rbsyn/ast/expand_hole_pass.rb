@@ -208,7 +208,7 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def lvar(type)
-    unless @ltenv.empty?
+    unless !@ctx.sketch_mode
       @ltenv.select { |k, v| v <= type }
         .map { |k, v| s(v, :lvar, k) }
     else

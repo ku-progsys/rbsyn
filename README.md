@@ -42,7 +42,7 @@ Multiple flags can be passed to RbSyn to explore different configurations of syn
 * `DISABLE_TYPES=1`: Disable type directed synthesis.
 * `DISABLE_EFFECTS=1`: Disable effect guided synthesis.
 * `EFFECT_PREC=0` or `EFFECT_PREC=1` or `EFFECT_PREC=2`: Set the level of effect precision to use. 0 is the most precise, 1 is class level precision and 2 reduces annotations to pure or impure only.
-
+* `SKETCH=1`: Enable sketch mode.
 These environment variables can be passed in any combination in the bench command like so:
 
 ```

@@ -30,6 +30,7 @@ class SynthesizerProxy
     @ctx.enable_constants = consts
     @ctx.enable_nil = enable_nil
     @ctx.seed_expr = seed_expr
+    @ctx.sketch_mode = ENV.key? 'SKETCH'
     raise RbSynError, "expected method type" unless @ctx.functype.is_a? RDL::Type::MethodType
 
     @mth_name = mth_name.to_sym
