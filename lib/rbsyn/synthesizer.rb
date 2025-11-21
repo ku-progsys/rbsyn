@@ -3,6 +3,24 @@ CONTRAVARIANT = :-
 TRUE_POSTCOND = Proc.new { |result| 
   result == true }
 
+ENV['COUNTER'] = '0'
+def debug(var, *conds) 
+  
+  if ENV['DEBUG'] == 'SILENCE'
+    return
+  end
+  
+  if conds.all? {|m| var.include?(m)}
+    if ENV['DEBUGFILES'] == "T"
+      puts __FILE__
+    end
+    puts "DEBUG NOTICE # #{ENV['COUNTER']}\n"
+    ENV['COUNTER'] = (ENV['COUNTER'].to_i + 1).to_s
+    puts var
+    binding.pry
+  end
+end
+
 class Synthesizer
   # require "pry"
   # require 'pry-byebug'
@@ -35,6 +53,7 @@ class Synthesizer
     update_types_pass = RefineTypesPass.new
     progconds = @ctx.preconds.zip(@ctx.postconds, @ctx.desc).map { |precond, postcond, desc|
       @ctx.logger.debug("Finding sln for subspec: #{desc}")
+      #binding.pry
       prog = prog_cache.find_prog(precond, postcond)
       #binding.pry
       if prog.nil?

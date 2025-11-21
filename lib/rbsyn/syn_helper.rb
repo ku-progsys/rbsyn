@@ -5,6 +5,26 @@ require 'parser/current'
 require "set"
 require_relative 'ast/infer_types'
 
+
+def debug(var, *conds) 
+  
+  if ENV['DEBUG'] == 'SILENCE'
+    return
+  end
+
+  
+  
+  if conds.all? {|m| var.include?(m)}
+    if ENV['DEBUGFILES'] == "T"
+      puts __FILE__
+    end
+    puts "DEBUG NOTICE # #{ENV['COUNTER']}\n"
+    ENV['COUNTER'] = (ENV['COUNTER'].to_i + 1).to_s
+    puts var
+    binding.pry
+  end
+end
+
 def test_ordering(worklist)
   is_sorted = worklist.each_cons(2).all? { |a, b| a.inferred_errors <= b.inferred_errors }
   if !is_sorted
@@ -16,7 +36,7 @@ module SynHelper
   include TypeOperations
   
   def generate(seed_hole, preconds, postconds, return_all=false)
-
+    #puts "\n\n\n------------------------------\n\n\n"
     correct_progs = []
     work_list = [seed_hole]
 
@@ -30,21 +50,16 @@ module SynHelper
 
       tempbool = false
       
-      # if evaluable.size > 0 && evaluable[0].prog_size >= 4
-      #   evaluable.each do |i|
-      #     puts i.to_ast
-      #     puts "\n\n"
-      #   end
-      #   binding.pry
-      # end
-      
+      puts base.to_ast
+      puts "{{{{{{{{{{{}}}}}}}}}}}"
+
       evaluable.each { |prog_wrap|
+        puts Unparser.unparse(prog_wrap.to_ast)
         tempbool = false
 
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
-          # puts prog_wrap.to_ast
-          # binding.pry
           begin
+            
             res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
           rescue RbSynError => err
             raise err
@@ -60,7 +75,9 @@ module SynHelper
             klass.instance_eval {
               @params = postcond.parameters.map &:last
             }
-            klass.instance_exec res, &postcond
+            x = klass.instance_exec res, &postcond
+            #debug((Unparser.unparse(prog_wrap.to_ast)), "+")
+            x
 
           rescue AssertionError => e
             orig_prog = prog_wrap.dup
@@ -83,6 +100,8 @@ module SynHelper
           
         }
         #BLOCK END
+
+        debug(Unparser.unparse(prog_wrap.to_ast), "new")
         
         if tempbool
           # type error encountered, we should not add to the worklist

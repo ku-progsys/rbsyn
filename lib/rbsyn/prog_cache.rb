@@ -1,4 +1,5 @@
 class ProgCache
+  attr_reader :cache
   include AST
 
   def initialize(ctx)

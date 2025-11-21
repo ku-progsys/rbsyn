@@ -2,6 +2,8 @@ require_relative "./ast/track_rewrite"
 require_relative "./ast/parenthesize"
 require 'unparser'
 require 'parser/current'
+require 'pry'
+require 'pry-byebug'
 
 module AST
   def s(ttype, type, *children)
@@ -24,20 +26,18 @@ module AST
     bind = klass.instance_eval { binding }
 
     ctx.curr_binding = bind
-    #require 'pry'
-    #require 'pry-byebug'
-    #binding.pry
+
     DBUtils.reset
 
     ctx.reset_func.call unless ctx.reset_func.nil?
-
+ 
     rewriter = Parens.new(ctx.moi)
     func = s(ctx.functype, :def, ctx.mth_name,
       s(RDL::Globals.types[:top], :args, *args.map { |arg|
         s(RDL::Globals.types[:top], :arg, arg)
       }), rewriter.process(ast))
 
-    #require pry
+
     klass.instance_eval Unparser.unparse(func)
 
     result = klass.instance_eval(&precond) unless precond.nil?
