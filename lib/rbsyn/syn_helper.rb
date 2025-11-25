@@ -8,20 +8,17 @@ require_relative 'ast/infer_types'
 
 def debug(var, *conds) 
   
-  if ENV['DEBUG'] == 'SILENCE'
-    return
-  end
-
-  
-  
-  if conds.all? {|m| var.include?(m)}
-    if ENV['DEBUGFILES'] == "T"
-      puts __FILE__
+  if ENV['DEBUG'] == 'PRY' || ENV['DEBUG'] == 'PRINT'
+    
+    if conds.all? {|m| var.include?(m)}
+      puts "DEBUG # #{ENV['COUNTER']} in file: #{__FILE__}\n"
+      ENV['COUNTER'] = (ENV['COUNTER'].to_i + 1).to_s
+      puts var
+      puts "-----------------------\n"
+      if ENV['DEBUG'] == 'PRY'
+        binding.pry
+      end
     end
-    puts "DEBUG NOTICE # #{ENV['COUNTER']}\n"
-    ENV['COUNTER'] = (ENV['COUNTER'].to_i + 1).to_s
-    puts var
-    binding.pry
   end
 end
 
@@ -39,8 +36,10 @@ module SynHelper
     #puts "\n\n\n------------------------------\n\n\n"
     correct_progs = []
     work_list = [seed_hole]
+    counter = 0
 
     until work_list.empty?
+      counter += 1
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
       effect_needed = []  
@@ -49,12 +48,33 @@ module SynHelper
       evaluable = generated.reject &:has_hole?
 
       tempbool = false
-      
-      puts base.to_ast
-      puts "{{{{{{{{{{{}}}}}}}}}}}"
+
+    # @ctx.type_info.type_successes.each {|i, j| 
+    #   j.each { |k|
+    #     x = @ctx.type_info.type_to_s(k)
+    #     if x.include?("Hamster")
+    #       print x
+    #       binding.pry
+    #     end
+    #   }
+    # }
+
+    #     @ctx.type_info.type_errs.each {|i, j| 
+    #   j.each { |k|
+    #     x = @ctx.type_info.type_to_s(k)
+    #     if x.include?("Hamster")
+    #       print x
+    #       binding.pry
+    #     end
+    #   }
+    # }
 
       evaluable.each { |prog_wrap|
-        puts Unparser.unparse(prog_wrap.to_ast)
+        res = 1
+        klass = 1
+        passes = 1
+
+        #puts Unparser.unparse(prog_wrap.to_ast)
         tempbool = false
 
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
@@ -75,9 +95,9 @@ module SynHelper
             klass.instance_eval {
               @params = postcond.parameters.map &:last
             }
-            x = klass.instance_exec res, &postcond
+            passes = klass.instance_exec res, &postcond
             #debug((Unparser.unparse(prog_wrap.to_ast)), "+")
-            x
+            passes
 
           rescue AssertionError => e
             orig_prog = prog_wrap.dup
@@ -101,8 +121,8 @@ module SynHelper
         }
         #BLOCK END
 
-        debug(Unparser.unparse(prog_wrap.to_ast), "new")
-        
+        debug(Unparser.unparse(prog_wrap.to_ast), "arg1.take")
+
         if tempbool
           # type error encountered, we should not add to the worklist
           next

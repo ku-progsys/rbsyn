@@ -31,7 +31,6 @@ NOTES - DONT DO THIS ONE IT REQUIRES A BLOCK PASSED
 
 PROMISING TESTS ----------------------------------------------------------------------
 
-
 ROTATE
 FUNCITON: https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L479
 TEST: https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/rotate_spec.rb
@@ -45,12 +44,6 @@ TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/span_
 DEPENDENCIES
 NOTES - THIS ONE MIGHT NOT WORK ONE OF THE ARGUMENTS IS A BLOCK BUT THAT PROBABLY ISN'T A PROBLEM 
 
-
-SPLIT_AT
-FUNCTION https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L495
-TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/split_at_spec.rb
-DEPENDENCIES
-NOTES - THIS ONE HAS A RELATIVELY SHORT FUNCTION, TRY THIS ONE FIRST
 
 
 
@@ -101,4 +94,11 @@ NOTES - LONG TESTS IN THIS ONE MAY NOT BE BEST
 
 
 
+WORKING WITH TYPES -------------------------------------------------------------------
+
+SPLIT_AT
+FUNCTION https://github.com/hamstergem/hamster/blob/804571abcba69e12c763d68e456697e35eddcf9a/lib/hamster/list.rb#L495
+TEST https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/split_at_spec.rb
+DEPENDENCIES
+NOTES - THIS ONE HAS A RELATIVELY SHORT FUNCTION, CREATED WORKING WITH TYPES BUT NOT WITH NO TYPES REVEALING SOME KIND OF ERROR POSSIBLY ISSUE WITH DIFFERENCE BETWEEN MODULE AND TYPE HIEARCHY
 

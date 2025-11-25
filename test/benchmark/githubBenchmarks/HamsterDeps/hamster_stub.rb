@@ -80,6 +80,15 @@ module Hamster
     end
     alias :cons :add
 
+    def append(other)
+      LazyList_1.new do
+        next other if empty?
+        Cons_1.new(head, tail.append(other))
+      end
+    end
+    alias :concat :append
+    alias :+ :append
+
     def <<(item)
       append(List_1[item])
     end

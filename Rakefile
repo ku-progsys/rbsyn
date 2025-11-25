@@ -67,8 +67,19 @@ Rake::TestTask.new(:twospecs) do |t|
   t.libs << "test"
   t.libs << "lib"
   t.libs << "models"
-  t.test_files = FileList["test/benchmark/noTypes/two_specs.rb"]
+  t.test_files = FileList["test/benchmark/noTypes/two_specs.rb"] 
+end
 
+
+Rake::TestTask.new(:hamster) do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.libs << "models"
+  t.test_files = FileList[
+                           "test/benchmark/githubBenchmarks/split_at_benchmark.rb", #WORKING WITH TYPES THIS ONE REVEALS SOME ERROR WITH THE TYPE INFERENCE SYSTEM
+#                           "test/benchmark/githubBenchmarks/rotate_benchmark.rb", 
+                          #"test/benchmark/githubBenchmarks/set_delete.rb"
+                          ]
 end
 
 

@@ -6,20 +6,20 @@ TRUE_POSTCOND = Proc.new { |result|
 ENV['COUNTER'] = '0'
 def debug(var, *conds) 
   
-  if ENV['DEBUG'] == 'SILENCE'
-    return
-  end
-  
-  if conds.all? {|m| var.include?(m)}
-    if ENV['DEBUGFILES'] == "T"
-      puts __FILE__
+  if ENV['DEBUG'] == 'PRY' || ENV['DEBUG'] == 'PRINT'
+    
+    if conds.all? {|m| var.include?(m)}
+      puts "DEBUG # #{ENV['COUNTER']} in file: #{__FILE__}\n"
+      ENV['COUNTER'] = (ENV['COUNTER'].to_i + 1).to_s
+      puts var
+      puts "-----------------------\n"
+      if ENV['DEBUG'] == 'PRY'
+        binding.pry
+      end
     end
-    puts "DEBUG NOTICE # #{ENV['COUNTER']}\n"
-    ENV['COUNTER'] = (ENV['COUNTER'].to_i + 1).to_s
-    puts var
-    binding.pry
   end
 end
+
 
 class Synthesizer
   # require "pry"
@@ -63,12 +63,12 @@ class Synthesizer
         seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref), env)
         seed.look_for(:type, @ctx.functype.ret)
 
-        prog = generate(seed, [precond], [postcond], false) 
 
+        prog = generate(seed, [precond], [postcond], false) 
         prog_cache.add(prog)
 
         @ctx.logger.debug("Synthesized program:\n#{format_ast(prog.to_ast)}")
-        @ctx.logger.debug("Synthesized: #{prog.to_ast}")
+        @ctx.logger.debug("In AST FORM: #{prog.to_ast}")
       else
 
         @ctx.logger.debug("Found program in cache:\n#{format_ast(prog.to_ast)}")
@@ -81,7 +81,7 @@ class Synthesizer
       bool_or_any = RDL::Type::UnionType.new(RDL::Globals.types[:bool], RDL::Globals.types[:any])
 
       seed.look_for(:type, bool_or_any)
-
+      @ctx.logger.debug("Searching for branch")
       branches = generate(seed, [precond], [TRUE_POSTCOND], true) 
       cond = BoolCond.new
       branches.each { |b| cond << update_types_pass.process(b.to_ast) }
@@ -91,7 +91,7 @@ class Synthesizer
       k = ProgTuple.new(@ctx, prog, cond, [precond], [postcond])
       k
     }
-
+    @ctx.logger.debug("Initial Candidates Generated")
     #binding.pry
     log = "Type Sucesses"
     @ctx.type_info.type_successes.each {|i, j| 

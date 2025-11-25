@@ -97,9 +97,10 @@ module TypeOperations
     #  "ActiveRecord_Relation",
     #   ]
       
-      
+      # require 'pry'
+      # require 'pry-byebug'
+      # binding.pry
       ParentsHelper.getParents()
-      #["Node", "BasicObject", "Integer", "String", "State"]
     else
       raise RbSynError, "unhandled type #{trecv.inspect}"
     end
