@@ -79,6 +79,12 @@ Rake::TestTask.new(:hamster) do |t|
                            #"test/benchmark/githubBenchmarks/split_at_benchmark.rb", #WORKING WITH TYPES THIS ONE REVEALS SOME ERROR WITH THE TYPE INFERENCE SYSTEM
                            #"test/benchmark/githubBenchmarks/rotate_benchmark.rb", # NOT YET WORKING WITH TYPES LIKELY TOO LARGE OF A SPEC
                            #"test/benchmark/githubBenchmarks/set_delete.rb" #WORKING WITH TYPES
+                           "test/benchmark/githubBenchmarks/span_benchmark.rb",
+                           #"test/benchmark/githubBenchmarks/hash_clear_benchmark.rb",
+                           #"test/benchmark/githubBenchmarks/hash_values_benchmark.rb",
+                           ##"test/benchmark/githubBenchmarks/hash_eql_benchmark.rb",
+                           #"test/benchmark/githubBenchmarks/hash_get_benchmark.rb",
+                           #"test/benchmark/githubBenchmarks/partition_benchmark.rb",
                           ]
 end
 
