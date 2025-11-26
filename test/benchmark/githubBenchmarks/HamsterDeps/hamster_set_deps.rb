@@ -9,6 +9,7 @@ module Hamster
   class Set_1
     include Immutable
     include Enumerable
+    attr_accessor :trie
 
     class << self
 
@@ -58,14 +59,14 @@ module Hamster
     end
     alias :member? :include?
 
-    def delete(item)
-      trie = @trie.delete(item)
-      new_trie(trie)
-    end
+    # def delete(item)
+    #   trie = @trie.delete(item)
+    #   new_trie(trie)
+    # end
 
-    def delete?(item)
-      include?(item) && delete(item)
-    end
+    # def delete?(item)
+    #   include?(item) && delete(item)
+    # end
 
     def new_trie(trie)
       if trie.empty?

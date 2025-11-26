@@ -76,9 +76,9 @@ Rake::TestTask.new(:hamster) do |t|
   t.libs << "lib"
   t.libs << "models"
   t.test_files = FileList[
-                           "test/benchmark/githubBenchmarks/split_at_benchmark.rb", #WORKING WITH TYPES THIS ONE REVEALS SOME ERROR WITH THE TYPE INFERENCE SYSTEM
-#                           "test/benchmark/githubBenchmarks/rotate_benchmark.rb", 
-                          #"test/benchmark/githubBenchmarks/set_delete.rb"
+                           #"test/benchmark/githubBenchmarks/split_at_benchmark.rb", #WORKING WITH TYPES THIS ONE REVEALS SOME ERROR WITH THE TYPE INFERENCE SYSTEM
+                           #"test/benchmark/githubBenchmarks/rotate_benchmark.rb", # NOT YET WORKING WITH TYPES LIKELY TOO LARGE OF A SPEC
+                           #"test/benchmark/githubBenchmarks/set_delete.rb" #WORKING WITH TYPES
                           ]
 end
 

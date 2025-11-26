@@ -22,22 +22,31 @@ describe "Hamster" do
     helperSet = S["A", "B", "C"]
 
     ParentsHelper.init_list()
-    RDL.nowrap :Set_1
+    RDL::Type::NominalType.new(:"Hamster::Set_1")
+    RDL.nowrap :"Hamster::Set_1"
     RDL.nowrap :"%bool"
+    RDL.nowrap :Integer
     RDL.type_params Hamster::Set_1, [:E], :all?
     RDL.nowrap :BasicObject
     RDL.nowrap :String
-    RDL.nowrap :Trie
-    RDL.type :"Set_1", :eql?, "(Hamster::List_1) -> %bool"
-    RDL.type :"Integer", :==, "(Integer) -> %bool"
+    RDL::Type::NominalType.new(:"Hamster::Trie")
+    RDL.nowrap :"Hamster::Trie"
+    RDL.type :"Hamster::Set_1", :eql?, "(Hamster::Set_1) -> %bool"
+    RDL.type :Integer, :eql?, "(Integer) -> %bool"
     RDL.type :BasicObject, :!, '() -> %bool' 
 
 
     ## METHODS TO DECLARE AS UNKNOWNS
-    RDL.type :Trie, :delete, "(String) -> Trie"
-    RDL.type :Set_1, :new_trie, "(Trie) -> Set_1"
+    RDL.type :"Hamster::Trie", :delete, "(String) -> Hamster::Trie"
+    RDL.type :"Hamster::Set_1", :new_trie, "(Hamster::Trie) -> Hamster::Set_1"
+    RDL.type :"Hamster::Set_1", :trie, "() -> Hamster::Trie"
 
-
+    # def delete(item)
+    #   trie = @trie.delete(item)
+    #   new_trie(trie)
+    # end
+    # which translates to 
+    # arg0.new_trie(arg0.trie.delete(arg1)) depth 6
 
     ParentsHelper.subtract()
 
@@ -47,15 +56,32 @@ describe "Hamster" do
     #  arr << drop(number)
     #  arr.freeze # not sure how to implement assignment in rbsyn yet so not sure how to do freeze
     # end
-    S = Hamster::Set_1
+
     helperSet = S["A", "B", "C"]
-    define :delete, "(Set_1, String)-> Set_1", [], consts: :true, moi: [:take, :drop, :<<] do
+    define :delete_item, "(Hamster::Set_1, String)-> Hamster::Set_1", [], consts: :true, moi: [] do
       
+      
+
+      spec "returns copy with element deleted" do
+
+        setup {
+          
+          delete_item(helperSet, "B")
+          
+        }
+
+        post { |ret|
+
+          assert {ret.eql?(S["A", "C"])}
+
+        }
+      end
+
       spec "preserves the original" do
 
         setup {
           
-          delete(helperSet, "B")
+          delete_item(helperSet, "B")
           
         }
 
@@ -66,32 +92,17 @@ describe "Hamster" do
         }
       end
 
-      spec "returns copy with element deleted" do
-
-        setup {
-          
-          delete(helperSet, "B")
-          
-        }
-
-        post { |ret|
-
-          assert {ret.eql(S["A", "C"])}
-
-        }
-      end
-
       spec "doesn't fail when deleting non-existent" do
 
         setup {
           
-          delete(helperSet, "D")
+          delete_item(helperSet, "D")
           
         }
 
         post { |ret|
 
-          assert {ret.eql(S["A", "B", "C"])}
+          assert {ret.eql?(S["A", "B", "C"])}
 
         }
       end
@@ -102,7 +113,7 @@ describe "Hamster" do
         setup {
           
           h = S["D"]
-          delete(h, "D")
+          delete_item(h, "D")
           
         }
 

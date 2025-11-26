@@ -49,8 +49,9 @@ class ParentsHelper
 
   def self.subtract()
     @@parents = RDL::Globals.info.info.keys() - @@parents
-    @@parents.append("Object")
-    @@parents.append("BasicObject")
+    @@parents.append("Object") unless @@parents.include?("Object")
+    @@parents.append("BasicObject") unless @@parents.include?("BasicObject")
+    @@parents.append("DynamicType") unless @@parents.include?("DynamicType")
     self.setFlag
   end
 
