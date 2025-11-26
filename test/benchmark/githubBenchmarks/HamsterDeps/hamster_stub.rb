@@ -158,13 +158,13 @@ module Hamster
       end
     end
 
-    def span(&block)
-      return [self, EmptyList_1].freeze unless block_given?
-      splitter = Splitter.new(self, block)
-      mutex = Mutex.new
-      [Splitter::Left.new(splitter, splitter.left, mutex),
-       Splitter::Right.new(splitter, mutex)].freeze
-    end
+    # def span(&block)
+    #   return [self, EmptyList_1].freeze unless block_given?
+    #   splitter = Splitter.new(self, block)
+    #   mutex = Mutex.new
+    #   [Splitter::Left.new(splitter, splitter.left, mutex),
+    #    Splitter::Right.new(splitter, mutex)].freeze
+    # end
 
 
 
