@@ -4,9 +4,16 @@ include RDL::Annotate
 require 'pry'
 require 'pry-byebug'
 require_relative "./HamsterDeps/hamster_stub.rb"
+
 L = Hamster::List_1
+S = Hamster::Splitter
+Left = Hamster::Splitter::Left
+Right = Hamster::Splitter::Right
+EL = Hamster::EmptyList_1
+M = Mutex.new
 describe "Hamster" do
   it "" do
+
 
   helperList =     [
       [[], [], []],
@@ -21,19 +28,30 @@ describe "Hamster" do
 
     ParentsHelper.init_list()
 
-    RDL.nowrap :"Hamster::List_1"
+
+    RDL::Globals.types[:"L"]          = RDL::Type::NominalType.new('Hamster::List_1')
+    RDL::Globals.types[:"EL"]     = RDL::Type::NominalType.new('Hamster::EmptyList_1')
+    RDL::Globals.types[:"S"]        = RDL::Type::NominalType.new('Hamster::Splitter')
+    RDL::Globals.types[:"Left"]  = RDL::Type::NominalType.new('Hamster::Splitter::Left')
+    RDL::Globals.types[:"Right"] = RDL::Type::NominalType.new('Hamster::Splitter::Right')
+
+
+    RDL.nowrap :L
+    RDL.nowrap :EL
     RDL.nowrap :"%bool"
     RDL.type_params Hamster::List_1, [:E], :all?
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.nowrap :String
-    RDL.nowrap :"Hamster::Splitter"
-    RDL.nowrap :"Hamster::Left"
-    RDL.nowrap :"Hamster::Right"
+    RDL.nowrap :S
+    RDL.nowrap :Left
+    RDL.nowrap :Right
     RDL.nowrap :Mutex
     RDL.nowrap :Array
     RDL.type_params Array, [:A], :all?
     RDL.nowrap :Proc
+    RDL.nowrap :Ham
+    #Aliases
 
     #BOOLEAN METHODS
     RDL.type :"Hamster::List_1", :eql?, "(Hamster::List_1) -> %bool"
@@ -42,68 +60,48 @@ describe "Hamster" do
 
     ## METHODS TO DECLARE AS UNKNOWNS
     RDL.type :Array, :<<, '(Hamster::List_1) -> Array', effect: [:-, :+]
-    RDL.type :"Hamster::List_1", :take, "(Integer) -> Hamster::List_1"
-    RDL.type :"Hamster::List_1", :drop, "(Integer) -> Hamster::List_1"
+    RDL.type :S, :"self.new", "(L, Proc) -> S"
+    RDL.type :Left, :"self.new", "(S, L, Mutex) -> L"
+    RDL.type :Right, :"self.new", "(S, Mutex) -> R"
+    
+
 
     ParentsHelper.subtract()
 
     #solution
     # def span(&block)
-    #   return [self, EmptyList_1] unless block_given?
+    #   return [self, EmptyList_1] unless block_given? #not sure how to do the RDL for Block_given? so I will probably skip this for now and only pass procs???
     #   splitter = Splitter.new(self, block)
     #   mutex = Mutex.new
     #   [Splitter::Left.new(splitter, splitter.left, mutex),
     #    Splitter::Right.new(splitter, mutex)].freeze
     # end
-
-    lst = L[*[1,2,3,4]]
-    define :span, "(Hamster::List_1, Array, Hamster::Splitter, Hamster::Left, Hamster::Right, Proc)-> Array", [], consts: :true, moi: [:take, :drop, :<<] do
+    # 
+    # if 
+    proc = Proc.new() {|item| item <= 2}
+    define :span, "(L, Array, S, Left, Right, Mutex, Proc)-> Array", [], consts: :true, moi: [] do
       
-      spec "checks that prefix and remainder is correct" do
-
+      spec "splits the list correctly v1" do
+        
+        
         setup {
-          
-          split_at([], lst, 2)
+          lst = [1, 2, 3, 4]
+          span(lst, [], S, L, R, Mutex.new, proc )
           
         }
 
         post { |ret|
 
-          assert {ret[0].eql?(L[*[1,2]])}
-          assert {ret[1].eql?(L[*[3,4]])}
+          prefix = [1, 2]
+          remainder = [3, 4]
+
+          assert {ret[0].eql?(L[*prefix]) }
+          assert {ret[1].eql?(L[*remainder])}
 
         }
       end
 
-      spec "checks that it returns an array of size 2" do
-
-        setup {
-          
-          split_at([], lst, 2)
-          
-        }
-
-        post { |ret|
-
-          assert {ret.size == 2}
-
-        }
-      end
-
-      spec "checks that original_list is unafeccted " do
-
-        setup {
-          
-          split_at([], lst, 2)
-          
-        }
-
-        post { |ret|
-
-          assert {lst.eql?(L[*[1,2,3,4]])}
-
-        }
-      end
+      
 
       generate_program
     end
