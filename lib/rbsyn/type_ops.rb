@@ -6,9 +6,11 @@ module TypeOperations
   def compute_targs(trec, tmeth)
     # BR you should probably modify this so that we don't have to declare type params
     # TODO: we use only the first definition, ignoring overloaded method definitions
+    #puts ("from type_ops.rb compute_targs: trec #{trec}\n\n")
     type = tmeth[0]
     targs = type.args
-  
+
+
     return targs.map { |targ| RDL::Type::DynamicType.new } if ENV.key? 'DISABLE_TYPES'
 
     targs.map { |targ|
@@ -25,6 +27,11 @@ module TypeOperations
 
   def compute_tout(trec, tmeth, targs)
     # TODO: we use only the first definition, ignoring overloaded method definitions
+    # puts "from type-ops.rb, compute_tout, trec: #{trec}, tmeth: #{tmeth}, targs: #{targs}\n----------------\n"
+    # require 'pry'
+    # require 'pry-byebug'
+    # binding.pry
+
     type = tmeth[0]
     return RDL::Type::DynamicType.new if ENV.key? 'DISABLE_TYPES'
 
@@ -57,6 +64,7 @@ module TypeOperations
   end
 
   def parents_of(trecv)
+    #binding.pry
 
     case trecv
     when RDL::Type::SingletonType
@@ -80,6 +88,9 @@ module TypeOperations
     when RDL::Type::OptionalType
       parents_of trecv.type
     when RDL::Type::NominalType
+      # require 'pry'
+      # require 'pry-byebug'
+      # binding.pry
       
       RDL::Util.to_class(trecv.name).ancestors.map { |klass| klass.to_s }
     when RDL::Type::FiniteHashType
@@ -100,6 +111,7 @@ module TypeOperations
       # require 'pry'
       # require 'pry-byebug'
       # binding.pry
+
       ParentsHelper.getParents()
     else
       raise RbSynError, "unhandled type #{trecv.inspect}"
@@ -145,9 +157,14 @@ module TypeOperations
   end
 
   def methods_of(trecv)
-    Hash[*parents_of(trecv).map { |klass|
+    if ['S', 'Left', 'Right', "L"].include?(trecv.to_s)
+      puts trecv
+      binding.pry
+    end
+    x = Hash[*parents_of(trecv).map { |klass|
         
         RDL::Globals.info.info[klass]
       }.reject(&:nil?).collect { |h| h.to_a }.flatten]
+    x
   end
 end

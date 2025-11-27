@@ -4,12 +4,12 @@ TRUE_POSTCOND = Proc.new { |result|
   result == true }
 
 ENV['COUNTER'] = '0'
-def debug(var, *conds) 
+def debug(var, *conds, message: "") 
   
   if ENV['DEBUG'] == 'PRY' || ENV['DEBUG'] == 'PRINT'
     
     if conds.all? {|m| var.include?(m)}
-      puts "DEBUG # #{ENV['COUNTER']} in file: #{__FILE__}\n"
+      puts "DEBUG # #{ENV['COUNTER']} in file: #{__FILE__}\n#{message}\n"
       ENV['COUNTER'] = (ENV['COUNTER'].to_i + 1).to_s
       puts var
       puts "-----------------------\n"
@@ -19,7 +19,6 @@ def debug(var, *conds)
     end
   end
 end
-
 
 class Synthesizer
   # require "pry"

@@ -4,23 +4,8 @@ require 'pry-byebug'
 require 'parser/current'
 require "set"
 require_relative 'ast/infer_types'
+require_relative 'debugger'
 
-
-def debug(var, *conds) 
-  
-  if ENV['DEBUG'] == 'PRY' || ENV['DEBUG'] == 'PRINT'
-    
-    if conds.all? {|m| var.include?(m)}
-      puts "DEBUG # #{ENV['COUNTER']} in file: #{__FILE__}\n"
-      ENV['COUNTER'] = (ENV['COUNTER'].to_i + 1).to_s
-      puts var
-      puts "-----------------------\n"
-      if ENV['DEBUG'] == 'PRY'
-        binding.pry
-      end
-    end
-  end
-end
 
 def test_ordering(worklist)
   is_sorted = worklist.each_cons(2).all? { |a, b| a.inferred_errors <= b.inferred_errors }
@@ -49,26 +34,7 @@ module SynHelper
 
       tempbool = false
 
-    # @ctx.type_info.type_successes.each {|i, j| 
-    #   j.each { |k|
-    #     x = @ctx.type_info.type_to_s(k)
-    #     if x.include?("Hamster")
-    #       print x
-    #       binding.pry
-    #     end
-    #   }
-    # }
-
-    #     @ctx.type_info.type_errs.each {|i, j| 
-    #   j.each { |k|
-    #     x = @ctx.type_info.type_to_s(k)
-    #     if x.include?("Hamster")
-    #       print x
-    #       binding.pry
-    #     end
-    #   }
-    # }
-
+      
       evaluable.each { |prog_wrap|
         res = 1
         klass = 1
@@ -79,7 +45,7 @@ module SynHelper
 
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
-            
+            debug(Unparser.unparse(prog_wrap.to_ast()), "make_splitter(arg0, arg3)")
             res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
           rescue RbSynError => err
             raise err
@@ -96,7 +62,7 @@ module SynHelper
               @params = postcond.parameters.map &:last
             }
             passes = klass.instance_exec res, &postcond
-            #debug((Unparser.unparse(prog_wrap.to_ast)), "+")
+           
             passes
 
           rescue AssertionError => e
@@ -120,8 +86,6 @@ module SynHelper
           
         }
         #BLOCK END
-
-        debug(Unparser.unparse(prog_wrap.to_ast), "arg1.take")
 
         if tempbool
           # type error encountered, we should not add to the worklist

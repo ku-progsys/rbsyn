@@ -213,6 +213,7 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def lvar(type)
+    #binding.pry
     @ctx.tenv.select { |k, v| v <= type }
       .map { |k, v| s(v, :lvar, k) }
   end

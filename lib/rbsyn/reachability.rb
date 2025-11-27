@@ -56,6 +56,8 @@ class Reachability
 
         mthds.each { |mthd, info|
 
+          #print("from reachability.rb: method: #{mthd}\n")
+
           tmeth = info[:type] 
 
           targs = compute_targs(trecv, tmeth)
@@ -64,12 +66,21 @@ class Reachability
           begin
             tout = compute_tout(trecv, tmeth, targs)
           rescue NoMethodError => e
+            puts "NO METHOD ERROR IN #{mthd}"
+            # require 'pry'
+            # require 'binding-pry'
+            # binding.pry
+
+
             #puts "fixed #{e}"
             #puts "type: #{trecv},\ntmeth: #{tmeth},\ntargs: #{targs}"
             #puts "methd: #{mthd}n\n\n"
             next
           end
           # convert :self types to actual object
+          # if mthd.to_s == "make_splitter" or mthd.to_s == "<<"
+          #   binding.pry
+          # end
           tout = trecv if tout.is_a?(RDL::Type::VarType) && tout.name == :self
           new_tenv = make_new_tenv(tout, path.tenv)
           new_queue << CallChain.new(path.path + [mthd, tout], new_tenv)
