@@ -1,8 +1,12 @@
-require "spec_helper"
-require "hamster/hash"
-require "hamster/set"
+# require "spec_helper"
+require_relative "../hash_deps"
+require_relative "../hamster_set_deps"
+require "bigdecimal"
+require "rspec"
 
-describe Hamster::Hash do
+H = Hamster::Hash_1
+
+describe Hamster::Hash_1 do
   describe "#values" do
     let(:hash) { H["A" => "aye", "B" => "bee", "C" => "see"] }
     let(:result) { hash.values }

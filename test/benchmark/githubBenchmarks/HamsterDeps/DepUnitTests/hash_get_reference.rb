@@ -1,7 +1,11 @@
-require "spec_helper"
-require "hamster/hash"
+# require "spec_helper"
+require_relative "../hash_deps"
+require "bigdecimal"
+require "rspec"
 
-describe Hamster::Hash do
+H = Hamster::Hash_1
+
+describe Hamster::Hash_1 do
   [:get, :[]].each do |method|
     describe "##{method}" do
       context "with a default block" do

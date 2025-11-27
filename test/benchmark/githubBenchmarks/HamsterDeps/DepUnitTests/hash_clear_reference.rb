@@ -1,7 +1,11 @@
-require "spec_helper"
-require "hamster/hash"
+# require "spec_helper"
+require_relative "../hash_deps"
+require "bigdecimal"
+require "rspec"
 
-describe Hamster::Hash do
+H = Hamster::Hash_1
+
+describe Hamster::Hash_1 do
   describe "#clear" do
     [
       [],
@@ -33,7 +37,7 @@ describe Hamster::Hash do
 
     context "on a subclass" do
       it "returns an empty instance of the subclass" do
-        subclass = Class.new(Hamster::Hash)
+        subclass = Class.new(Hamster::Hash_1)
         instance = subclass.new(a: 1, b: 2)
         expect(instance.clear.class).to be(subclass)
         expect(instance.clear).to be_empty

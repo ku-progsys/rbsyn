@@ -1,8 +1,10 @@
-require "spec_helper"
-require "hamster/hash"
+# require "spec_helper"
+require_relative "../hash_deps"
 require "bigdecimal"
+require "rspec"
 
-describe Hamster::Hash do
+H = Hamster::Hash_1
+describe Hamster::Hash_1 do
   let(:hash) { H["A" => "aye", "B" => "bee", "C" => "see"] }
 
   describe "#eql?" do
@@ -14,8 +16,8 @@ describe Hamster::Hash do
       expect(hash.eql?(Object.new)).to eq(false)
     end
 
-    it "returns false when comparing with a subclass of Hamster::Hash" do
-      subclass = Class.new(Hamster::Hash)
+    it "returns false when comparing with a subclass of Hamster::Hash_1_1" do
+      subclass = Class.new(Hamster::Hash_1)
       instance = subclass.new("A" => "aye", "B" => "bee", "C" => "see")
       expect(hash.eql?(instance)).to eq(false)
     end
@@ -30,8 +32,8 @@ describe Hamster::Hash do
       expect(hash == Object.new).to eq(false)
     end
 
-    it "returns true when comparing with a subclass of Hamster::Hash" do
-      subclass = Class.new(Hamster::Hash)
+    it "returns true when comparing with a subclass of Hamster::Hash_1_1" do
+      subclass = Class.new(Hamster::Hash_1)
       instance = subclass.new("A" => "aye", "B" => "bee", "C" => "see")
       expect(hash == instance).to eq(true)
     end

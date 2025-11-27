@@ -5,12 +5,33 @@ require 'pry'
 require 'pry-byebug'
 require_relative "./HamsterDeps/hamster_stub.rb"
 
+
+
+module List_1
+
+
+  def make_splitter(l, p)
+    Hamster::Splitter.new(l, p) 
+  end
+  
+  def make_right(s, m)
+    Hamster::Splitter::Right.new(s,m)
+
+  end
+
+  def make_left(s, l, m)
+    Hamster::Splitter::Left.new(s,l,m)
+  end
+
+end
+
 L = Hamster::List_1
 S = Hamster::Splitter
 Left = Hamster::Splitter::Left
 Right = Hamster::Splitter::Right
 EL = Hamster::EmptyList_1
 M = Mutex.new
+
 describe "Hamster" do
   it "" do
 
@@ -29,42 +50,38 @@ describe "Hamster" do
     ParentsHelper.init_list()
 
 
-    RDL::Globals.types[:"L"]          = RDL::Type::NominalType.new('Hamster::List_1')
-    RDL::Globals.types[:"EL"]     = RDL::Type::NominalType.new('Hamster::EmptyList_1')
-    RDL::Globals.types[:"S"]        = RDL::Type::NominalType.new('Hamster::Splitter')
-    RDL::Globals.types[:"Left"]  = RDL::Type::NominalType.new('Hamster::Splitter::Left')
-    RDL::Globals.types[:"Right"] = RDL::Type::NominalType.new('Hamster::Splitter::Right')
 
 
-    RDL.nowrap :L
-    RDL.nowrap :EL
     RDL.nowrap :"%bool"
     RDL.type_params Hamster::List_1, [:E], :all?
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.nowrap :String
-    RDL.nowrap :S
-    RDL.nowrap :Left
-    RDL.nowrap :Right
     RDL.nowrap :Mutex
     RDL.nowrap :Array
     RDL.type_params Array, [:A], :all?
     RDL.nowrap :Proc
-    RDL.nowrap :Ham
+    RDL.nowrap :"Hamster::List_1"
+    RDL.nowrap :"Hamster::Splitter"
+    RDL.nowrap :"Hamster::Splitter::Right"
+    RDL.nowrap :"Hamster::Splitter::Left"
     #Aliases
 
     #BOOLEAN METHODS
     RDL.type :"Hamster::List_1", :eql?, "(Hamster::List_1) -> %bool"
     RDL.type :"Integer", :eql?, "(Integer) -> %bool"
     RDL.type :BasicObject, :!, '() -> %bool' 
+    RDL.type :Integer, :<=, "(Integer) -> %bool"
 
     ## METHODS TO DECLARE AS UNKNOWNS
-    RDL.type :Array, :<<, '(Hamster::List_1) -> Array', effect: [:-, :+]
-    RDL.type :S, :"self.new", "(L, Proc) -> S"
-    RDL.type :Left, :"self.new", "(S, L, Mutex) -> L"
-    RDL.type :Right, :"self.new", "(S, Mutex) -> R"
-    
+    RDL.type :Array, :<<, '(Hamster::Splitter::Left or Hamster::Splitter::Right) -> Array', effect: [:-, :+]
+    RDL.type :"Hamster::List_1", :"make_splitter", "(Hamster::List_1, Proc) -> Hamster::Splitter"
+    RDL.type :"Hamster::List_1", :"make_left", "(Hamster::Splitter, Hamster::List_1, Mutex) -> Hamster::Splitter::Left"
+    RDL.type :"Hamster::List_1", :"make_right", "(Hamster::Splitter, Mutex) -> Hamster::Splitter::Right"
+    RDL.type :"Hamster::Splitter", :left, "() -> Hamster::List_1"
 
+    
+    # binding.pry
 
     ParentsHelper.subtract()
 
@@ -79,14 +96,14 @@ describe "Hamster" do
     # 
     # if 
     proc = Proc.new() {|item| item <= 2}
-    define :span, "(L, Array, S, Left, Right, Mutex, Proc)-> Array", [], consts: :true, moi: [] do
+    define :span, "(Hamster::List_1, Array, Mutex, Proc)-> Array", [], consts: :true, moi: [] do
       
       spec "splits the list correctly v1" do
         
         
         setup {
           lst = [1, 2, 3, 4]
-          span(lst, [], S, L, R, Mutex.new, proc )
+          span(lst, [], Mutex.new, proc )
           
         }
 
