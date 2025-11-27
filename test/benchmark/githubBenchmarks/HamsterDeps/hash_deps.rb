@@ -4,7 +4,7 @@ require_relative "enumerable"
 require_relative "trie"
 require_relative "hamster_set_deps"
 require_relative "vector"
-require "hamster/associable"
+require_relative "associable"
 
 module Hamster
 
@@ -735,10 +735,10 @@ module Hamster
     #
     # @param other [Object] The collection to compare with
     # @return [Boolean]
-    def eql?(other)
-      return true if other.equal?(self)
-      instance_of?(other.class) && @trie.eql?(other.instance_variable_get(:@trie))
-    end
+    # def eql?(other)
+    #   return true if other.equal?(self)
+    #   instance_of?(other.class) && @trie.eql?(other.instance_variable_get(:@trie))
+    # end
 
     # Return true if `other` has the same contents as this `Hash_1`. Will convert
     # `other` to a Ruby `Hash_1` using `#to_hash` if necessary.

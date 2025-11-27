@@ -16,7 +16,7 @@ describe Hamster::Hash_1 do
       expect(hash.eql?(Object.new)).to eq(false)
     end
 
-    it "returns false when comparing with a subclass of Hamster::Hash_1_1" do
+    it "returns false when comparing with a subclass of Hamster::Hash_1" do
       subclass = Class.new(Hamster::Hash_1)
       instance = subclass.new("A" => "aye", "B" => "bee", "C" => "see")
       expect(hash.eql?(instance)).to eq(false)
@@ -32,7 +32,7 @@ describe Hamster::Hash_1 do
       expect(hash == Object.new).to eq(false)
     end
 
-    it "returns true when comparing with a subclass of Hamster::Hash_1_1" do
+    it "returns true when comparing with a subclass of Hamster::Hash_1" do
       subclass = Class.new(Hamster::Hash_1)
       instance = subclass.new("A" => "aye", "B" => "bee", "C" => "see")
       expect(hash == instance).to eq(true)
