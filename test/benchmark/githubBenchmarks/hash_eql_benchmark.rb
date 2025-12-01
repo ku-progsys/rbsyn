@@ -10,26 +10,13 @@ require_relative "./HamsterDeps/hash_deps"
 require "bigdecimal"
 H = Hamster::Hash_1
 
-class Hamster::Hash_1
-    def helper1(other)
-    other.instance_variable_get(:@trie)
-    end
-end
-
-module BooleanHelpers
-
-  def and_then(other)
-    self && other
+class Object
+  def helper1
+    instance_variable_get(:@trie)
   end
 end
 
-class TrueClass
-  include BooleanHelpers
-end
 
-class FalseClass
-  include BooleanHelpers
-end
 
 describe "Hamster" do
   it "" do
@@ -50,15 +37,17 @@ describe "Hamster" do
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.nowrap :String
-    RDL.nowrap :Trie
+    RDL.nowrap :"Hamster::Trie"
+    RDL.nowrap :"Object"
 
     #METHODS
-    RDL.type :BasicObject, :!, '() -> %bool' 
+    RDL.type :"%bool", :!, '() -> %bool' 
     RDL.type :"Hamster::Hash_1", :instance_of?, "(%dyn) -> %bool"
-    RDL.type :BasicObject, :equal?, "(Hamster::Hash_1) -> %bool"
-    RDL.type :Trie, :eql?, "(%dyn) -> %bool"
-    RDL.type :"Hamster::Hash_1", :helper1, "(%dyn) -> %dyn"
-    RDL.type :"%bool", :and_then, "(%bool) -> %bool"
+    RDL.type :Object, :equal?, "(Hamster::Hash_1) -> %bool"
+    RDL.type :"Hamster::Trie", :eql?, "(Hamster::Trie) -> %bool"
+    RDL.type :"Object", :helper1, "() -> Hamster::Trie"
+    RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
+
 
     #Solution
     # def eql?(other)
@@ -66,10 +55,18 @@ describe "Hamster" do
     #   instance_of?(other.class) && @trie.eql?(other.instance_variable_get(:@trie))
     # end
     # 
-    #
+    # if arg1.equal?(arg0)
+    #   true
+    # if arg0.instance_of?(arg1)
+    #   if arg0.trie.eql?(arg1.helper1())
+    #       true
+    #   else
+    #       false
+    #   end
+    # end
     ParentsHelper.subtract()
 
-    define :eql? , "(Hamster::Hash_1, Hamster::Hash_1)-> %bool", [], consts: :true, moi: [] do
+    define :eql? , "(Hamster::Hash_1, Object)-> %bool", [], consts: :true, moi: [] do
       
 
 
@@ -100,18 +97,18 @@ describe "Hamster" do
         end
     
       
-        spec "returns false wehn comparing with a standard hash" do
+        spec "returns false when comparing with a standard hash" do
 
-            setup {
-                hash = H["A" => "aye", "B" => "bee", "C" => "see"]
-                normal_hash = {"A" => "aye", "B" => "bee", "C" => "see"}
-                eql?(hash, normal_hash)
-            
-            }
+                setup {
+                    hash = H["A" => "aye", "B" => "bee", "C" => "see"]
+                    normal_hash = {"A" => "aye", "B" => "bee", "C" => "see"}
+                    eql?(hash, normal_hash)
+                
+                }
 
             post { |ret|
 
-                assert {!ret}
+                assert {ret == false}
 
             }
         end
@@ -128,7 +125,7 @@ describe "Hamster" do
 
             post { |ret|
 
-                assert {!ret}
+                assert {ret == false}
 
             }
         end
@@ -146,7 +143,7 @@ describe "Hamster" do
 
             post { |ret|
 
-                assert {!ret}
+                assert {ret == false}
 
             }
         end

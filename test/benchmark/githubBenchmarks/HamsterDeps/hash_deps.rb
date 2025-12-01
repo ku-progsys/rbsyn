@@ -65,8 +65,12 @@ module Hamster
     include Immutable
     include Enumerable
     include Associable
+    attr_reader :trie, :default
 
     class << self
+
+
+
       # Create a new `Hash_1` populated with the given key/value pairs.
       #
       # @example
@@ -107,6 +111,8 @@ module Hamster
       @trie = pairs ? Trie[pairs] : EmptyTrie
       @default = block
     end
+
+
 
     # Return the default block if there is one. Otherwise, return `nil`.
     #
@@ -452,6 +458,8 @@ module Hamster
     end
     alias :detect :find
 
+    
+
     # Return a new `Hash_1` containing all the key/value pairs from this `Hash_1` and
     # `other`. If no block is provided, the value for entries with colliding keys
     # will be that from `other`. Otherwise, the value for each duplicate key is
@@ -735,10 +743,10 @@ module Hamster
     #
     # @param other [Object] The collection to compare with
     # @return [Boolean]
-    # def eql?(other)
-    #   return true if other.equal?(self)
-    #   instance_of?(other.class) && @trie.eql?(other.instance_variable_get(:@trie))
-    # end
+    def eql?(other)
+      return true if other.equal?(self)
+      instance_of?(other.class) && @trie.eql?(other.instance_variable_get(:@trie))
+    end
 
     # Return true if `other` has the same contents as this `Hash_1`. Will convert
     # `other` to a Ruby `Hash_1` using `#to_hash` if necessary.

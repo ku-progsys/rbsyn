@@ -83,8 +83,8 @@ Rake::TestTask.new(:hamster) do |t|
                            #"test/benchmark/githubBenchmarks/partition_benchmark.rb", #THIS ONE LOOKS RATHER SIMILAR TO THE SPAN BENCHMARK
                            #"test/benchmark/githubBenchmarks/hash_clear_benchmark.rb",
                            #"test/benchmark/githubBenchmarks/hash_values_benchmark.rb",
-                           "test/benchmark/githubBenchmarks/hash_eql_benchmark.rb",
-                           #"test/benchmark/githubBenchmarks/hash_get_benchmark.rb",
+                           #"test/benchmark/githubBenchmarks/hash_eql_benchmark.rb", #FINDING EACH PART OF THE SOLUTION SEPARATELY WITH TYPES NOT SURE WHY IT'S NOT CONNECTING THEM
+                           "test/benchmark/githubBenchmarks/hash_get_benchmark.rb",
 
                           ]
 end
