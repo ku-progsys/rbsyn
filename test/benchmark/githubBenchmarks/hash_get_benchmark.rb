@@ -47,6 +47,7 @@ describe "Hamster" do
     RDL.nowrap :"Proc"
     RDL.type_params Array, [:Q], :all?
 
+
     #METHODS
     RDL.type :"%bool", :!, '() -> %bool' 
 
@@ -55,7 +56,7 @@ describe "Hamster" do
     RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
     RDL.type :"Proc", :"call", "(Object) -> String"
     RDL.type :"Array", :"[]", "(Integer) -> String"
-    RDL.type :"Object", :truthy?, "() -> %bool"
+    RDL.type :"Array", :truthy?, "() -> %bool"
 
 
     # def get(key)
