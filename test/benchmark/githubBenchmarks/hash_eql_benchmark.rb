@@ -21,13 +21,6 @@ end
 describe "Hamster" do
   it "" do
 
-  helperList = [
-      [[], [], []],
-      [[1], [1], []],
-      [[1, 2], [1, 2], []],
-      [[1, 2, 3], [1, 2], [3]],
-      [[1, 2, 3, 4], [1, 2], [3, 4]],
-    ]
 
     ParentsHelper.init_list()
     RDL::Type::NominalType.new("Hamster::Hash_1")

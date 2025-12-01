@@ -44,38 +44,35 @@ describe "Hamster" do
     RDL.nowrap :"Object"
     RDL.nowrap :"String"
     RDL.nowrap :"Array"
+    RDL.nowrap :"Proc"
     RDL.type_params Array, [:Q], :all?
 
     #METHODS
     RDL.type :"%bool", :!, '() -> %bool' 
-    RDL.type :"Hamster::Hash_1", :instance_of?, "(%dyn) -> %bool"
-    RDL.type :Object, :equal?, "(Hamster::Hash_1) -> %bool"
-    RDL.type :"Hamster::Trie", :eql?, "(Hamster::Trie) -> %bool"
 
     RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
     RDL.type :"Hamster::Trie", :get, "(Object) -> Array"
     RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
-    RDL.type :"Proc", :"call", "(String) -> String"
-    RDL.type :"Array", :"[]", "(Integer) -> Object"
-    RDL.type :"Object", :truthy, "() -> %bool"
+    RDL.type :"Proc", :"call", "(Object) -> String"
+    RDL.type :"Array", :"[]", "(Integer) -> String"
+    RDL.type :"Object", :truthy?, "() -> %bool"
 
 
     # def get(key)
     #   entry = @trie.get(key)
-    #   if entry
+    #   if entry.truthy?
     #     entry[1]
     #   elsif @default
     #     @default.call(key)
     #   end
     # end
     # alias :[] :get
-    # 
-    #
+    
+    
     ParentsHelper.subtract()
 
     define :get , "(Hamster::Hash_1, Object)-> String", [], consts: :true, moi: [] do
       
-
 
         spec "if key exists" do 
             setup {
@@ -91,7 +88,11 @@ describe "Hamster" do
         spec "returns default block value when doesn't exist" do 
             setup {
                 hash = H.new("A" => "aye") do |key|
-                                        "bee"
+                                        if key == "J"
+                                            "bee" 
+                                        else 
+                                            "FAIL"
+                                        end
                                     end
                 get(hash, "J")
             }
@@ -111,41 +112,6 @@ describe "Hamster" do
             post { |ret|
 
                 assert {ret == 'something'}
-
-            }
-        end
-
-        spec "returns false when compared to arbitrary objects" do
-
-            setup {
-            
-                hash = H["A" => "aye", "B" => "bee", "C" => "see"]
-                
-                eql?(hash, Object.new)
-            
-            }
-
-            post { |ret|
-
-                assert {ret == false}
-
-            }
-        end
-
-        spec "returns false when comparing with a subclass of Hamster::Hash_1"  do
-
-            setup {
-            
-                hash = H["A" => "aye", "B" => "bee", "C" => "see"]
-                subclass = Class.new(Hamster::Hash_1)
-                instance = subclass.new("A" => "aye", "B" => "bee", "C" => "see")
-                eql?(hash, instance)
-                
-            }
-
-            post { |ret|
-
-                assert {ret == false}
 
             }
         end
