@@ -110,3 +110,7 @@ TEST: https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/list/rota
 DEPENDENCIES
 NOTES - INTERESTING
 
+
+DELETE
+FUNCTION: https://github.com/hamstergem/hamster/blob/core/lib/hamster/hash.rb#L317C1-L319C8
+TEST: https://github.com/hamstergem/hamster/blob/core/spec/lib/hamster/hash/delete_spec.rb
