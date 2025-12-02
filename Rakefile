@@ -83,8 +83,9 @@ Rake::TestTask.new(:hamster) do |t|
                            #"test/benchmark/githubBenchmarks/partition_benchmark.rb", #THIS ONE LOOKS RATHER SIMILAR TO THE SPAN BENCHMARK
                            #"test/benchmark/githubBenchmarks/hash_clear_benchmark.rb",
                            #"test/benchmark/githubBenchmarks/hash_values_benchmark.rb",
-                           "test/benchmark/githubBenchmarks/hash_eql_benchmark.rb", # WORKING WITH TYPES
+                           #"test/benchmark/githubBenchmarks/hash_eql_benchmark.rb", # WORKING WITH TYPES
                            #"test/benchmark/githubBenchmarks/hash_get_benchmark.rb", # WORKING WITH TYPES
+                           "test/benchmark/githubBenchmarks/hash_delete_benchmark.rb" # WORKING WITH TYPES
 
                           ]
 end
