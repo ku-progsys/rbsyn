@@ -498,6 +498,10 @@ module Hamster
       derive_new_hash(trie)
     end
 
+    def makeNewVector(array)
+      Vector.new(array)
+    end
+
     # Retrieve the value corresponding to the given key object, or use the provided
     # default value or block, or otherwise raise a `KeyError`.
     #
