@@ -49,8 +49,9 @@ describe "Hamster" do
 
 
     #METHODS
-    RDL.type :"%bool", :!, '() -> %bool' 
-
+    #RDL.type :"%bool", :"!", '() -> %bool' 
+    RDL.type :TrueClass, :!, '() -> %bool'
+    RDL.type :FalseClass, :!, '() -> %bool'
     RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
     RDL.type :"Hamster::Trie", :get, "(Object) -> Array"
     RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
@@ -72,7 +73,7 @@ describe "Hamster" do
     
     ParentsHelper.subtract()
 
-    define :get , "(Hamster::Hash_1, Object)-> String", [], consts: :true, moi: [] do
+    define :get , "(Hamster::Hash_1, Object)-> String", [], consts: :true, moi: [], prog_size: 7 do
       
 
         spec "if key exists" do 
@@ -106,7 +107,7 @@ describe "Hamster" do
         spec "doesn't call default if key is nill, that is fine" do
 
                 setup {
-                    hash = H.new(nil => 'something') { |i| "FAILS" }.send(method, nil)
+                    hash = H.new(nil => 'something') { |i| "FAILS" }
                     get(hash, nil)
                 }
 
