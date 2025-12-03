@@ -32,8 +32,10 @@ class InferTypes
   end
 
   def w_instrument(receiver, meth, *args)
+
+    # trace form: {method, reciever, args, result, exception}
     trace = {:method => meth,:receiver => RDL::Type::NominalType.new(receiver.class.to_s),
-      :args => args.map {|i| RDL::Type::NominalType.new(i.class.to_s)}, :result => nil, :except => nil}
+      :args => args.map {|i| RDL::Type::NominalType.new(i.class.to_s)}, :result => nil, :except => nil} # why is this nominal type this might need to change because of generics 
       
     begin
 
@@ -129,19 +131,79 @@ class InferTypes
 
   def update_success(trace)
 
-
-    @type_successes[trace[:method]].each{|i|
+    consolidate_success_types(trace)
+    @type_successes
+    #@type_successes[trace[:method]].each{|i|
     
-      if compare_hashes(i, trace)
-        return
-      end
-    }
-  
-    @updated = true
-    @type_successes[trace[:method]].append(trace)
+    #   if compare_hashes(i, trace)
+    #     return
+    #   end
+    # }
+    
+    # @updated = true
+    #@type_successes[trace[:method]].append(trace)
       
 
   end
+
+  def consolidate_success_types(trace)
+    # trace form: {method, reciever, args, result, exception}
+    require 'pry'
+    require 'pry-byebug'
+    binding.pry
+    if @type_successes[trace[:method]] == []
+      @type_successes[trace[:method]].append(trace)
+    end
+    @type_successes[trace[:method]].each_with_index do |sig, ind|
+      newtrace = {method: trace[:method]}
+      arg_union = true
+      
+      if sig[:receiver] <= trace[:receiver]
+        newtrace[:receiver] = trace[:receiver]
+      elsif trace[:receiver] <= sig[:receiver]
+        newtrace[:receiver] = sig[:receiver]
+      else
+        next
+      end
+      ############  
+      if sig[:args].size != trace[:args].size
+        next
+      else
+        newtrace[:args] = []
+        sig[:args].zip(trace[:args]).each do |s, t|
+          if s <= t
+            newtrace[:args].append t
+          elsif t <= s
+            newtrace[:args].append t
+          else
+            newtrace[:args].append RDL::Type::UnionType.new(s,t)
+            arg_union = false
+          end
+        end
+      end
+      ###########
+      if sig[:result] <= trace[:result]
+        newtrace[:result] = trace[:result]
+      elsif trace[:result] <= sig[:result]
+        newtrace[:result] = sig[:result]
+      elsif arg_union
+        newtrace[:result] = RDL::Type::UnionType.new(sig[:result], trace[:result])
+      else
+        next
+      end
+
+      newtrace[:exception] = nil
+      @type_successes[trace[:method]].delete_at(ind)
+      @type_successes[trace[:method]].append(newtrace)
+      RDL.type newtrace[:receiver].name, newtrace[:method], "(#{newtrace[:args].map {|i| i.name}.join(', ')}) -> #{newtrace[:result].name}"
+      break
+    end
+
+    return @type_successes
+  
+  end
+
+
 
 
   def check_errors(ast)
