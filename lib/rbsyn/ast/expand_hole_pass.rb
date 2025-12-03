@@ -35,6 +35,9 @@ class ExpandHolePass < ::AST::Processor
     expanded = []
 
     if depth == 0
+      # real program variables in the environment
+      expanded.concat lvar(node.ttype)
+
       # nil constant
       if @ctx.enable_nil# && !@recv
         expanded << nil_const
@@ -72,9 +75,6 @@ class ExpandHolePass < ::AST::Processor
         node.ttype.types.all? { |t| t.is_a?(RDL::Type::SingletonType) && t.val.is_a?(Symbol) }
         expanded.concat symbols(node.ttype.types)
       end
-
-      # real program variables in the environment
-      expanded.concat lvar(node.ttype)
 
       # hashes
       # receivers are not hashes for now
