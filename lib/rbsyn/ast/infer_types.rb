@@ -148,9 +148,9 @@ class InferTypes
 
   def consolidate_success_types(trace)
     # trace form: {method, reciever, args, result, exception}
-    require 'pry'
-    require 'pry-byebug'
-    binding.pry
+    # require 'pry'
+    # require 'pry-byebug'
+    # binding.pry
     if @type_successes[trace[:method]] == []
       @type_successes[trace[:method]].append(trace)
     end

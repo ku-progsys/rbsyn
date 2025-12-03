@@ -3,7 +3,7 @@ class ProgWrapper
   require_relative "ast/check_error_pass"
 
   attr_reader :seed, :env, :exprs, :looking_for, :target, :inferred_errors, :exprs
-  attr_accessor :passed_asserts, :inferred_errors, :ctx, :env
+  attr_accessor :passed_asserts, :inferred_errors, :ctx, :env, :ttype
 
   def initialize(ctx, seed, env, exprs=RDL.type_cast([], 'Array<TypedNode>', force: true))
     @ctx = ctx
@@ -12,6 +12,7 @@ class ProgWrapper
     @exprs = exprs
     @passed_asserts = 0
     @looking_for = :type
+    @ttype = nil
     @inferred_errors = 0
     # add the ranking for types here
   end
@@ -42,7 +43,7 @@ class ProgWrapper
     assigns = pass.var_expr.map { |id, e|
       s(RDL::Globals.types[:top], :lvasgn, "#{VAR_PREFIX}#{id}".to_sym, e)
     }
-
+    @ttype = ast.ttype
     s(ast.ttype, :begin, *[
       *assigns,
       *effect_exprs,
