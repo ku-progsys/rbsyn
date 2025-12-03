@@ -44,15 +44,18 @@ describe "Hamster" do
 
     ## METHODS TO DECLARE AS UNKNOWNS
     #
-    RDL.type :"Hamster::List_1", :take, "(Integer) -> Hamster::List_1"
-    RDL.type :"Hamster::List_1", :drop, "(Integer) -> Hamster::List_1"
-    RDL.type :Array, :<<, '(Hamster::List_1) -> Array', effect: [:-, :+]
+    # RDL.type :"Hamster::List_1", :take, "(Integer) -> Hamster::List_1"
+    # RDL.type :"Hamster::List_1", :drop, "(Integer) -> Hamster::List_1"
+    # RDL.type :Array, :<<, '(Hamster::List_1) -> Array'
     
     
     # RDL.type :"Hamster::List_1", :take, "(%dyn) -> %dyn"
     # RDL.type :"Hamster::List_1", :drop, "(%dyn) -> %dyn"
     # RDL.type :Array, :<<, '(%dyn) -> %dyn'
 
+    RDL.type :"BasicObject", :take, "(%dyn) -> %dyn"
+    RDL.type :"BasicObject", :drop, "(%dyn) -> %dyn"
+    RDL.type :"BasicObject", :<<, '(%dyn) -> %dyn'
 
     ParentsHelper.subtract()
 

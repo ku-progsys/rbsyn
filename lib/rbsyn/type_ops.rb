@@ -157,14 +157,20 @@ module TypeOperations
   end
 
   def methods_of(trecv)
-    if ['S', 'Left', 'Right', "L"].include?(trecv.to_s)
-      puts trecv
-      binding.pry
+
+    # if trecv.to_s == "Hamster::List_1"
+    #   binding.pry
+    # end
+
+    parents = parents_of(trecv)
+    if ENV["ADD_BASICS"] == "TRUE"
+      parents.append("BasicObject")
     end
-    x = Hash[*parents_of(trecv).map { |klass|
+    x = Hash[*parents.map { |klass|
         
         RDL::Globals.info.info[klass]
       }.reject(&:nil?).collect { |h| h.to_a }.flatten]
+
     x
   end
 end

@@ -76,16 +76,19 @@ Rake::TestTask.new(:hamster) do |t|
   t.libs << "lib"
   t.libs << "models"
   t.test_files = FileList[
-                           #"test/benchmark/githubBenchmarks/split_at_benchmark.rb", #WORKING WITH TYPES THIS ONE REVEALS SOME ERROR WITH THE TYPE INFERENCE SYSTEM
-                           #"test/benchmark/githubBenchmarks/rotate_benchmark.rb", # NOT YET WORKING WITH TYPES LIKELY TOO LARGE OF A SPEC
+                           "test/benchmark/githubBenchmarks/split_at_benchmark.rb", #WORKING WITH TYPES THIS ONE REVEALS SOME ERROR WITH THE TYPE INFERENCE SYSTEM
                            #"test/benchmark/githubBenchmarks/set_delete.rb" #WORKING WITH TYPES
-                           #"test/benchmark/githubBenchmarks/span_benchmark.rb", #VERY DIFFICULT ONE MIGHT NEED ASSISTANCE FORCING ASSIGNMENT OPERATIONS TO GET IT TO WORK
-                           #"test/benchmark/githubBenchmarks/partition_benchmark.rb", #THIS ONE LOOKS RATHER SIMILAR TO THE SPAN BENCHMARK
                            #"test/benchmark/githubBenchmarks/hash_clear_benchmark.rb", # WORKING WITH TYPES
-                           "test/benchmark/githubBenchmarks/hash_values_benchmark.rb",
+                           #"test/benchmark/githubBenchmarks/hash_values_benchmark.rb", # WORKING WITH TYPES 
                            #"test/benchmark/githubBenchmarks/hash_eql_benchmark.rb", # WORKING WITH TYPES
                            #"test/benchmark/githubBenchmarks/hash_get_benchmark.rb", # WORKING WITH TYPES
-                           #"test/benchmark/githubBenchmarks/hash_delete_benchmark.rb" # WORKING WITH TYPES
+                           #"test/benchmark/githubBenchmarks/hash_delete_benchmark.rb", # WORKING WITH TYPES
+
+
+
+                           #"test/benchmark/githubBenchmarks/span_benchmark.rb", #VERY DIFFICULT ONE MIGHT NEED ASSISTANCE FORCING ASSIGNMENT OPERATIONS TO GET IT TO WORK
+                           #"test/benchmark/githubBenchmarks/partition_benchmark.rb", #THIS ONE LOOKS RATHER SIMILAR TO THE SPAN BENCHMARK
+                           #"test/benchmark/githubBenchmarks/rotate_benchmark.rb", # NOT YET WORKING WITH TYPES LIKELY TOO LARGE OF A SPEC
 
                           ]
 end
