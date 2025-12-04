@@ -50,7 +50,6 @@ class InferTypes
     rescue TypeError => e
       if !@set_exception 
 
-
         trace[:except] = e
         update_errlist(trace)
         @set_exception = true
@@ -70,7 +69,7 @@ class InferTypes
       end
       raise e
 
-    rescue NameError => e # BR TODO TEST THIS NEW FUNCTIONALLITY
+    rescue NameError => e 
       if !@set_exception 
         if e.to_s.downcase.include?("undefined method")
       
@@ -82,10 +81,9 @@ class InferTypes
         @set_exception = true
       end
       raise e
-    rescue ArgumentError => e #BR TODO TEST THIS NEW FUNCITONALITY
-       if !@set_exception  
- 
 
+    rescue ArgumentError => e 
+       if !@set_exception  
   
         trace[:except] = e
         trace[:args] = :ALL
@@ -116,22 +114,24 @@ class InferTypes
 
   def update_errlist(trace)
 
-    @type_errs[trace[:method]].each{|i|
+    # @type_errs[trace[:method]].each{|i|
 
-      if compare_hashes(i, trace)
-        return
-      end
-    }
+    #   if compare_hashes(i, trace)
+    #     return
+    #   end
+    # }
 
-    @updated = true
-    @type_errs[trace[:method]].append(trace)
+    # @updated = true
+    # @type_errs[trace[:method]].append(trace)
+    consolidate_types(trace, true)
+    @type_errs
 
   end
 
 
   def update_success(trace)
 
-    consolidate_success_types(trace)
+    consolidate_types(trace)
     @type_successes
     #@type_successes[trace[:method]].each{|i|
     
@@ -146,60 +146,101 @@ class InferTypes
 
   end
 
-  def consolidate_success_types(trace)
+  def consolidate_types(trace, err=false)
     # trace form: {method, reciever, args, result, exception}
     # require 'pry'
     # require 'pry-byebug'
     # binding.pry
-    if @type_successes[trace[:method]] == []
-      @type_successes[trace[:method]].append(trace)
-    end
-    @type_successes[trace[:method]].each_with_index do |sig, ind|
-      newtrace = {method: trace[:method]}
-      arg_union = true
-      
-      if sig[:receiver] <= trace[:receiver]
-        newtrace[:receiver] = trace[:receiver]
-      elsif trace[:receiver] <= sig[:receiver]
-        newtrace[:receiver] = sig[:receiver]
-      else
-        next
+    begin
+      if trace[:except].is_a?(NoMethodError)
+        #binding.pry
+        types = @type_errs[trace[:method]].each_with_index.filter_map {|val, ind| [val, ind] if val[:receiver] <= trace[:receiver] ||  trace[:receiver] <= val[:receiver]} 
+        if types == []
+          @type_errs[trace[:method]].append(trace)
+          return @type_errs
+        elif types[0][0][:receiver] <= trace[:receiver]
+          @type_errs[trace[:method]][types[0][1]][:receiver] = trace[:receiver]
+          return @type_errs
+        else
+          return @type_errs
+        end
+    
       end
-      ############  
-      if sig[:args].size != trace[:args].size
-        next
-      else
-        newtrace[:args] = []
-        sig[:args].zip(trace[:args]).each do |s, t|
-          if s <= t
-            newtrace[:args].append t
-          elsif t <= s
-            newtrace[:args].append t
+      type_list =  err ? @type_errs : @type_successes
+      type_list[trace[:method]].each_with_index do |sig, ind|
+        newtrace = {method: trace[:method]}
+        arg_union = true
+        
+        if sig[:receiver] <= trace[:receiver]
+          newtrace[:receiver] = trace[:receiver]
+        elsif trace[:receiver] <= sig[:receiver]
+          newtrace[:receiver] = sig[:receiver]
+        else
+          next
+        end
+        ############
+        if err
+          newtrace[:result] = nil
+        else
+          if sig[:result] <= trace[:result]
+            newtrace[:result] = trace[:result]
+          elsif trace[:result] <= sig[:result]
+            newtrace[:result] = sig[:result]
           else
-            newtrace[:args].append RDL::Type::UnionType.new(s,t)
-            arg_union = false
+            next
           end
         end
+        ############  
+        if sig[:args].size != trace[:args].size
+          next
+        else
+          newtrace[:args] = []
+          sig[:args].zip(trace[:args]).each do |s, t|
+            if s <= t
+              newtrace[:args].append t
+            elsif t <= s
+              newtrace[:args].append t
+            else
+              newtrace[:args].append RDL::Type::UnionType.new(s,t)
+            end
+          end
+        end
+        ###########
+        
+        if err && sig[:excep].to_s != trace[:except].to_s
+          newtrace[:multi_exept] = [sig[:except], trace[:except]]
+        end
+        newtrace[:except] = sig[:except]
+        if err
+          @type_errs[trace[:method]].delete_at(ind)
+          @type_errs[trace[:method]].append(newtrace)
+        else
+          @type_successes[trace[:method]].delete_at(ind)
+          @type_successes[trace[:method]].append(newtrace)
+          RDL.type newtrace[:receiver].to_s, newtrace[:method], "(#{newtrace[:args].map {|i| i.to_s}.join(', ')}) -> #{newtrace[:result].to_s}"
+        end
+        #############
+        if err 
+          return @type_errs
+        else
+          return @type_successes
+        end
+
       end
-      ###########
-      if sig[:result] <= trace[:result]
-        newtrace[:result] = trace[:result]
-      elsif trace[:result] <= sig[:result]
-        newtrace[:result] = sig[:result]
-      elsif arg_union
-        newtrace[:result] = RDL::Type::UnionType.new(sig[:result], trace[:result])
+
+
+      if err 
+        @type_errs[trace[:method]].append(trace)
+        return @type_errs
       else
-        next
+        @type_successes[trace[:method]].append(trace)
+        return @type_successes
       end
-
-      newtrace[:exception] = nil
-      @type_successes[trace[:method]].delete_at(ind)
-      @type_successes[trace[:method]].append(newtrace)
-      RDL.type newtrace[:receiver].name, newtrace[:method], "(#{newtrace[:args].map {|i| i.name}.join(', ')}) -> #{newtrace[:result].name}"
-      break
+    rescue Exception => e
+      binding.pry
+      raise e
     end
-
-    return @type_successes
+    
   
   end
 
@@ -238,7 +279,7 @@ class InferTypes
 
 
     if !type[:except].nil?
-      t = " #{t} => :exception"
+      t = " #{t} => :except"
     end
 
     t

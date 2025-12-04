@@ -39,7 +39,11 @@ describe "Hamster" do
     RDL.type :Array, :size, "() -> Integer"
     RDL.type :"Hamster::List_1", :eql?, "(Hamster::List_1) -> %bool"
     RDL.type :"Integer", :==, "(Integer) -> %bool"
-    RDL.type :BasicObject, :!, '() -> %bool' 
+    RDL.type :TrueClass, :!, '() -> %bool'
+    RDL.type :FalseClass, :!, '() -> %bool' 
+    RDL.nowrap :DynamicType
+    RDL.nowrap :TrueClass
+    RDL.nowrap :FlaseClass
     #RDL.type :Object, :freeze, '() -> self'
 
     ## METHODS TO DECLARE AS UNKNOWNS
@@ -53,9 +57,9 @@ describe "Hamster" do
     # RDL.type :"Hamster::List_1", :drop, "(%dyn) -> %dyn"
     # RDL.type :Array, :<<, '(%dyn) -> %dyn'
 
-    RDL.type :"BasicObject", :take, "(%dyn) -> %dyn"
-    RDL.type :"BasicObject", :drop, "(%dyn) -> %dyn"
-    RDL.type :"BasicObject", :<<, '(%dyn) -> %dyn'
+    RDL.type :"DynamicType", :take, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :drop, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :<<, '(%dyn) -> %dyn'
 
     ParentsHelper.subtract()
 
