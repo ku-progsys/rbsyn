@@ -22,7 +22,11 @@ class InferTypes
   end
 
   def compare_hashes(left, right)
-    return left.reject { |k, _| [:result, :except].include?(k) } == right.reject { |k, _| [:result, :except].include?(k) }
+    begin
+      return left.reject { |k, _| [:except].include?(k) } == right.reject { |k, _| [:except].include?(k) }
+    rescue Exception => e
+      binding.pry
+    end
   end
 
   def reset_instrumentation()
@@ -123,17 +127,19 @@ class InferTypes
 
     # @updated = true
     # @type_errs[trace[:method]].append(trace)
-    consolidate_types(trace, true)
+    #194
+    consolidate_type_errors(trace)
     @type_errs
+    #176
 
   end
 
 
   def update_success(trace)
 
-    consolidate_types(trace)
+    consolidate_type_successes(trace)
     @type_successes
-    #@type_successes[trace[:method]].each{|i|
+    # @type_successes[trace[:method]].each{|i|
     
     #   if compare_hashes(i, trace)
     #     return
@@ -141,106 +147,125 @@ class InferTypes
     # }
     
     # @updated = true
-    #@type_successes[trace[:method]].append(trace)
+    # @type_successes[trace[:method]].append(trace)
       
 
   end
 
-  def consolidate_types(trace, err=false)
-    # trace form: {method, reciever, args, result, exception}
+  def consolidate_type_errors(trace)
+    # trace form: {method:, reciever:, args: [], result: , except: = nil}
     # require 'pry'
     # require 'pry-byebug'
     # binding.pry
+    meth = trace[:method]
     begin
       if trace[:except].is_a?(NoMethodError)
-        #binding.pry
-        types = @type_errs[trace[:method]].each_with_index.filter_map {|val, ind| [val, ind] if val[:receiver] <= trace[:receiver] ||  trace[:receiver] <= val[:receiver]} 
+
+        types = @type_errs[meth].each_with_index.filter_map {|val, ind| [val, ind] if  trace[:receiver] <= val[:receiver] || val[:receiver] <= trace[:receiver]} 
+        #if new error observation is a subtype of original error observation 
+        # Check if new Method Missing observation is related to any existing obsrvations
         if types == []
-          @type_errs[trace[:method]].append(trace)
-          return @type_errs
-        elif types[0][0][:receiver] <= trace[:receiver]
-          @type_errs[trace[:method]][types[0][1]][:receiver] = trace[:receiver]
+          @type_errs[meth].append(trace)
           return @type_errs
         else
-          return @type_errs
-        end
-    
-      end
-      type_list =  err ? @type_errs : @type_successes
-      type_list[trace[:method]].each_with_index do |sig, ind|
-        newtrace = {method: trace[:method]}
-        arg_union = true
+          val, ind = types[0]
         
-        if sig[:receiver] <= trace[:receiver]
-          newtrace[:receiver] = trace[:receiver]
-        elsif trace[:receiver] <= sig[:receiver]
-          newtrace[:receiver] = sig[:receiver]
-        else
-          next
-        end
-        ############
-        if err
-          newtrace[:result] = nil
-        else
-          if sig[:result] <= trace[:result]
-            newtrace[:result] = trace[:result]
-          elsif trace[:result] <= sig[:result]
-            newtrace[:result] = sig[:result]
+          if val[:receiver] <= trace[:receiver]
+            # if current observation is supertype of existing observation
+            # do nothing, error types propogate upward
+            return @type_errs
+          elsif trace[:receiver] <= val[:receiver]
+            # if current observation is subtype of existing observation
+            # replace existing entry as we can now force the error lower
+            @type_errs[meth][ind] = trace
+            return @type_errs
           else
-            next
+            raise Exception "Wow something bad here!"
           end
         end
-        ############  
+      end
+      ##############
+      
+      #################
+      @type_errs[meth].filter {|i| i[:receiver] == trace[:receiver]}.each_with_index do |sig, ind|
+        
         if sig[:args].size != trace[:args].size
           next
         else
-          newtrace[:args] = []
-          sig[:args].zip(trace[:args]).each do |s, t|
-            if s <= t
-              newtrace[:args].append t
-            elsif t <= s
-              newtrace[:args].append t
-            else
-              newtrace[:args].append RDL::Type::UnionType.new(s,t)
-            end
+
+          if sig[:args].zip(trace[:args]).all? { |old, current| current <= old}
+            # if arguments are all subtypes of original observaion
+            # narrow the args as errors propigate upward and this will
+            # make the error type encompass more
+            @type_errs[meth][ind][:args] = trace[:args] 
+            return @type_errs
+          elsif sig[:args].zip(trace[:args]).all? { |old, current| old <= current}
+            # if they are all supertypes this observation falls within 
+            # already seen behavior
+            return @type_errs
+          else
+            # look at next observation
+            next
           end
         end
         ###########
-        
-        if err && sig[:excep].to_s != trace[:except].to_s
-          newtrace[:multi_exept] = [sig[:except], trace[:except]]
-        end
-        newtrace[:except] = sig[:except]
-        if err
-          @type_errs[trace[:method]].delete_at(ind)
-          @type_errs[trace[:method]].append(newtrace)
-        else
-          @type_successes[trace[:method]].delete_at(ind)
-          @type_successes[trace[:method]].append(newtrace)
-          RDL.type newtrace[:receiver].to_s, newtrace[:method], "(#{newtrace[:args].map {|i| i.to_s}.join(', ')}) -> #{newtrace[:result].to_s}"
-        end
-        #############
-        if err 
-          return @type_errs
-        else
-          return @type_successes
-        end
 
       end
+      # no arguments matched
 
+      @type_errs[meth].append(trace)
+      return @type_errs
 
-      if err 
-        @type_errs[trace[:method]].append(trace)
-        return @type_errs
-      else
-        @type_successes[trace[:method]].append(trace)
-        return @type_successes
-      end
     rescue Exception => e
       binding.pry
       raise e
     end
-    
+  end
+
+
+  def consolidate_type_successes(trace)
+    begin
+      meth = trace[:method]
+      @type_successes[meth].filter {|i| i[:receiver] == trace[:receiver]}.each_with_index do |sig, ind|
+          
+        if sig[:args].size != trace[:args].size
+            next
+        elsif sig[:result] <= trace[:result]
+          # if the previously observed result is the same or subtype of current observations result
+          
+          sigzip = sig[:args].zip(trace[:args])
+          if sigzip.any? {|old, current| !(old <= current)}
+            # if any arguments are incomprable or smaller in the current observation
+            # either this needs to be treated as a subtype funciton (may still be able to be absorbed?)
+            # or it is incomparable. 
+            next
+          else
+            @type_successes[meth][ind][:args] = sigzip.map {|old, current| current <= old ? old : current}
+          end
+
+        elsif trace[:result] <= sig[:result]
+          # if the prev observed result is a super or the same type
+          # either 
+          sigzip = sig[:args].zip(trace[:args])
+          if sigzip.any? {|old, current| !(current <= old)}
+            # it is a call which is a subtype 
+            # or has incompararable types both seen in this guard
+            next
+          else
+            # or it is already a subtype of what we have observed. 
+            return @type_successes
+          end
+        end
+
+      end
+
+      @type_successes[trace[:method]].append(trace)
+      return @type_successes
+
+    rescue Exception => e
+      binding.pry
+      raise e
+    end
   
   end
 

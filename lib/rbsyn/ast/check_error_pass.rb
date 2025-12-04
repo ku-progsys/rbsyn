@@ -135,13 +135,27 @@ class CheckErrorPass < ::AST::Processor
       return false
     end  
 
-    template[:args].zip(signature[:args]).each {|t,s|
-      if !(s <= t) # again remove if you want it to reject potentail candidates.
-        return false
-      end
-    }
-
-    return true
+    # template[:args].zip(signature[:args]).each {|t,s|
+    #   if !(s <= t) # again remove if you want it to reject potential candidates.
+    #     return false
+    #   end
+    # }
+    # return true
+#     => 1610
+#     [2] pry(#<Synthesizer>)> work_list.sum { |w| w.inferred_errors }
+#     => 1183
+    begin
+      return template[:args].zip(signature[:args]).any? {|t,s|
+        !left_intersection_subtype(t, s)
+      }
+    rescue Exception => e 
+      binding.pry
+    end
+#     => 933
+#     [2] pry(#<Synthesizer>)> work_list.size
+#     => 1447
+#     WEIRD! THESE SHOULDN'T BE LIKE THIS
+    
 
   end
 
@@ -161,48 +175,77 @@ class CheckErrorPass < ::AST::Processor
       # for now I can't think of how to handle a vararg
       return false
     end
-    ([template[:receiver]] + template[:args]).zip(
-      ([signature[:receiver]] + signature[:args])).each {|t,s|
+    begin
+      return ([template[:receiver]] + template[:args]).zip(
+        ([signature[:receiver]] + signature[:args])).any? {|t,s|
 
-      if !iterativesuper(t, s)  # same as above, uncomment second predicate if you want it to be overzealous
-        return false
+        # t <= s || left_intersection_subtype(t, s)  # same as above, uncomment second predicate if you want it to be overzealous
+        !left_intersection_supertype(t, s)
+        #   return false
+        # end
+        } 
+      rescue Exception => e 
+        binding.pry
       end
-      } 
 
-    return true
+    #return true
 
   end
 
-  def iterativesuper(lower, upper)
-    # since our error type might have been a specific instance of a union type
-    # we must check if our type is a supertype of any of the parts of a union.
-    # this will recursively check as a union can technically have a sub-union (bad practice though.)
+  def left_intersection_subtype(lower, upper)
+    # if any of the types within a Union or \
+    #otherwise on the left are a subtype of any of the types on the right Union or otherwise. 
     if upper.is_a?(RDL::Type::UnionType)
-      upper.types.each do |i|
-        
-        if iterativesuper(i, lower)
-          return true
-        end
 
-      end
-      return false
+      u = upper.types
+    else
+      u = [upper]
     end
 
     if lower.is_a?(RDL::Type::UnionType)
-      lower.types.each do |i|
-        
-        if iterativesuper(upper, i)
-          return true
-        end
-      end
-      return false
+
+      l = lower.types
+    else 
+      l = [lower]
     end
 
-    return lower <= upper
+    return l.any? { |t_left|
+      u.any? { |t_right| t_left <= t_right }
+      }
 
   end
 
+  def left_intersection_supertype(lower, upper)
+    # if any of the types within a Union or \
+    #otherwise on the left are a subtype of any of the types on the right Union or otherwise. 
+    if upper.is_a?(RDL::Type::UnionType)
+
+      u = upper.types
+    else
+      u = [upper]
+    end
+
+    if lower.is_a?(RDL::Type::UnionType)
+
+      l = lower.types
+    else 
+      l = [lower]
+    end
+
+    return l.any? { |t_left|
+      u.any? { |t_right| t_right <= t_left  }
+      }
+
+  end
+
+  
+
+
 end
+
+
+
+
 
 
 
