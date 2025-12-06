@@ -42,6 +42,8 @@ class Reachability
 
   def paths_to_type(target, depth, variance=COVARIANT)
 
+    
+    #puts target.to_s
     curr_depth = 0
     types = types_from_tenv(@initial_tenv)
     queue = types.map { |t| CallChain.new([t], types) }
@@ -59,7 +61,9 @@ class Reachability
           #print("from reachability.rb: method: #{mthd}\n")
 
           tmeth = info[:type] 
-
+          # if mthd == :drop
+          #   binding.pry
+          # end
           targs = compute_targs(trecv, tmeth)
 
           next if targs.any? { |t| t.is_a? RDL::Type::BotType }
@@ -98,8 +102,10 @@ class Reachability
     chains.filter { |chain|
       case variance
       when COVARIANT
+
         type <= chain.last
       when CONTRAVARIANT
+
         if chain.last.is_a? RDL::Type::UnionType
           chain.last.types.any? { |t| t <= type }
         else

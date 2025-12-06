@@ -27,35 +27,40 @@ describe "Hamster" do
 
     ParentsHelper.init_list()
 
-    RDL.nowrap :"Hamster::List_1"
+    RDL.nowrap :"Hamster::LazyList_1"
     RDL.nowrap :"Hamster::LazyList_1"
     RDL.nowrap :Array
     RDL.nowrap :"%bool"
     RDL.type_params Array, [:A], :all?
-    RDL.type_params Hamster::List_1, [:E], :all?
+    RDL.type_params Hamster::LazyList_1, [:E], :all?
     RDL.nowrap :Integer
     RDL.nowrap :BasicObject
     RDL.nowrap :String
     RDL.type :Array, :size, "() -> Integer"
-    RDL.type :"Hamster::List_1", :eql?, "(Hamster::List_1) -> %bool"
+    RDL.type :"Hamster::LazyList_1", :eql?, "(Hamster::LazyList_1) -> %bool"
     RDL.type :"Integer", :==, "(Integer) -> %bool"
     RDL.type :TrueClass, :!, '() -> %bool'
     RDL.type :FalseClass, :!, '() -> %bool' 
     RDL.nowrap :DynamicType
     RDL.nowrap :TrueClass
     RDL.nowrap :FlaseClass
+
+
+
     #RDL.type :Object, :freeze, '() -> self'
 
     ## METHODS TO DECLARE AS UNKNOWNS
     #
-    # RDL.type :"Hamster::List_1", :take, "(Integer) -> Hamster::List_1"
-    # RDL.type :"Hamster::List_1", :drop, "(Integer) -> Hamster::List_1"
-    # RDL.type :Array, :<<, '(Hamster::List_1) -> Array'
+    # RDL.type :"Hamster::LazyList_1", :take, "(Integer) -> Hamster::LazyList_1"
+    # RDL.type :"Hamster::LazyList_1", :drop, "(Integer) -> Hamster::LazyList_1"
+    # RDL.type :Array, :<<, '(Hamster::LazyList_1) -> Array'
     
     
-    # RDL.type :"Hamster::List_1", :take, "(%dyn) -> %dyn"
-    # RDL.type :"Hamster::List_1", :drop, "(%dyn) -> %dyn"
+    # RDL.type :"Hamster::LazyList_1", :take, "(%dyn) -> %dyn"
+    # RDL.type :"Hamster::LazyList_1", :drop, "(%dyn) -> %dyn"
     # RDL.type :Array, :<<, '(%dyn) -> %dyn'
+
+
 
     RDL.type :"DynamicType", :take, "(%dyn) -> %dyn"
     RDL.type :"DynamicType", :drop, "(%dyn) -> %dyn"
@@ -63,14 +68,19 @@ describe "Hamster" do
 
     ParentsHelper.subtract()
 
+
+
     #solution: 
     # def split_at(arr, number)
     #  arr << take(number)
     #  arr << drop(number)
     #  arr.freeze # not sure how to implement assignment in rbsyn yet so not sure how to do freeze
     # end
+
+
+
     lst = L[*[1,2,3,4]]
-    define :split_at, "(Array, Hamster::List_1, Integer)-> Array", [], consts: :true, moi: [:take, :drop, :<<] do
+    define :split_at, "(Array, Hamster::LazyList_1, Integer)-> Array", [], consts: :true, moi: [:take, :drop, :<<] do
       
       spec "checks that prefix and remainder is correct" do
 

@@ -2,6 +2,7 @@ require "set"
 require_relative "check_error_pass"
 require "pry"
 require "pry-byebug"
+require_relative "../type_helper"
 
 class InferTypes
 
@@ -40,15 +41,10 @@ class InferTypes
     # trace form: {method, reciever, args, result, exception}
     trace = {:method => meth,:receiver => RDL::Type::NominalType.new(receiver.class.to_s),
       :args => args.map {|i| RDL::Type::NominalType.new(i.class.to_s)}, :result => nil, :except => nil} # why is this nominal type this might need to change because of generics 
-      
+
     begin
 
-      # puts "constants: \n\n"
-      # puts reciever.instance_variable_get(:columns_hash)
-      # receiver.instance_variables.each do |i|
-      #   puts i
-      # end
-      # puts "\n\n\n\n"
+
       result = receiver.public_send(meth, *args)
       
     rescue TypeError => e
@@ -110,6 +106,9 @@ class InferTypes
     
     
     trace[:result] = RDL::Type::NominalType.new(result.class.to_s)
+
+
+
     update_success(trace)
     result
 
@@ -137,7 +136,10 @@ class InferTypes
 
   def update_success(trace)
 
+    ParentsHelper.addTypeManually(trace[:receiver].to_s)
+    ParentsHelper.addTypeManually(trace[:result].to_s)
     consolidate_type_successes(trace)
+
     @type_successes
     # @type_successes[trace[:method]].each{|i|
     
@@ -153,65 +155,31 @@ class InferTypes
   end
 
   def consolidate_type_errors(trace)
-    # trace form: {method:, reciever:, args: [], result: , except: = nil}
-    # require 'pry'
-    # require 'pry-byebug'
-    # binding.pry
+
     meth = trace[:method]
     begin
-      if trace[:except].is_a?(NoMethodError)
-
-        types = @type_errs[meth].each_with_index.filter_map {|val, ind| [val, ind] if  trace[:receiver] <= val[:receiver] || val[:receiver] <= trace[:receiver]} 
-        #if new error observation is a subtype of original error observation 
-        # Check if new Method Missing observation is related to any existing obsrvations
-        if types == []
-          @type_errs[meth].append(trace)
-          return @type_errs
-        else
-          val, ind = types[0]
-        
-          if val[:receiver] <= trace[:receiver]
-            # if current observation is supertype of existing observation
-            # do nothing, error types propogate upward
-            return @type_errs
-          elsif trace[:receiver] <= val[:receiver]
-            # if current observation is subtype of existing observation
-            # replace existing entry as we can now force the error lower
-            @type_errs[meth][ind] = trace
-            return @type_errs
-          else
-            raise Exception "Wow something bad here!"
-          end
-        end
-      end
-      ##############
       
-      #################
-      @type_errs[meth].filter {|i| i[:receiver] == trace[:receiver]}.each_with_index do |sig, ind|
-        
-        if sig[:args].size != trace[:args].size
+      @type_errs[meth].each_with_index do |sig, ind|
+        if sig[:receiver] != trace[:receiver]
           next
-        else
+        end
+        if trace[:except].is_a?(NoMethodError)
+          #if we've already seen this error we don't need to update anything, method missing is method missing. 
+          return @type_errs
+        end
+        
+        if sig[:args].size == trace[:args].size
 
-          if sig[:args].zip(trace[:args]).all? { |old, current| current <= old}
-            # if arguments are all subtypes of original observaion
-            # narrow the args as errors propigate upward and this will
-            # make the error type encompass more
-            @type_errs[meth][ind][:args] = trace[:args] 
+          sigzip = sig[:args].zip(trace[:args])
+          if sigzip.all? { |old, current| current <= old || old <= current}
+            # if all arguments in the old observation are comprable to the current observation
+            # reduce each argument to the smallest smaller arguments will be expanding the incorrectness as incorrectness travels upwards. 
+            @type_errs[meth][ind][:args] = sigzip.map {|old, current| old <= current ? old : current}
+            
             return @type_errs
-          elsif sig[:args].zip(trace[:args]).all? { |old, current| old <= current}
-            # if they are all supertypes this observation falls within 
-            # already seen behavior
-            return @type_errs
-          else
-            # look at next observation
-            next
           end
         end
-        ###########
-
       end
-      # no arguments matched
 
       @type_errs[meth].append(trace)
       return @type_errs
@@ -224,49 +192,41 @@ class InferTypes
 
 
   def consolidate_type_successes(trace)
-    begin
-      meth = trace[:method]
-      @type_successes[meth].filter {|i| i[:receiver] == trace[:receiver]}.each_with_index do |sig, ind|
-          
-        if sig[:args].size != trace[:args].size
-            next
-        elsif sig[:result] <= trace[:result]
-          # if the previously observed result is the same or subtype of current observations result
-          
-          sigzip = sig[:args].zip(trace[:args])
-          if sigzip.any? {|old, current| !(old <= current)}
-            # if any arguments are incomprable or smaller in the current observation
-            # either this needs to be treated as a subtype funciton (may still be able to be absorbed?)
-            # or it is incomparable. 
-            next
-          else
-            @type_successes[meth][ind][:args] = sigzip.map {|old, current| current <= old ? old : current}
-          end
 
-        elsif trace[:result] <= sig[:result]
-          # if the prev observed result is a super or the same type
-          # either 
+    meth = trace[:method]
+    begin
+
+      @type_successes[meth].each_with_index do |sig, ind|
+        if sig[:receiver] != trace[:receiver]
+          next
+        end 
+        if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
+          temp = sig
+          # if args are correct size and returns are comprable
           sigzip = sig[:args].zip(trace[:args])
-          if sigzip.any? {|old, current| !(current <= old)}
-            # it is a call which is a subtype 
-            # or has incompararable types both seen in this guard
-            next
-          else
-            # or it is already a subtype of what we have observed. 
+          if !(sigzip.any? {|old, current| !(old <= current) && !(current <= old)})
+            # otherwise we can consider the previous observation to be a call to an instance of this function 
+            # or a more specific instance of this function (perhaps we should not fold in, but RUBY only allows one function of the same arity per reciever" 
+            @type_successes[meth][ind][:args] = sigzip.map {|old, current| current <= old ? old : current}
+            @type_successes[meth][ind][:result] = sig[:result] <= trace[:result] ? trace[:result] : sig[:result]
+            update = @type_successes[meth][ind]
+            #update RDL HERE
+
+            RDL.type update[:receiver].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
             return @type_successes
           end
         end
-
       end
 
-      @type_successes[trace[:method]].append(trace)
+      @type_successes[meth].append(trace)
+      update = @type_successes[meth][-1]
+      RDL.type update[:receiver].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
       return @type_successes
 
     rescue Exception => e
       binding.pry
       raise e
     end
-  
   end
 
 
@@ -275,7 +235,10 @@ class InferTypes
   def check_errors(ast)
     @checker.update_reset(@type_errs, @type_successes) # resetting the checker
     @checker.process(ast) # the # of errors 
-    @checker.errors
+    # binding.pry if x.is_a?(RDL::Type::DynamicType)
+    # @checker.update_reset(@type_errs, @type_successes) # resetting the checker
+    # x = @checker.process(ast) # the # of errors 
+    [@checker.errors, @checker.dynamic_components]  
 
   end
 

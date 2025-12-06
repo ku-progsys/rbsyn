@@ -3,7 +3,7 @@ class ProgWrapper
   require_relative "ast/check_error_pass"
 
   attr_reader :seed, :env, :exprs, :looking_for, :target, :inferred_errors, :exprs
-  attr_accessor :passed_asserts, :inferred_errors, :ctx, :env, :ttype
+  attr_accessor :passed_asserts, :inferred_errors, :ctx, :env, :ttype, :dynamic_components
 
   def initialize(ctx, seed, env, exprs=RDL.type_cast([], 'Array<TypedNode>', force: true))
     @ctx = ctx
@@ -14,6 +14,7 @@ class ProgWrapper
     @looking_for = :type
     @ttype = nil
     @inferred_errors = 0
+    @dynamic_components = 0
     # add the ranking for types here
   end
 
@@ -36,6 +37,7 @@ class ProgWrapper
 
   def to_ast
     pass = FlattenProgramPass.new(@ctx, @env)
+    
     ast = pass.process(@seed)
     return ast if @exprs.empty?
 
@@ -87,6 +89,7 @@ class ProgWrapper
         prog_wrap
       }
     when :effect
+
       # TODO: ordering can be done better to build candidates programs with
       # method calls that can satisfy multiple effects at once
       RDL.type_cast(@target, 'Array<String>', force: true).map { |eff|

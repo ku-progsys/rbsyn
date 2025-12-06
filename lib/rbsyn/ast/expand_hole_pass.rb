@@ -1,6 +1,7 @@
 class ExpandHolePass < ::AST::Processor
   include AST
   include TypeOperations
+
   require_relative "check_error_pass"
 
   attr_reader :expand_map, :read_effs
@@ -13,6 +14,8 @@ class ExpandHolePass < ::AST::Processor
     @ctx = ctx
     raise RbSynError, "expected LocalEnvironment" unless env.is_a? LocalEnvironment
     @env = env
+    @moi = @ctx.moi
+
   end
 
   def on_envref(node)
@@ -25,7 +28,7 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def on_hole(node)
-
+    
     depth = node.children[0]
     @params = node.children[1]
     @no_bool_consts = !@params.fetch(:bool_consts, true)
@@ -109,6 +112,7 @@ class ExpandHolePass < ::AST::Processor
 
     @expand_map << expanded.size
     s(node.ttype, :filled_hole, *expanded, {method_arg: @method_arg})
+    #BRYAN THIS IS WHERE TO MODIFY HOLES
   end
 
   def handler_missing(node)
@@ -214,8 +218,12 @@ class ExpandHolePass < ::AST::Processor
 
   def lvar(type)
     #binding.pry
+    begin
     @ctx.tenv.select { |k, v| v <= type }
       .map { |k, v| s(v, :lvar, k) }
+    rescue Exception => e 
+      binding.pry
+    end
   end
 
   def envref(type)
@@ -232,8 +240,10 @@ class ExpandHolePass < ::AST::Processor
       begin
         trecv = tokens.next
         mth = tokens.next
+
         mthds = methods_of(trecv)
         info = mthds[mth]
+
         # if mth == :exists? 
   
         #   tmeth = [RDL::Type::MethodType.new(
@@ -252,14 +262,29 @@ class ExpandHolePass < ::AST::Processor
         #   next
         # end
 
-        
+
         hole_args = targs.map { |targ| s(targ, :hole, 0, {hash_depth: @curr_hash_depth, method_arg: true}) }
-        if accum.nil?
-          accum = s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
-            mth, *hole_args)
+        #if @moi.include?(mth)
+        if @moi.include?(mth)
+          if accum.nil?
+            accum = TypedNode.new(tret, :begin, s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
+              mth, *hole_args))
+
+          else
+            raise RbSynError, "expected type" unless accum.ttype <= trecv
+            accum = TypedNode.new(tret, :begin, s(tret, :send, accum, mth, *hole_args))
+
+          end
+
+
         else
-          raise RbSynError, "expected type" unless accum.ttype <= trecv
-          accum = s(tret, :send, accum, mth, *hole_args)
+          if accum.nil?
+            accum = s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
+              mth, *hole_args)
+          else
+            raise RbSynError, "expected type" unless accum.ttype <= trecv
+            accum = s(tret, :send, accum, mth, *hole_args)
+          end
         end
       rescue StopIteration
         break

@@ -55,6 +55,15 @@ class ParentsHelper
     self.setFlag
   end
 
+
+  def self.addTypeManually(typeSigStr)
+    RDL.nowrap typeSigStr unless @@parents.include?(typeSigStr)
+    @@parents.append(typeSigStr) unless @@parents.include?(typeSigStr)
+     
+    return
+  end
+
+
   def self.getParents()
     if @@flag
       return @@parents
@@ -66,32 +75,5 @@ class ParentsHelper
   def self.setFlag()
     @@flag = true
   end
-  # def self.getParentsHelper(keyslist)
-
-  #   newlist = keyslist - 
-  #   ["[s]RDL::Globals",
-  #   "RDL::Type::Parser",
-  #   "[s]RDL::Config",
-  #   "RDL::Config",
-  #   "EmailToken",
-  #   "DiasporaPod",
-  #   "DiasporaUser",
-  #   "InvitationCode",
-  #   "GitlabDiscussion",
-  #   "GitlabMergeRequest",
-  #   "GitlabNote",
-  #   "GitlabUser",
-  #   "GitlabIssue",
-  #   "DemoUser",
-  #   "Post",
-  #   "AnotherUser",
-  #   "UserEmail",
-  #   "User",]
-  #   re = /RDL/
-  #   newlist.select! {|i|  !re.match?(i)}
-  #   require 'pry'
-  #   require 'pry-byebug'
-  #   binding.pry
-  #   return newlist
   
 end
