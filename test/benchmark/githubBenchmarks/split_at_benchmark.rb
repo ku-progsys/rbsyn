@@ -45,6 +45,9 @@ describe "Hamster" do
     RDL.nowrap :TrueClass
     RDL.nowrap :FlaseClass
 
+    RDL.type :"DynamicType", :take, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :drop, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :<<, '(%dyn) -> %dyn'
 
 
     #RDL.type :Object, :freeze, '() -> self'
@@ -62,9 +65,6 @@ describe "Hamster" do
 
 
 
-    RDL.type :"DynamicType", :take, "(%dyn) -> %dyn"
-    RDL.type :"DynamicType", :drop, "(%dyn) -> %dyn"
-    RDL.type :"DynamicType", :<<, '(%dyn) -> %dyn'
 
     ParentsHelper.subtract()
 

@@ -4,7 +4,7 @@ class ExpandHolePass < ::AST::Processor
 
   require_relative "check_error_pass"
 
-  attr_reader :expand_map, :read_effs
+  attr_reader :expand_map, :read_effs, :env
   attr_writer :effect_methds
 
   def initialize(ctx, env)
@@ -266,6 +266,7 @@ class ExpandHolePass < ::AST::Processor
         hole_args = targs.map { |targ| s(targ, :hole, 0, {hash_depth: @curr_hash_depth, method_arg: true}) }
         #if @moi.include?(mth)
         if @moi.include?(mth)
+          # adding parenthisization
           if accum.nil?
             accum = TypedNode.new(tret, :begin, s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
               mth, *hole_args))

@@ -158,14 +158,12 @@ module TypeOperations
 
   def methods_of(trecv)
 
-    # if trecv.to_s == "Hamster::List_1"
-    #   binding.pry
-    # end
+
 
     parents = parents_of(trecv)
-    if ENV["ADD_BASIC"] == "TRUE"
-      parents.append("DynamicType") unless parents.include?("DynamicType")
-    end
+    # if ENV["ADD_BASIC"] == "TRUE"
+    #   parents.append("DynamicType") unless parents.include?("DynamicType")
+    # end
     x = Hash[*parents.map { |klass|
         
         RDL::Globals.info.info[klass]

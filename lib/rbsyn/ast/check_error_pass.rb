@@ -1,13 +1,14 @@
 class CheckErrorPass < ::AST::Processor
   include TypeOperations
   require "set"
-  attr_reader :errors
+  attr_reader :errors, :dynamic_components
 
   def initialize(errs, successes)
 
     @type_errs = errs
     @type_successes = successes
     @errors = 0
+    @dynamic_components = 0
     # temp = Set[]
 
     # @type_successes.each {|i|
@@ -33,6 +34,7 @@ class CheckErrorPass < ::AST::Processor
     @type_errs = type_errs
     @type_successes = type_successes
     @errors = 0
+    @dynamic_components = 0
     # temp = Set[]
     
     # @type_successes.each {|i|
@@ -57,6 +59,9 @@ class CheckErrorPass < ::AST::Processor
   def on_send(node)
     mth = node.children[1]
     trecv = process(node.children[0]) 
+    if trecv.is_a?(RDL::Type::DynamicType)
+      @dynamic_components += 1
+    end
     return "error" if trecv.to_s == "error" #expecting a string for errors, for now
 
     targs = node.children[2 ..].map {|k|
@@ -71,14 +76,21 @@ class CheckErrorPass < ::AST::Processor
 
     
     if @type_successes.keys.include?(mth) # pass for when method is a method of interest (successes is initalized with all moi)
+      result = []
       @type_successes[mth].each {|i|
         if match_success(i, signature)
+          #BR THIS IS WHERE YOU CAN GENERATE NEW PROGRAMS!!!
           #node.update_ttype(i[:result])  # uncomment if you would like the type to be updated with the emperical  types
-          return i[:result]
+
+          if i[:result].is_a?(RDL::Type::DynamicType)
+            @dynamic_components += 1
+          end
+          return  i[:result]
+
         end
 
       }
-      
+
       @type_errs[mth].each {|i|
         # check if this matches any known errors since we have already tested sucesses we will agressively check for errors. 
         if matches_err(i, signature)  
@@ -103,6 +115,9 @@ class CheckErrorPass < ::AST::Processor
 
       begin
         tret = compute_tout(trecv, tmeth, targs)
+        if tret.is_a?(RDL::Type::DynamicType)
+          @dynamic_components += 1
+        end
         #node.update_ttype(tret)  # uncomment if you would like the type to be updated with the emperical  types
         return tret
       rescue Exception => e
@@ -114,10 +129,15 @@ class CheckErrorPass < ::AST::Processor
 
   def handler_missing(node)
 
+    if node.is_a?(TypedNode) && node.ttype.is_a?(RDL::Type::DynamicType)
+      @dynamic_components += 1
+    end
+
+
     node.updated(nil, node.children.map { |k|
       k.is_a?(TypedNode) ? process(k) : k
     })
-
+    
     return node.ttype
   end
 
@@ -145,9 +165,7 @@ class CheckErrorPass < ::AST::Processor
 #     [2] pry(#<Synthesizer>)> work_list.sum { |w| w.inferred_errors }
 #     => 1183
     begin
-      return template[:args].zip(signature[:args]).any? {|t,s|
-        !left_intersection_subtype(t, s)
-      }
+      return !(template[:args].zip(signature[:args]).any? {|t,s| !left_intersection_subtype(t, s)})
     rescue Exception => e 
       binding.pry
     end
@@ -176,14 +194,14 @@ class CheckErrorPass < ::AST::Processor
       return false
     end
     begin
-      return ([template[:receiver]] + template[:args]).zip(
+      return !(([template[:receiver]] + template[:args]).zip(
         ([signature[:receiver]] + signature[:args])).any? {|t,s|
 
         # t <= s || left_intersection_subtype(t, s)  # same as above, uncomment second predicate if you want it to be overzealous
         !left_intersection_supertype(t, s)
         #   return false
         # end
-        } 
+        } )
       rescue Exception => e 
         binding.pry
       end
@@ -209,9 +227,7 @@ class CheckErrorPass < ::AST::Processor
       l = [lower]
     end
 
-    return l.any? { |t_left|
-      u.any? { |t_right| t_left <= t_right }
-      }
+    return l.any? { |t_left| u.any? { |t_right| t_left <= t_right }}
 
   end
 
@@ -232,9 +248,7 @@ class CheckErrorPass < ::AST::Processor
       l = [lower]
     end
 
-    return l.any? { |t_left|
-      u.any? { |t_right| t_right <= t_left  }
-      }
+    return l.any? { |t_left| u.any? { |t_right| t_right <= t_left  }}
 
   end
 

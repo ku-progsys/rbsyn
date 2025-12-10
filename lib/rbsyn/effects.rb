@@ -105,7 +105,7 @@ class EffectAnalysis
       effect_union(*([klass_eff, my_eff, args].flatten))
     when :ivar, :lvar, :str, :true, :false, :const, :sym, :nil, :int, :float
       []
-    when :begin, :array
+    when :begin, :array, :hash, :pair
       effects = ast.children.map { |c| effect_of(c, env, kind) }
       effect_union(*effects.flatten)
     else
