@@ -67,7 +67,9 @@ Rake::TestTask.new(:twospecs) do |t|
   t.libs << "test"
   t.libs << "lib"
   t.libs << "models"
-  t.test_files = FileList["test/benchmark/noTypes/two_specs.rb"] 
+  t.test_files = FileList["test/benchmark/noTypes/interleave.rb",
+                          #"test/benchmark/noTypes/clamp.rb"
+                          ] 
 end
 
 
@@ -83,9 +85,6 @@ Rake::TestTask.new(:hamster) do |t|
                            #"test/benchmark/githubBenchmarks/hash_eql_benchmark.rb", # WORKING WITH TYPES
                            #"test/benchmark/githubBenchmarks/hash_get_benchmark.rb", # WORKING WITH TYPES
                            #"test/benchmark/githubBenchmarks/hash_delete_benchmark.rb", # WORKING WITH TYPES
-
-
-
                            #"test/benchmark/githubBenchmarks/span_benchmark.rb", #VERY DIFFICULT ONE MIGHT NEED ASSISTANCE FORCING ASSIGNMENT OPERATIONS TO GET IT TO WORK
                            #"test/benchmark/githubBenchmarks/partition_benchmark.rb", #THIS ONE LOOKS RATHER SIMILAR TO THE SPAN BENCHMARK
                            #"test/benchmark/githubBenchmarks/rotate_benchmark.rb", # NOT YET WORKING WITH TYPES LIKELY TOO LARGE OF A SPEC

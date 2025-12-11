@@ -31,6 +31,10 @@ class LocalEnvironment
     ref
   end
 
+  def update_expr(ref, expr)
+    @info[ref][:expr] = expr
+  end
+
   def exprs_with_type(type)
     @info.select { |k, v| v[:expr].ttype <= type }.keys
   end

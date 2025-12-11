@@ -1,6 +1,7 @@
 class ProgWrapper
   include AST
   require_relative "ast/check_error_pass"
+  require_relative "ast/refine_type_pass_v2"
 
   attr_reader :seed, :env, :exprs, :looking_for, :target, :inferred_errors, :exprs
   attr_accessor :passed_asserts, :inferred_errors, :ctx, :env, :ttype, :dynamic_components
@@ -75,19 +76,35 @@ class ProgWrapper
     when :type
 
       # send the list of suspect type args to the function that builds candidates
+      # require 'pry'
+      # require 'pry-byebug'
+      # binding.pry
       pass1 = ExpandHolePass.new(@ctx, @env)
       expanded = pass1.process(@seed)
+
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
-      expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
-        pass2 = ExtractASTPass.new(selection, @env)
+      x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
+        pass2 = ExtractASTPass.new(selection, @env) 
+
         program = update_types_pass.process(pass2.process(expanded))
         new_env = pass2.env
+
+        if program.ttype.is_a? RDL::Type::DynamicType
+
+          refiner = DynamicRefineTypes.new(@ctx, new_env)
+          program = refiner.process(program)
+          if !(program.ttype <= @target)
+            next
+          end
+        end
         prog_wrap = ProgWrapper.new(@ctx, program, new_env)
         prog_wrap.look_for(:type, @target)
         prog_wrap.passed_asserts = @passed_asserts
         
         prog_wrap
       }
+
+      x.reject(&:nil?)
     when :effect
 
       # TODO: ordering can be done better to build candidates programs with
@@ -98,6 +115,7 @@ class ProgWrapper
         pass1 = ExpandHolePass.new(@ctx, @env)
         pass1.effect_methds = methds
         expanded = pass1.process(eff_hole)
+
         expand_map = pass1.expand_map.map { |i| i.times.to_a }
         expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
           raise RbSynError, "expected only one item" unless selection.size == 1

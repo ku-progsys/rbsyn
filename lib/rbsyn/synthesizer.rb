@@ -59,6 +59,7 @@ class Synthesizer
 
         env = LocalEnvironment.new
         prog_ref = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
+        prog_ref = env.add_expr(s(RDL::Type::DynamicType.new(), :hole, 0, {variance: CONTRAVARIANT}))
         seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref), env)
         seed.look_for(:type, @ctx.functype.ret)
 
@@ -72,7 +73,7 @@ class Synthesizer
 
         @ctx.logger.debug("Found program in cache:\n#{format_ast(prog.to_ast)}")
       end
-      
+      raise Exception
       
       env = LocalEnvironment.new
       branch_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))
