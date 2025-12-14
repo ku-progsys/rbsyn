@@ -36,8 +36,9 @@ end
 class Reachability
   include TypeOperations
 
-  def initialize(initial_tenv)
+  def initialize(initial_tenv, moi)
     @initial_tenv = initial_tenv
+    @moi = moi
   end
 
   def RDLRespondTo(type, mthd)
@@ -46,7 +47,7 @@ class Reachability
       klass = type.klass
       return klass.instance_methods.include?(mthd) || klass.singleton_methods.include?(mthd)
     elsif type.is_a?(RDL::Type::UnionType)
-      # cant remember the structure right now, I will figure out shortly. 
+      # BR cant remember the structure right now, I will figure out shortly. 
       binding.pry
     elsif type.is_a?(RDL::Type::DynamicType)
       true
@@ -71,16 +72,14 @@ class Reachability
         mthds = methods_of(trecv)
         mthds.delete(:__getobj__)
         #BR added in a respond_to here so that we can avoid methods that don't actually respond. 
-        mthds = mthds.filter {|i, _| RDLRespondTo(trecv, i)} # a bit hackey though 
+        #mthds = mthds.filter {|i, _| RDLRespondTo(trecv, i)} # a bit hackey though 
         mthds.each { |mthd, info|
-
-          #print("from reachability.rb: method: #{mthd}\n")
-
+          if @moi.include?(mthd) && !RDLRespondTo(trecv, mthd)
+            next
+          end
+          
           tmeth = info[:type] 
-          # if mthd == :drop
-          #   binding.pry
-          # end
-          targs = compute_targs(trecv, tmeth)
+          targs = compute_targs(trecv, tmeth, @moi)
 
           next if targs.any? { |t| t.is_a? RDL::Type::BotType }
           begin

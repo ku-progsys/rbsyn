@@ -3,14 +3,13 @@ module TypeOperations
 
   require_relative 'type_helper'
 
-  def compute_targs(trec, tmeth)
+  def compute_targs(trec, tmeth, moi)
     # This is were you should allow it to use more than the first definition, ONLY
     # when it is an MOI. 
     # TODO: we use only the first definition, ignoring overloaded method definitions
     #puts ("from type_ops.rb compute_targs: trec #{trec}\n\n")
     type = tmeth[0]
     targs = type.args
-
 
     return targs.map { |targ| RDL::Type::DynamicType.new } if ENV.key? 'DISABLE_TYPES'
 
@@ -86,9 +85,6 @@ module TypeOperations
     when RDL::Type::OptionalType
       parents_of trecv.type
     when RDL::Type::NominalType
-      # require 'pry'
-      # require 'pry-byebug'
-      # binding.pry
       
       RDL::Util.to_class(trecv.name).ancestors.map { |klass| klass.to_s }
     when RDL::Type::FiniteHashType
@@ -96,19 +92,6 @@ module TypeOperations
     when RDL::Type::BotType
       []
     when RDL::Type::DynamicType 
-
-    #["Integer", "Bool", "BasicObject"]
-    #["Integer", "Bool"]
-    #  ["UserEmail",
-    #  "User",
-    #  "BasicObject",
-    #  "[s]ActiveRecord::Base",
-    #  "ActiveRecord_Relation",
-    #   ]
-      
-      # require 'pry'
-      # require 'pry-byebug'
-      # binding.pry
 
       ParentsHelper.getParents()
     else
