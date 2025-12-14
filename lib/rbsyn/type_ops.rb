@@ -4,7 +4,8 @@ module TypeOperations
   require_relative 'type_helper'
 
   def compute_targs(trec, tmeth)
-    # BR you should probably modify this so that we don't have to declare type params
+    # This is were you should allow it to use more than the first definition, ONLY
+    # when it is an MOI. 
     # TODO: we use only the first definition, ignoring overloaded method definitions
     #puts ("from type_ops.rb compute_targs: trec #{trec}\n\n")
     type = tmeth[0]
@@ -27,10 +28,7 @@ module TypeOperations
 
   def compute_tout(trec, tmeth, targs)
     # TODO: we use only the first definition, ignoring overloaded method definitions
-    # puts "from type-ops.rb, compute_tout, trec: #{trec}, tmeth: #{tmeth}, targs: #{targs}\n----------------\n"
-    # require 'pry'
-    # require 'pry-byebug'
-    # binding.pry
+    # BR Here is where you need to give the overloaded method definitions. 
 
     type = tmeth[0]
     return RDL::Type::DynamicType.new if ENV.key? 'DISABLE_TYPES'
@@ -161,9 +159,9 @@ module TypeOperations
 
 
     parents = parents_of(trecv)
-    # if ENV["ADD_BASIC"] == "TRUE"
-    #   parents.append("DynamicType") unless parents.include?("DynamicType")
-    # end
+      if ENV["ADD_BASIC"] == "TRUE"
+        parents.append("DynamicType") unless parents.include?("DynamicType")
+      end
     x = Hash[*parents.map { |klass|
         
         RDL::Globals.info.info[klass]

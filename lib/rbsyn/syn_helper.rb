@@ -33,6 +33,7 @@ def test_ordering(worklist)
 end
 
 def discard_impossible_types(generated, type)
+  
   generated.select { |prog_wrap|
     prog_wrap.ttype <= type
   }
@@ -44,22 +45,25 @@ module SynHelper
   def generate(seed_hole, preconds, postconds, return_all=false)
     #puts "\n\n\n------------------------------\n\n\n"
     correct_progs = []
+    # env = seed_hole.env
+    # seed = ProgWrapper.new(@ctx, s(RDL::Type::DynamicType.new(), :hole, 0, {}), env)
+    # seed.look_for(:type, RDL::Type::DynamicType.new())
 
-    env = LocalEnvironment.new
-    prog_ref = env.add_expr(s(RDL::Type::DynamicType.new(), :hole, 0, {variance: COVARIANT}))
-    dynamic_seed = ProgWrapper.new(@ctx, s(RDL::Type::DynamicType.new(), :envref, prog_ref), env)
-    dynamic_seed.look_for(:type, RDL::Type::DynamicType.new())
-    work_list = [dynamic_seed, seed_hole]
-    #counter = 0
+    work_list = [seed_hole,]
+    counter = 0
 
     until work_list.empty?
       counter += 1
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
       effect_needed = []  
-
+      puts work_list.size
+      puts counter
+      binding.pry
       generated = base.build_candidates()
+
       #generated = discard_impossible_types(generated, @ctx.functype.ret)
+
       evaluable = generated.reject &:has_hole?
 
       tempbool = false
@@ -149,6 +153,7 @@ module SynHelper
         prog_wrap.prog_size <= @ctx.max_prog_size 
         
       }
+      
       newsuccess = @ctx.type_info.newsuccess
       newerror = @ctx.type_info.newerror
       newtypes = @ctx.type_info.get_reset_newtypes
@@ -180,7 +185,7 @@ module SynHelper
       if !correct_progs.empty? && return_all
         return correct_progs
       end
-
+      
       work_list = [*work_list, *remainder_holes].sort { |a, b| comparator(a, b) }
 #      test_ordering(work_list)
       work_list

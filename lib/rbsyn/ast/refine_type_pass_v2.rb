@@ -11,8 +11,9 @@ class DynamicRefineTypes < ::AST::Processor
 
     ref = node.children[0]
     info = @env.get_expr(ref)
-    if info[:expr].ttype.is_a? RDL::Type::DynamicType
-      @env.update_expr(ref, process(info[:expr]))
+    processed = process(info[:expr])
+    if processed.ttype.is_a? RDL::Type::DynamicType
+      @env.update_expr(ref, info[:expr].update_ttype(processed.ttype))
       info = @env.get_expr(ref)
     end
     x = node.update_ttype(info[:expr].ttype)
@@ -20,7 +21,6 @@ class DynamicRefineTypes < ::AST::Processor
   end
 
   def on_send(node)
-    binding.pry
     node.updated(nil, node.children.map { |k|
       k.is_a?(TypedNode) ? process(k) : k
     })

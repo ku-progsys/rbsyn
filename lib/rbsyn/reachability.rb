@@ -40,6 +40,21 @@ class Reachability
     @initial_tenv = initial_tenv
   end
 
+  def RDLRespondTo(type, mthd)
+
+    if type.is_a?(RDL::Type::NominalType)
+      klass = type.klass
+      return klass.instance_methods.include?(mthd) || klass.singleton_methods.include?(mthd)
+    elsif type.is_a?(RDL::Type::UnionType)
+      # cant remember the structure right now, I will figure out shortly. 
+      binding.pry
+    elsif type.is_a?(RDL::Type::DynamicType)
+      true
+    else
+     false
+    end
+  end
+
   def paths_to_type(target, depth, variance=COVARIANT)
 
     
@@ -55,7 +70,8 @@ class Reachability
         trecv = path.last
         mthds = methods_of(trecv)
         mthds.delete(:__getobj__)
-
+        #BR added in a respond_to here so that we can avoid methods that don't actually respond. 
+        mthds = mthds.filter {|i, _| RDLRespondTo(trecv, i)} # a bit hackey though 
         mthds.each { |mthd, info|
 
           #print("from reachability.rb: method: #{mthd}\n")
@@ -71,14 +87,7 @@ class Reachability
             tout = compute_tout(trecv, tmeth, targs)
           rescue NoMethodError => e
             puts "NO METHOD ERROR IN #{mthd}"
-            # require 'pry'
-            # require 'binding-pry'
-            # binding.pry
 
-
-            #puts "fixed #{e}"
-            #puts "type: #{trecv},\ntmeth: #{tmeth},\ntargs: #{targs}"
-            #puts "methd: #{mthd}n\n\n"
             next
           end
           # convert :self types to actual object

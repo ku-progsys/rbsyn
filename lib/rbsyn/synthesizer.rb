@@ -58,9 +58,11 @@ class Synthesizer
       if prog.nil?
 
         env = LocalEnvironment.new
-        prog_ref = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
-        prog_ref = env.add_expr(s(RDL::Type::DynamicType.new(), :hole, 0, {variance: CONTRAVARIANT}))
-        seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref), env)
+
+        prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
+       
+        seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
+        
         seed.look_for(:type, @ctx.functype.ret)
 
 

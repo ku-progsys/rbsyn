@@ -28,7 +28,7 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def on_hole(node)
-    
+    #binding.pry
     depth = node.children[0]
     @params = node.children[1]
     @no_bool_consts = !@params.fetch(:bool_consts, true)
@@ -109,6 +109,9 @@ class ExpandHolePass < ::AST::Processor
     # TODO: we don't do this if we are synthesizing for effects, will do after
     # effect reachability graph is implemented
     expanded << s(node.ttype, :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth)
+    # if !node.ttype.is_a?(RDL::Type::DynamicType)
+    #   expanded << s(RDL::Type::DynamicType.new(), :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth)
+    # end
 
     @expand_map << expanded.size
     s(node.ttype, :filled_hole, *expanded, {method_arg: @method_arg})
@@ -217,13 +220,10 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def lvar(type)
-    #binding.pry
-    begin
+
     @ctx.tenv.select { |k, v| v <= type }
       .map { |k, v| s(v, :lvar, k) }
-    rescue Exception => e 
-      binding.pry
-    end
+
   end
 
   def envref(type)
@@ -242,6 +242,8 @@ class ExpandHolePass < ::AST::Processor
         mth = tokens.next
 
         mthds = methods_of(trecv)
+        # BRYAN this is where you need to allow for multiple return signatures. 
+        # and update to allow for it. 
         info = mthds[mth]
 
         # if mth == :exists? 

@@ -74,33 +74,35 @@ class ProgWrapper
     update_types_pass = RefineTypesPass.new
     case @looking_for
     when :type
-
+      # binding.pry
       # send the list of suspect type args to the function that builds candidates
       # require 'pry'
       # require 'pry-byebug'
       # binding.pry
       pass1 = ExpandHolePass.new(@ctx, @env)
+      
       expanded = pass1.process(@seed)
 
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
       x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
         pass2 = ExtractASTPass.new(selection, @env) 
-
-        program = update_types_pass.process(pass2.process(expanded))
+        temp = pass2.process(expanded)
+        program = update_types_pass.process(temp)
         new_env = pass2.env
 
-        if program.ttype.is_a? RDL::Type::DynamicType
+        
 
-          refiner = DynamicRefineTypes.new(@ctx, new_env)
-          program = refiner.process(program)
-          if !(program.ttype <= @target)
-            next
-          end
+        refiner = DynamicRefineTypes.new(@ctx, new_env)
+        #BR, this is where you should really be counting the number of dynamic types. ???
+        #even the number of errors??
+        program = refiner.process(program)
+        if !(program.ttype <= @target)
+          next
         end
+        
         prog_wrap = ProgWrapper.new(@ctx, program, new_env)
         prog_wrap.look_for(:type, @target)
         prog_wrap.passed_asserts = @passed_asserts
-        
         prog_wrap
       }
 
