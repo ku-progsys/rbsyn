@@ -46,9 +46,12 @@ class Reachability
     if type.is_a?(RDL::Type::NominalType)
       klass = type.klass
       return klass.instance_methods.include?(mthd) || klass.singleton_methods.include?(mthd)
+    elsif type.is_a?(RDL::Type::SingletonType)
+      val = type.val
+      return val.singleton_methods.include?(mthd)
     elsif type.is_a?(RDL::Type::UnionType)
-      # BR cant remember the structure right now, I will figure out shortly. 
-      binding.pry
+
+      type.types.any? {|t| RDLRespondTo(t, mthd)}
     elsif type.is_a?(RDL::Type::DynamicType)
       true
     else
@@ -78,24 +81,32 @@ class Reachability
             next
           end
           
-          tmeth = info[:type] 
-          targs = compute_targs(trecv, tmeth, @moi)
+          tmeth = info[:type]
+          is_moi = @moi.include?(mthd)
+          targs = compute_targs(trecv, tmeth,is_moi)
+          
+          tout = []
+          targs.each do |targs|
+            next if targs.any? { |t| t.is_a? RDL::Type::BotType }
 
-          next if targs.any? { |t| t.is_a? RDL::Type::BotType }
-          begin
-            tout = compute_tout(trecv, tmeth, targs)
-          rescue NoMethodError => e
-            puts "NO METHOD ERROR IN #{mthd}"
-
-            next
+            begin
+              x = compute_tout(trecv, tmeth, targs)
+              tout << x unless tout.include?(x)
+            rescue NoMethodError => e
+              puts "NO METHOD ERROR IN #{mthd}"
+              next
+            end
           end
+          next if tout == []
           # convert :self types to actual object
           # if mthd.to_s == "make_splitter" or mthd.to_s == "<<"
           #   binding.pry
           # end
-          tout = trecv if tout.is_a?(RDL::Type::VarType) && tout.name == :self
-          new_tenv = make_new_tenv(tout, path.tenv)
-          new_queue << CallChain.new(path.path + [mthd, tout], new_tenv)
+          tout.each do |t|
+            t = trecv if t.is_a?(RDL::Type::VarType) && t.name == :self
+            new_tenv = make_new_tenv(t, path.tenv)
+            new_queue << CallChain.new(path.path + [mthd, t], new_tenv)
+          end
         }
         
       }

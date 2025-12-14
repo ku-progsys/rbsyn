@@ -97,14 +97,18 @@ class ExpandHolePass < ::AST::Processor
 
       r = Reachability.new(@ctx.tenv, @moi)
       paths = r.paths_to_type(node.ttype, depth, @variance)
-      expanded.concat paths.map { |path| fn_call(path) }
+      temp = paths.map { |path| fn_call(path) }.flatten
+      
+      #binding.pry
+      expanded.concat temp
+
 
     elsif depth == 1 && @effect
       expanded.concat effects
     else
       raise RbSynError, "unexpected"
     end
-
+    #binding.pry
     # synthesize a hole with higher depth
     # TODO: we don't do this if we are synthesizing for effects, will do after
     # effect reachability graph is implemented
@@ -234,8 +238,8 @@ class ExpandHolePass < ::AST::Processor
 
   def fn_call(path)
     tokens = path.path.to_enum
-    
-    accum = nil
+    accum_1 = nil
+    nested_accum = [accum_1]
     loop {
       begin
         trecv = tokens.next
@@ -257,43 +261,50 @@ class ExpandHolePass < ::AST::Processor
         # end
 
         # begin
-        targs = compute_targs(trecv, tmeth, @moi)
-        tret = compute_tout(trecv, tmeth, targs)
-        # rescue Exception => e  
-          
-        #   next
-        # end
+        is_moi = @moi.include?(mth)
+        targs_1 = compute_targs(trecv, tmeth, is_moi)
+
+        new_nesting = []
+        targs_1.each do |targs|
+          tret = compute_tout(trecv, tmeth, targs)
+
+          hole_args = targs.map { |targ| s(targ, :hole, 0, {hash_depth: @curr_hash_depth, method_arg: true}) }
+          temp_nested_accum = copied = Marshal.load(Marshal.dump(nested_accum))
+          temp_nested_accum.each do |accum|
+            if @moi.include?(mth)
+              # adding parenthisization
+              if accum.nil?
+                accum = TypedNode.new(tret, :begin, s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
+                  mth, *hole_args))
+
+              else
+                raise RbSynError, "expected type" unless accum.ttype <= trecv
+                accum = TypedNode.new(tret, :begin, s(tret, :send, accum, mth, *hole_args))
+
+              end
 
 
-        hole_args = targs.map { |targ| s(targ, :hole, 0, {hash_depth: @curr_hash_depth, method_arg: true}) }
-        #if @moi.include?(mth)
-        if @moi.include?(mth)
-          # adding parenthisization
-          if accum.nil?
-            accum = TypedNode.new(tret, :begin, s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
-              mth, *hole_args))
+            else
+              if accum.nil?
+                accum = s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
+                  mth, *hole_args)
+              else
+                raise RbSynError, "expected type" unless accum.ttype <= trecv
+                accum = s(tret, :send, accum, mth, *hole_args)
+              end
+            end
 
-          else
-            raise RbSynError, "expected type" unless accum.ttype <= trecv
-            accum = TypedNode.new(tret, :begin, s(tret, :send, accum, mth, *hole_args))
-
-          end
-
-
-        else
-          if accum.nil?
-            accum = s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
-              mth, *hole_args)
-          else
-            raise RbSynError, "expected type" unless accum.ttype <= trecv
-            accum = s(tret, :send, accum, mth, *hole_args)
+            new_nesting << accum
+            #binding.pry
           end
         end
+        nested_accum = new_nesting
+
       rescue StopIteration
         break
       end
     }
-    accum
+    nested_accum
   end
 
   def finite_hash(type)

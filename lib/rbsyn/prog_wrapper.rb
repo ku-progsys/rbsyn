@@ -74,16 +74,13 @@ class ProgWrapper
     update_types_pass = RefineTypesPass.new
     case @looking_for
     when :type
-      # binding.pry
-      # send the list of suspect type args to the function that builds candidates
-      # require 'pry'
-      # require 'pry-byebug'
-      # binding.pry
+
       pass1 = ExpandHolePass.new(@ctx, @env)
       
       expanded = pass1.process(@seed)
 
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
+      #binding.pry
       x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
         pass2 = ExtractASTPass.new(selection, @env) 
         temp = pass2.process(expanded)

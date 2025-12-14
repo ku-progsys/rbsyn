@@ -3,26 +3,33 @@ module TypeOperations
 
   require_relative 'type_helper'
 
-  def compute_targs(trec, tmeth, moi)
+  def compute_targs(trec, tmeth, is_moi=false)
     # This is were you should allow it to use more than the first definition, ONLY
     # when it is an MOI. 
     # TODO: we use only the first definition, ignoring overloaded method definitions
     #puts ("from type_ops.rb compute_targs: trec #{trec}\n\n")
-    type = tmeth[0]
-    targs = type.args
+    #type = tmeth[0]
+    if !is_moi
+      targs = [tmeth[0].args]
+    else
+      targs = tmeth.map {|t| t.args }
+    end
 
-    return targs.map { |targ| RDL::Type::DynamicType.new } if ENV.key? 'DISABLE_TYPES'
+    return targs.map {|t| t.map { |targ| RDL::Type::DynamicType.new }} if ENV.key? 'DISABLE_TYPES'
 
-    targs.map { |targ|
-      case targ
-      when RDL::Type::ComputedType
-        bind = Class.new.class_eval { binding }
-        bind.local_variable_set(:trec, trec)
-        targ.compute(bind)
-      else
-        targ
-      end
+    targs.map {|t| 
+      t.map { |targ|
+        case targ
+        when RDL::Type::ComputedType
+          bind = Class.new.class_eval { binding }
+          bind.local_variable_set(:trec, trec)
+          targ.compute(bind)
+        else
+          targ
+        end
+      }
     }
+
   end
 
   def compute_tout(trec, tmeth, targs)

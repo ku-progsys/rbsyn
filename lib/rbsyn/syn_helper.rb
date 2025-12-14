@@ -57,11 +57,11 @@ module SynHelper
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
       effect_needed = []  
-      puts work_list.size
-      puts counter
-      binding.pry
-      generated = base.build_candidates()
 
+      
+
+      generated = base.build_candidates()
+      binding.pry
       #generated = discard_impossible_types(generated, @ctx.functype.ret)
 
       evaluable = generated.reject &:has_hole?
