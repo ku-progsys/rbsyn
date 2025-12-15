@@ -281,9 +281,7 @@ class InferTypes
         end 
         puts "here"
         puts sig
-        if sig[:recvr] == RDL::Type::NominalType.new("Integer") && meth == :<<
-          binding.pry
-        end
+
         if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
           temp = sig
           # if args are correct size and returns are comprable
@@ -301,6 +299,12 @@ class InferTypes
             update = @type_successes[meth][ind]
             @newsuccess = true
             @new_types << update
+            RDL::Globals.info.info[update[:result].to_s][meth][:type].each_with_index do |type, index|
+              if type.args.zip(update[:args]).all? {|left, right| left == right} && type.returns == update[:result] 
+                RDL::Globals.info.info[update[:result].to_s][meth][:type].pop(index)
+                RDL::Globals.info.info[update[:result].to_s][meth][:effect].pop(index)
+              end  
+            end
 
             RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
             return @type_successes

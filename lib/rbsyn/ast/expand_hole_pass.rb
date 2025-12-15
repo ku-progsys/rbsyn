@@ -263,9 +263,9 @@ class ExpandHolePass < ::AST::Processor
         # begin
         is_moi = @moi.include?(mth)
         targs_1 = compute_targs(trecv, tmeths, is_moi)
-        # if is_moi 
-        #   binding.pry
-        # end
+        if is_moi && targs_1.size > 1 
+          binding.pry
+        end
         new_nesting = []
         targs_1.zip(tmeths[0 .. targs_1.size]).each do |targs, tmeth|
           
