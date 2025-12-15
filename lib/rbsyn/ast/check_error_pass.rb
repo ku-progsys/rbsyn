@@ -70,7 +70,7 @@ class CheckErrorPass < ::AST::Processor
     }
     return "error" if targs.map {|i| i.to_s}.include?("error")
     # return error if any of the children are in error (without incrementing the number of errors found)
-    signature = {:receiver => trecv, 
+    signature = {:recvr => trecv, 
       :args => targs,
       :method => mth}
 
@@ -147,7 +147,7 @@ class CheckErrorPass < ::AST::Processor
     
     if template[:args].size != signature[:args].size
       return false
-    elsif !(signature[:receiver] <= template[:receiver])  # comment if you want it to be non-conservative in what it rejects
+    elsif !(signature[:recvr] <= template[:recvr])  # comment if you want it to be non-conservative in what it rejects
       # TODO clean comment and put in readme or experiemental log
       # we aren't using liskov, we are not trying to find out if an unknown function
       # is a subtype, we are trying to find out if a known function is being used 
@@ -184,7 +184,7 @@ class CheckErrorPass < ::AST::Processor
 
     # this might be a mistake as there might be variable size arguments. 
     if template[:args] == :ALL #this is where there is a method missing error
-      if template[:receiver] == signature[:receiver]
+      if template[:recvr] == signature[:recvr]
         #puts "testing function on template: #{template}\n\n\nsignature: #{signature}\n\n"
         return true
       end
@@ -194,8 +194,8 @@ class CheckErrorPass < ::AST::Processor
       return false
     end
     begin
-      return !(([template[:receiver]] + template[:args]).zip(
-        ([signature[:receiver]] + signature[:args])).any? {|t,s|
+      return !(([template[:recvr]] + template[:args]).zip(
+        ([signature[:recvr]] + signature[:args])).any? {|t,s|
 
         # t <= s || left_intersection_subtype(t, s)  # same as above, uncomment second predicate if you want it to be overzealous
         !left_intersection_supertype(t, s)

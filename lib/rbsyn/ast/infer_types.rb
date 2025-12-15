@@ -39,16 +39,16 @@ class InferTypes
 
   end
 
-  def w_instrument(receiver, meth, *args)
+  def w_instrument(recvr, meth, *args)
 
     # trace form: {method, reciever, args, result, exception}
-    trace = {:method => meth,:receiver => RDL::Type::NominalType.new(receiver.class.to_s),
+    trace = {:method => meth,:recvr => RDL::Type::NominalType.new(recvr.class.to_s),
       :args => args.map {|i| RDL::Type::NominalType.new(i.class.to_s)}, :result => nil, :except => nil} # why is this nominal type this might need to change because of generics 
 
     begin
 
 
-      result = receiver.public_send(meth, *args)
+      result = recvr.public_send(meth, *args)
       
     rescue TypeError => e
       if !@set_exception 
@@ -139,7 +139,7 @@ class InferTypes
 
   def update_success(trace)
 
-    ParentsHelper.addTypeManually(trace[:receiver].to_s)
+    ParentsHelper.addTypeManually(trace[:recvr].to_s)
     ParentsHelper.addTypeManually(trace[:result].to_s)
     consolidate_type_successes(trace)
 
@@ -163,7 +163,7 @@ class InferTypes
 
       
   #   @type_errs[meth].each_with_index do |sig, ind|
-  #     if sig[:receiver] != trace[:receiver]
+  #     if sig[:recvr] != trace[:recvr]
   #       next
   #     end
   #     if trace[:except].is_a?(NoMethodError)
@@ -197,7 +197,7 @@ class InferTypes
     begin
       
       @type_errs[meth].each_with_index do |sig, ind|
-        if sig[:receiver] != trace[:receiver]
+        if sig[:recvr] != trace[:recvr]
           next
         end
         if trace[:except].is_a?(NoMethodError) || trace[:except].is_a?(NameError)
@@ -240,7 +240,7 @@ class InferTypes
 
 
   #   @type_successes[meth].each_with_index do |sig, ind|
-  #     if sig[:receiver] != trace[:receiver]
+  #     if sig[:recvr] != trace[:recvr]
   #       next
   #     end 
   #     if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
@@ -256,7 +256,7 @@ class InferTypes
   #         update = @type_successes[meth][ind]
   #         @new_types << update
 
-  #         RDL.type update[:receiver].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
+  #         RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
   #         return @type_successes
   #       end
   #     end
@@ -264,7 +264,7 @@ class InferTypes
   #   @newsuccess = true
   #   @new_types << trace
   #   @type_successes[meth].append(trace)
-  #   RDL.type trace[:receiver].to_s, meth, "(#{trace[:args].map(&:to_s).join(', ')}) -> #{trace[:result].to_s}"
+  #   RDL.type trace[:recvr].to_s, meth, "(#{trace[:args].map(&:to_s).join(', ')}) -> #{trace[:result].to_s}"
   #   return @type_successes
 
 
@@ -276,14 +276,23 @@ class InferTypes
     begin
 
       @type_successes[meth].each_with_index do |sig, ind|
-        if sig[:receiver] != trace[:receiver]
+        if sig[:recvr] != trace[:recvr]
           next
         end 
+        puts "here"
+        puts sig
+        if sig[:recvr] == RDL::Type::NominalType.new("Integer") && meth == :<<
+          binding.pry
+        end
         if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
           temp = sig
           # if args are correct size and returns are comprable
           sigzip = sig[:args].zip(trace[:args])
-          if !(sigzip.any? {|old, current| !(old <= current) && !(current <= old)})
+          if !(sigzip.any? {|old, current| old != current})
+            return @type_successes
+          end
+
+          if !(sigzip.any? {|old, current| !(old <= current) && !(current <= old)}) 
 
             # otherwise we can consider the previous observation to be a call to an instance of this function 
             # or a more specific instance of this function (perhaps we should not fold in, but RUBY only allows one function of the same arity per reciever" 
@@ -293,7 +302,7 @@ class InferTypes
             @newsuccess = true
             @new_types << update
 
-            RDL.type update[:receiver].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
+            RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
             return @type_successes
           end
         end
@@ -303,7 +312,7 @@ class InferTypes
       update = @type_successes[meth][-1]
       @newsuccess = true
       @new_types << update
-      RDL.type update[:receiver].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
+      RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
       return @type_successes
 
     rescue Exception => e
@@ -326,7 +335,7 @@ class InferTypes
 
   def type_to_s(type)
   
-    t = type[:receiver].to_s 
+    t = type[:recvr].to_s 
     
     if !type[:method].nil?
       t = "#{t} :#{type[:method]}"

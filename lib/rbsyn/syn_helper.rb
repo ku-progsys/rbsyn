@@ -65,9 +65,9 @@ module SynHelper
       
 
       generated = base.build_candidates()
-      puts "\n\nBASE : \n#{base.to_ast}"
-      puts "\nTTYPE: #{base.ttype}"
-      binding.pry
+      # puts "\n\nBASE : \n#{base.to_ast}"
+      # puts "\nTTYPE: #{base.ttype}"
+      # binding.pry
       #generated = discard_impossible_types(generated, @ctx.functype.ret)
 
       evaluable = generated.reject &:has_hole?
