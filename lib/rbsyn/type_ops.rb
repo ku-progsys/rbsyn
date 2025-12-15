@@ -14,7 +14,9 @@ module TypeOperations
     else
       targs = tmeth.map {|t| t.args }
     end
-
+    # if targs.size > 1
+    #   binding.pry
+    # end
     return targs.map {|t| t.map { |targ| RDL::Type::DynamicType.new }} if ENV.key? 'DISABLE_TYPES'
 
     targs.map {|t| 
@@ -32,38 +34,46 @@ module TypeOperations
 
   end
 
-  def compute_tout(trec, tmeth, targs)
+  def compute_tout(trec, tmethod, targs)
+
     # TODO: we use only the first definition, ignoring overloaded method definitions
     # BR Here is where you need to give the overloaded method definitions. 
-
-    type = tmeth[0]
-    return RDL::Type::DynamicType.new if ENV.key? 'DISABLE_TYPES'
-
-    tret = type.ret
     
-    case tret
-    when RDL::Type::ComputedType
-      bind = Class.new.class_eval { binding }
-      bind.local_variable_set(:trec, trec)
-      bind.local_variable_set(:targs, targs)
-      tret.compute(bind)
-    
-    when RDL::Type::DynamicType
-      
-      RDL::Type::DynamicType.new()
+    tmethod.each do |type|
 
-    when RDL::Type::VarType
-      if tret.name == :self
-        trec
-      else
-
-        params = RDL::Wrap.get_type_params(trec.base.to_s)[0]
-        idx = params.index(tret.name)
-        raise RbSynError, "unexpected" if idx.nil?
-        trec.params[idx]
+      if targs.zip(type.args).any? {|actual, prescribed| !(actual <= prescribed)}
+        next
       end
-    else
-      tret
+
+      #type = tmeth[0]
+      return RDL::Type::DynamicType.new if ENV.key? 'DISABLE_TYPES'
+
+      tret = type.ret
+      
+      case tret
+      when RDL::Type::ComputedType
+        bind = Class.new.class_eval { binding }
+        bind.local_variable_set(:trec, trec)
+        bind.local_variable_set(:targs, targs)
+        return tret.compute(bind)
+      
+      when RDL::Type::DynamicType
+        
+        return RDL::Type::DynamicType.new()
+
+      when RDL::Type::VarType
+        if tret.name == :self
+          return trec
+        else
+
+          params = RDL::Wrap.get_type_params(trec.base.to_s)[0]
+          idx = params.index(tret.name)
+          raise RbSynError, "unexpected" if idx.nil?
+          return trec.params[idx]
+        end
+      else
+        return tret
+      end
     end
   end
 
@@ -144,6 +154,18 @@ module TypeOperations
     tenv.values.to_set
   end
 
+
+  def merge_methods(left, right)
+    merged = Marshal.load(Marshal.dump(left))
+    right[:type].zip(right[:effect]).map {|type, effect| 
+      if !(merged[:type].any? {|t| t.args == type.args})
+        merged[:type].append(type)
+        merged[:effect].append(effect)
+      end
+    }
+    merged
+  end
+
   def methods_of(trecv)
 
 
@@ -152,11 +174,29 @@ module TypeOperations
       if ENV["ADD_BASIC"] == "TRUE"
         parents.append("DynamicType") unless parents.include?("DynamicType")
       end
-    x = Hash[*parents.map { |klass|
+    # x = Hash[*parents.map { |klass|
         
-        RDL::Globals.info.info[klass]
-      }.reject(&:nil?).collect { |h| h.to_a }.flatten]
+    #     RDL::Globals.info.info[klass]
+    #   }.reject(&:nil?).collect { |h| h.to_a }.flatten]
+  
+    x = parents.reduce({}) {|acc, klass| 
+      methods = RDL::Globals.info.info[klass]
+      if methods == nil
+        acc
+      else
+        methods.reduce(acc) {|ac, (key, val)|
+          if acc.has_key?(key)
+            acc[key] = merge_methods(acc[key], val) 
+          else
+            acc[key] = val
+          end
+          acc
+        }
+        
+      end
+    }
+    
 
-    x
+    
   end
 end

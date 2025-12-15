@@ -257,16 +257,19 @@ class ExpandHolePass < ::AST::Processor
         #     nil,
         #     RDL::Type::DynamicType.new)]
         # else
-        tmeth = info[:type]
+        tmeths = info[:type]
         # end
 
         # begin
         is_moi = @moi.include?(mth)
-        targs_1 = compute_targs(trecv, tmeth, is_moi)
-
+        targs_1 = compute_targs(trecv, tmeths, is_moi)
+        if is_moi 
+          binding.pry
+        end
         new_nesting = []
-        targs_1.each do |targs|
-          tret = compute_tout(trecv, tmeth, targs)
+        targs_1.zip(tmeths[0 .. targs_1.size]).each do |targs, tmeth|
+          
+          tret = compute_tout(trecv, [tmeth], targs)
 
           hole_args = targs.map { |targ| s(targ, :hole, 0, {hash_depth: @curr_hash_depth, method_arg: true}) }
           temp_nested_accum = copied = Marshal.load(Marshal.dump(nested_accum))

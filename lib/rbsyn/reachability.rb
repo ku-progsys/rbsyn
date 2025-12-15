@@ -50,7 +50,6 @@ class Reachability
       val = type.val
       return val.singleton_methods.include?(mthd)
     elsif type.is_a?(RDL::Type::UnionType)
-
       type.types.any? {|t| RDLRespondTo(t, mthd)}
     elsif type.is_a?(RDL::Type::DynamicType)
       true
@@ -81,18 +80,22 @@ class Reachability
             next
           end
           
-          tmeth = info[:type]
+          tmeths = info[:type]
           is_moi = @moi.include?(mthd)
-          targs = compute_targs(trecv, tmeth,is_moi)
+          targs_1 = compute_targs(trecv, tmeths,is_moi)
           
           tout = []
-          targs.each do |targs|
+          # if (tmeths.size > 1) && is_moi
+          #   binding.pry
+          # end
+          targs_1.zip(tmeths[0 .. targs_1.size]).each do |targs, tmeth|
             next if targs.any? { |t| t.is_a? RDL::Type::BotType }
 
             begin
-              x = compute_tout(trecv, tmeth, targs)
+              x = compute_tout(trecv, [tmeth], targs)
               tout << x unless tout.include?(x)
             rescue NoMethodError => e
+              binding.pry
               puts "NO METHOD ERROR IN #{mthd}"
               next
             end

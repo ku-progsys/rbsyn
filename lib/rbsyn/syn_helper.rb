@@ -32,12 +32,16 @@ def test_ordering(worklist)
   end
 end
 
+
 def discard_impossible_types(generated, type)
   
   generated.select { |prog_wrap|
     prog_wrap.ttype <= type
   }
 end
+
+
+
 
 module SynHelper
   include TypeOperations
@@ -61,6 +65,8 @@ module SynHelper
       
 
       generated = base.build_candidates()
+      puts "\n\nBASE : \n#{base.to_ast}"
+      puts "\nTTYPE: #{base.ttype}"
       binding.pry
       #generated = discard_impossible_types(generated, @ctx.functype.ret)
 
