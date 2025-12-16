@@ -3,7 +3,7 @@ class ExpandHolePass < ::AST::Processor
   include TypeOperations
 
   require_relative "check_error_pass"
-
+  require_relative "ttype_print"
   attr_reader :expand_map, :read_effs, :env
   attr_writer :effect_methds
 
@@ -15,6 +15,7 @@ class ExpandHolePass < ::AST::Processor
     raise RbSynError, "expected LocalEnvironment" unless env.is_a? LocalEnvironment
     @env = env
     @moi = @ctx.moi
+
 
   end
 
@@ -30,6 +31,7 @@ class ExpandHolePass < ::AST::Processor
   def on_hole(node)
     #binding.pry
     depth = node.children[0]
+
     @params = node.children[1]
     @no_bool_consts = !@params.fetch(:bool_consts, true)
     @curr_hash_depth = @params.fetch(:hash_depth, 0)
@@ -88,7 +90,13 @@ class ExpandHolePass < ::AST::Processor
       # receivers are not hashes for now
       if node.ttype.is_a?(RDL::Type::FiniteHashType) && @curr_hash_depth < @ctx.max_hash_depth && !@recv
         expanded.concat finite_hash(node.ttype)
+        
       end
+
+      # if ENV["HOLE_ZERO"] == "TRUE"
+      #   expanded.concat [s(RDL::Type::DynamicType.new(), :hole, 1, { bool_consts: false})]
+      #   ENV["HOLE_ZERO"] == "FALSE"
+      # end
 
       # possibly reusable subexpressions
       expanded.concat envref(node.ttype)
@@ -96,23 +104,23 @@ class ExpandHolePass < ::AST::Processor
       # synthesize function calls
 
       r = Reachability.new(@ctx.tenv, @moi)
-      paths = r.paths_to_type(node.ttype, depth, @variance)
-      temp = paths.map { |path| fn_call(path) }.flatten
-      
-      #binding.pry
-      expanded.concat temp
 
+      paths = r.paths_to_type(node.ttype, depth, @variance)
+      expanded.concat paths.map { |path| fn_call(path) }.flatten
+      
 
     elsif depth == 1 && @effect
       expanded.concat effects
     else
       raise RbSynError, "unexpected"
     end
+
     #binding.pry
     # synthesize a hole with higher depth
     # TODO: we don't do this if we are synthesizing for effects, will do after
     # effect reachability graph is implemented
     expanded << s(node.ttype, :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth)
+
     # if !node.ttype.is_a?(RDL::Type::DynamicType)
     #   expanded << s(RDL::Type::DynamicType.new(), :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth)
     # end
@@ -237,12 +245,16 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def fn_call(path)
+    # puts "\nBEGIN"
+    # puts "path: #{path.path}"
     tokens = path.path.to_enum
     accum_1 = nil
     nested_accum = [accum_1]
+
     loop {
       begin
         trecv = tokens.next
+
         mth = tokens.next
 
         mthds = methods_of(trecv)
@@ -250,22 +262,19 @@ class ExpandHolePass < ::AST::Processor
         # and update to allow for it. 
         info = mthds[mth]
 
-        # if mth == :exists? 
-  
-        #   tmeth = [RDL::Type::MethodType.new(
-        #     [RDL::Type::ComputedType.new("DBTypes.schema_type(trec)")],
-        #     nil,
-        #     RDL::Type::DynamicType.new)]
-        # else
         tmeths = info[:type]
         # end
 
         # begin
         is_moi = @moi.include?(mth)
         targs_1 = compute_targs(trecv, tmeths, is_moi)
-        if is_moi && targs_1.size > 1 
-          binding.pry
-        end
+        # puts mth
+        # puts targs_1.size
+        # puts "----------"
+
+        # if mth == :<< && @ctx.type_info.type_successes[mth].filter {|i| i[:recvr] == trecv}.size == 1
+        #   binding.pry
+        # end
         new_nesting = []
         targs_1.zip(tmeths[0 .. targs_1.size]).each do |targs, tmeth|
           
@@ -274,18 +283,22 @@ class ExpandHolePass < ::AST::Processor
           hole_args = targs.map { |targ| s(targ, :hole, 0, {hash_depth: @curr_hash_depth, method_arg: true}) }
           temp_nested_accum = copied = Marshal.load(Marshal.dump(nested_accum))
           temp_nested_accum.each do |accum|
+
             if @moi.include?(mth)
               # adding parenthisization
+              
               if accum.nil?
+                
                 accum = TypedNode.new(tret, :begin, s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
                   mth, *hole_args))
+                
 
               else
                 raise RbSynError, "expected type" unless accum.ttype <= trecv
                 accum = TypedNode.new(tret, :begin, s(tret, :send, accum, mth, *hole_args))
+                
 
               end
-
 
             else
               if accum.nil?
@@ -303,10 +316,25 @@ class ExpandHolePass < ::AST::Processor
         end
         nested_accum = new_nesting
 
+
+
       rescue StopIteration
         break
       end
     }
+    
+
+    
+    # nested_accum.each do |i|
+
+
+    #   tt = TTypePrint.new()
+    #   tt.process(i)
+    #   puts tt.stack.join(" ")
+    #   puts "#####"
+
+    # end
+    # puts "END--------------\n"
     nested_accum
   end
 

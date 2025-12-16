@@ -71,16 +71,19 @@ describe "Hamster" do
 
 
     #solution: 
-    # def split_at(arr, number)
-    #  arr << take(number)
-    #  arr << drop(number)
+    # def split_at(arr, Hlist,  number)
+    #  arr << Hlist.take(number)
+    #  arr << Hlist.drop(number)
     #  arr.freeze # not sure how to implement assignment in rbsyn yet so not sure how to do freeze
     # end
 
 
+    # arr << take(Int)
+
+
 
     lst = L[*[1,2,3,4]]
-    define :split_at, "(Array, Hamster::LazyList_1, Integer)-> Array", [], consts: :true, moi: [:take, :drop, :<<] do
+    define :split_at, "(Array, Hamster::LazyList_1, Integer)-> Array<Hamster::LazyList_1>", [], consts: :true, moi: [:take, :drop, :<<] do
       
       spec "checks that prefix and remainder is correct" do
 

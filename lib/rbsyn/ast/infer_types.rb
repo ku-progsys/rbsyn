@@ -144,52 +144,12 @@ class InferTypes
     consolidate_type_successes(trace)
 
     @type_successes
-    # @type_successes[trace[:method]].each{|i|
-    
-    #   if compare_hashes(i, trace)
-    #     return
-    #   end
-    # }
-    
-    # @updated = true
-    # @type_successes[trace[:method]].append(trace)
+
       
 
   end
 
-  # def consolidate_type_errors(trace)
 
-  #   meth = trace[:method]
-
-      
-  #   @type_errs[meth].each_with_index do |sig, ind|
-  #     if sig[:recvr] != trace[:recvr]
-  #       next
-  #     end
-  #     if trace[:except].is_a?(NoMethodError)
-  #       #if we've already seen this error we don't need to update anything, method missing is method missing. 
-  #       return @type_errs
-  #     end
-      
-  #     if sig[:args].size == trace[:args].size
-
-  #       sigzip = sig[:args].zip(trace[:args])
-  #       if sigzip.all? { |old, current| (current <= old || old <= current) && current != old }
-  #         @newerror = true
-  #         # if all arguments in the old observation are comprable to the current observation
-  #         # reduce each argument to the smallest smaller arguments will be expanding the incorrectness as incorrectness travels upwards. 
-  #         @type_errs[meth][ind][:args] = sigzip.map {|old, current| old <= current ? old : current}
-
-  #         return @type_errs
-  #       end
-  #     end
-  #   end
-  #   @newerror = true
-  #   @type_errs[meth].append(trace)
-  #   return @type_errs
-
-
-  # end
 
     def consolidate_type_errors(trace)
 
@@ -234,41 +194,7 @@ class InferTypes
     end
   end
 
-  # def consolidate_type_successes(trace)
 
-  #   meth = trace[:method]
-
-
-  #   @type_successes[meth].each_with_index do |sig, ind|
-  #     if sig[:recvr] != trace[:recvr]
-  #       next
-  #     end 
-  #     if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
-
-  #       # if args are correct size and returns are comprable
-  #       sigzip = sig[:args].zip(trace[:args])
-  #       if (sigzip.all? {|old, current| ((old <= current) || (current <= old)) && current != old })
-  #         @newsuccess = true
-  #         # otherwise we can consider the previous observation to be a call to an instance of this function 
-  #         # or a more specific instance of this function (perhaps we should not fold in, but RUBY only allows one function of the same arity per reciever" 
-  #         @type_successes[meth][ind][:args] = sigzip.map {|old, current| current <= old ? old : current}
-  #         @type_successes[meth][ind][:result] = sig[:result] <= trace[:result] ? trace[:result] : sig[:result]
-  #         update = @type_successes[meth][ind]
-  #         @new_types << update
-
-  #         RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
-  #         return @type_successes
-  #       end
-  #     end
-  #   end
-  #   @newsuccess = true
-  #   @new_types << trace
-  #   @type_successes[meth].append(trace)
-  #   RDL.type trace[:recvr].to_s, meth, "(#{trace[:args].map(&:to_s).join(', ')}) -> #{trace[:result].to_s}"
-  #   return @type_successes
-
-
-  # end
 
   def consolidate_type_successes(trace)
 
@@ -279,8 +205,8 @@ class InferTypes
         if sig[:recvr] != trace[:recvr]
           next
         end 
-        puts "here"
-        puts sig
+        # puts "here"
+        # puts sig
 
         if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
           temp = sig
