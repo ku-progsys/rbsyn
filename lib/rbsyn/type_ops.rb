@@ -39,16 +39,16 @@ module TypeOperations
     # TODO: we use only the first definition, ignoring overloaded method definitions
     # BR Here is where you need to give the overloaded method definitions. 
     
-    tmethod.each do |type|
+    tmethod.each do |t|
 
-      if targs.zip(type.args).any? {|actual, prescribed| !(actual <= prescribed)}
+      if targs.zip(t.args).any? {|actual, prescribed| !(actual <= prescribed)}
         next
       end
 
       #type = tmeth[0]
       return RDL::Type::DynamicType.new if ENV.key? 'DISABLE_TYPES'
 
-      tret = type.ret
+      tret = t.ret
       
       case tret
       when RDL::Type::ComputedType
@@ -156,6 +156,7 @@ module TypeOperations
 
 
   def merge_methods(left, right)
+
     merged = Marshal.load(Marshal.dump(left))
     right[:type].zip(right[:effect]).map {|type, effect| 
       if !(merged[:type].any? {|t| t.args == type.args})
@@ -171,6 +172,7 @@ module TypeOperations
 
 
     parents = parents_of(trecv)
+
       if ENV["ADD_BASIC"] == "TRUE"
         parents.append("DynamicType") unless parents.include?("DynamicType")
       end
@@ -178,20 +180,25 @@ module TypeOperations
         
     #     RDL::Globals.info.info[klass]
     #   }.reject(&:nil?).collect { |h| h.to_a }.flatten]
+    #   
+    
   
     x = parents.reduce({}) {|acc, klass| 
-      methods = RDL::Globals.info.info[klass]
+      methods = Marshal.load(Marshal.dump(RDL::Globals.info.info[klass]))
       if methods == nil
         acc
       else
-        methods.reduce(acc) {|ac, (key, val)|
-          if acc.has_key?(key)
-            acc[key] = merge_methods(acc[key], val) 
+        j = methods.reduce(acc) {|ac, (key, val)|
+          if ac.has_key?(key)
+            merged = merge_methods(ac[key], val)
+            ac[key] =  merged
           else
-            acc[key] = val
+            ac[key] = val
           end
-          acc
+          ac
         }
+        acc = j
+        acc
         
       end
     }

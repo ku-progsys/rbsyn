@@ -294,7 +294,18 @@ class ExpandHolePass < ::AST::Processor
                 
 
               else
-                raise RbSynError, "expected type" unless accum.ttype <= trecv
+                # if !(accum.ttype <= trecv)
+                #   binding.pry
+                #   ch1 = RDL::Type::DynamicType.new()
+                #   m = methods_of(ch1)
+                #   i = m[:take][:type]
+                #   t1 = compute_targs(ch1, i, true)
+                #   z = t1.zip(i)
+                #   k = z[1]
+                #   binding.pry
+                #   compute_tout(RDL::Type::DynamicType.new(), k[0], k[1])
+                # end
+                next unless accum.ttype <= trecv
                 accum = TypedNode.new(tret, :begin, s(tret, :send, accum, mth, *hole_args))
                 
 

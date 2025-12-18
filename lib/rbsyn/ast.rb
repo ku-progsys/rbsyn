@@ -1,5 +1,5 @@
 require_relative "./ast/track_rewrite"
-require_relative "./ast/parenthesize"
+#require_relative "./ast/parenthesize"
 require 'unparser'
 require 'parser/current'
 require 'pry'

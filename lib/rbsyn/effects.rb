@@ -82,7 +82,16 @@ class EffectAnalysis
       when RDL::Type::GenericType
         if klass.base.to_s == 'ActiveRecord_Relation'
           RDL::Globals.info.get(klass.params[0].to_s, meth, kind)
+        #BR This is my thing to make generics work with array and lazylist
+        elsif klass.base.to_s == 'Hamster::LazyList_1'
+          effects = ast.children.map { |c| effect_of(c, env, kind) }
+          effect_union(*effects.flatten)
+        elsif klass.base.to_s == "Array"
+          effects = ast.children.map { |c| effect_of(c, env, kind) }
+          effect_union(*effects.flatten)
+        #BR End my contribution
         else
+          binding.pry
           raise RbSynError, "unhandled type #{klass}"
         end
       when RDL::Type::DynamicType
