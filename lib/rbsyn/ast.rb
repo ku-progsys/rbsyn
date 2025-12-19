@@ -30,12 +30,14 @@ module AST
     DBUtils.reset
 
     ctx.reset_func.call unless ctx.reset_func.nil?
- 
+    
+
     #rewriter = Parens.new(ctx.moi)
     func = s(ctx.functype, :def, ctx.mth_name,
       s(RDL::Globals.types[:top], :args, *args.map { |arg|
         s(RDL::Globals.types[:top], :arg, arg)
-      }), rewriter.process(ast))
+      }), ast)
+
 
 
     klass.instance_eval Unparser.unparse(func)
