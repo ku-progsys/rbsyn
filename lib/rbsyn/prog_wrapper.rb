@@ -5,7 +5,7 @@ class ProgWrapper
   require_relative "ast/ttype_print"
 
   attr_reader :seed, :env, :exprs, :looking_for, :target, :inferred_errors, :exprs
-  attr_accessor :passed_asserts, :inferred_errors, :ctx, :env, :ttype, :dynamic_components
+  attr_accessor :passed_asserts, :inferred_errors, :ctx, :env, :ttype, :dynamic_components, :typehash, :typestring
 
   def remove_duplicates(list)
     counts = {}
@@ -25,6 +25,8 @@ class ProgWrapper
     @ttype = nil
     @inferred_errors = 0
     @dynamic_components = 0
+    @typehash = nil
+    @typestring = nil
     # add the ranking for types here
   end
 
