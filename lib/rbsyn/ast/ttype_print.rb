@@ -7,6 +7,9 @@ class TTypePrint < ::AST::Processor
     @stack = []
   end
 
+  def reset()
+    @stack = []
+  end
 
   def on_envref(node)
     @stack.append(node.ttype.to_s)

@@ -2,9 +2,18 @@ class ProgWrapper
   include AST
   require_relative "ast/check_error_pass"
   require_relative "ast/refine_type_pass_v2"
+  require_relative "ast/ttype_print"
 
   attr_reader :seed, :env, :exprs, :looking_for, :target, :inferred_errors, :exprs
   attr_accessor :passed_asserts, :inferred_errors, :ctx, :env, :ttype, :dynamic_components
+
+  def remove_duplicates(list)
+    counts = {}
+    list.each do |item| 
+      counts[item.typehash] = item
+    end
+    counts.values
+  end
 
   def initialize(ctx, seed, env, exprs=RDL.type_cast([], 'Array<TypedNode>', force: true))
     @ctx = ctx
@@ -34,6 +43,23 @@ class ProgWrapper
     else
       raise RbSynError, "can look for types/effects only"
     end
+  end
+
+  def to_typestring
+    if @typestring.nil?
+      t = TTypePrint.new()
+      string = t.process(to_ast).to_a.join(" ")
+      @typehash = string.hash
+      @typestring = string
+    end
+    @typestring
+  end
+
+  def typehash
+    if @typehash.nil?
+      to_typestring
+    end
+    @typehash
   end
 
   def to_ast
@@ -71,6 +97,7 @@ class ProgWrapper
   end
 
   def build_candidates()
+
     update_types_pass = RefineTypesPass.new
     case @looking_for
     when :type
@@ -80,14 +107,12 @@ class ProgWrapper
       expanded = pass1.process(@seed)
 
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
-      #binding.pry
+
       x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
         pass2 = ExtractASTPass.new(selection, @env) 
         temp = pass2.process(expanded)
         program = update_types_pass.process(temp)
         new_env = pass2.env
-
-        
 
         refiner = DynamicRefineTypes.new(@ctx, new_env)
         #BR, this is where you should really be counting the number of dynamic types. ???
@@ -103,7 +128,12 @@ class ProgWrapper
         prog_wrap
       }
 
-      x.reject(&:nil?)
+      x = x.reject(&:nil?)
+      # if ENV["FLAG"] == "TRUE"
+      #   binding.pry
+      # end      
+      x = remove_duplicates(x)
+      x
     when :effect
 
       # TODO: ordering can be done better to build candidates programs with

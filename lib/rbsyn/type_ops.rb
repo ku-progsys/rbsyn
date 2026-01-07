@@ -173,7 +173,7 @@ module TypeOperations
 
     parents = parents_of(trecv)
 
-      if ENV["ADD_BASIC"] == "TRUE"
+      if ENV["ADD_DYN"] == "TRUE"
         parents.append("DynamicType") unless parents.include?("DynamicType")
       end
     # x = Hash[*parents.map { |klass|

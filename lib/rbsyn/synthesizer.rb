@@ -54,13 +54,17 @@ class Synthesizer
       @ctx.logger.debug("Finding sln for subspec: #{desc}")
       #binding.pry
       prog = prog_cache.find_prog(precond, postcond)
+      # if prog.nil? 
+      #   binding.pry
+      #   prog = prog_cache.find_prog(precond,postcond)
+      # end
       #binding.pry
       if prog.nil?
 
         env = LocalEnvironment.new
 
         prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
-       
+        
         seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
         
         seed.look_for(:type, @ctx.functype.ret)
@@ -75,7 +79,7 @@ class Synthesizer
 
         @ctx.logger.debug("Found program in cache:\n#{format_ast(prog.to_ast)}")
       end
-      raise Exception
+      
       
       env = LocalEnvironment.new
       branch_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))

@@ -72,6 +72,7 @@ class Reachability
       queue.each { |path|
         trecv = path.last
         mthds = methods_of(trecv)
+        #binding.pry
         mthds.delete(:__getobj__)
         #BR added in a respond_to here so that we can avoid methods that don't actually respond. 
         #mthds = mthds.filter {|i, _| RDLRespondTo(trecv, i)} # a bit hackey though 

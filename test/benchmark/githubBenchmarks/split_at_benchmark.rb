@@ -54,14 +54,12 @@ describe "Hamster" do
 
     ## METHODS TO DECLARE AS UNKNOWNS
     #
-    # RDL.type :"Hamster::LazyList_1", :take, "(Integer) -> Hamster::LazyList_1"
-    # RDL.type :"Hamster::LazyList_1", :drop, "(Integer) -> Hamster::LazyList_1"
-    # RDL.type :Array, :<<, '(Hamster::LazyList_1) -> Array'
+    # RDL.type :"Hamster::Cons_1", :take, "(Integer) -> Hamster::LazyList_1"
+    # RDL.type :"Hamster::Cons_1", :drop, "(Integer) -> Hamster::LazyList_1"
+    # RDL.type :Array, :<<, '(Hamster::LazyList_1) -> Array<Hamster::LazyList_1>'
     
     
-    # RDL.type :"Hamster::LazyList_1", :take, "(%dyn) -> %dyn"
-    # RDL.type :"Hamster::LazyList_1", :drop, "(%dyn) -> %dyn"
-    # RDL.type :Array, :<<, '(%dyn) -> %dyn'
+
 
 
 
@@ -83,12 +81,12 @@ describe "Hamster" do
 
 
     lst = L[*[1,2,3,4]]
-    define :split_at, "(Array, Hamster::LazyList_1, Integer)-> Array<Hamster::LazyList_1>", [], consts: :true, moi: [:take, :drop, :<<] do
-      
+    define :split_at, "(Array<Hamster::LazyList_1>, Hamster::Cons_1, Integer)-> Array<Hamster::LazyList_1>", [], consts: :true, moi: [:take, :drop, :<<] do
+    #define :split_at, "(Array, Hamster::Cons_1, Integer)-> Array<Hamster::LazyList_1>", [], consts: :true, moi: [] do  
       spec "checks that prefix and remainder is correct" do
 
         setup {
-          
+
           split_at([], lst, 2)
           
         }

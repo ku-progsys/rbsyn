@@ -21,7 +21,8 @@ class ProgCache
       rescue RbSynError => err
         raise err
       rescue StandardError => err
-
+        # binding.pry
+        # res, klass = eval_ast(@ctx, prog.to_ast, precond)
         next
       end
       klass.instance_eval {

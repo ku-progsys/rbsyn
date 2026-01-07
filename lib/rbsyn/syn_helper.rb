@@ -24,6 +24,17 @@ def debug(var, *conds, message: "")
   end
 end
 
+def duplicates(list)
+  t = TTypePrint.new()
+  counts = Hash.new(0)
+  
+  list.each do |item| 
+    counts[t.process(item).to_a.join(" ")] += 1
+    t.reset()
+  end
+  counts.select { |_, n| n > 1 }
+end
+
 
 def test_ordering(worklist)
   is_sorted = worklist.each_cons(2).all? { |a, b| a.inferred_errors <= b.inferred_errors }
@@ -41,8 +52,6 @@ def discard_impossible_types(generated, type)
 end
 
 
-
-
 module SynHelper
   include TypeOperations
   
@@ -54,18 +63,43 @@ module SynHelper
     # seed.look_for(:type, RDL::Type::DynamicType.new())
 
     work_list = [seed_hole,]
+    basehashlist = []
     counter = 0
 
     until work_list.empty?
       counter += 1
+      if counter == 7
+        ENV['FLAG'] = "TRUE"
+      end
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
+      if basehashlist.include? base.typehash
+        next
+      end
+      basehashlist << base.typehash
+      # puts "BASE----------------\n"
+      # t = TTypePrint.new()
+      # puts t.process(base).to_a.join(" ")
+      # t.reset()
+      # puts "WORKLIST--------------------\n"
+      # work_list.each do |i|
+      #   puts t.process(i).to_a.join(" ")
+      #   t.reset()
+      #   puts "\n********\n"
+      # end
+      # puts "END--------------------\n"
+      # binding.pry
       effect_needed = []  
-
       
+      #puts t.process(base)
+      #debug(base.to_ast().to_s, ":<<")
+      x = duplicates([base] + work_list)
+      if x.size > 0
+        binding.pry
+      end
 
       generated = base.build_candidates()
-      # puts "\n\nBASE : \n#{base.to_ast}"
+      #puts "\n\nBASE : \n#{base.to_ast}"
       # puts "\nTTYPE: #{base.ttype}"
       # binding.pry
       #generated = discard_impossible_types(generated, @ctx.functype.ret)
@@ -86,9 +120,9 @@ module SynHelper
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
             #arg0 << arg1.take(arg2) << arg1.drop(arg2)
-            
+            #puts Unparser.unparse(prog_wrap.to_ast)
 
-            #debug(Unparser.unparse(prog_wrap.to_ast()), "arg0 << arg1.take(arg2)")
+            #debug(Unparser.unparse(prog_wrap.to_ast()), "arg1.take(arg2)")
 
             res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
           rescue RbSynError => err
@@ -133,13 +167,13 @@ module SynHelper
 
         
         if tempbool
-          # type error encountered, we should not add to the worklist
+          # type error encountered in a complete program, we should not add back to the worklist
           next
         end
         # passes all tests
+        #debug(Unparser.unparse(prog_wrap.to_ast), "arg1.take(arg2)")
         if test_outputs.all? true
             #puts "correct program \n#{format_ast(prog_wrap.to_ast)}"
-
             correct_progs << prog_wrap
           return prog_wrap unless return_all
           

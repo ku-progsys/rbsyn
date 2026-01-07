@@ -104,7 +104,9 @@ class ExpandHolePass < ::AST::Processor
       # synthesize function calls
 
       r = Reachability.new(@ctx.tenv, @moi)
-
+      # if ENV["FLAG"] == "TRUE"
+      #   binding.pry
+      # end
       paths = r.paths_to_type(node.ttype, depth, @variance)
       expanded.concat paths.map { |path| fn_call(path) }.flatten
       
@@ -120,7 +122,7 @@ class ExpandHolePass < ::AST::Processor
     # TODO: we don't do this if we are synthesizing for effects, will do after
     # effect reachability graph is implemented
     expanded << s(node.ttype, :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth)
-
+    #binding.pry
     # if !node.ttype.is_a?(RDL::Type::DynamicType)
     #   expanded << s(RDL::Type::DynamicType.new(), :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth)
     # end
@@ -285,26 +287,15 @@ class ExpandHolePass < ::AST::Processor
           temp_nested_accum.each do |accum|
 
             if @moi.include?(mth)
-              # adding parenthisization
               
               if accum.nil?
-                
+                # this parenthesizes the term. 
                 accum = TypedNode.new(tret, :begin, s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
                   mth, *hole_args))
                 
 
               else
-                # if !(accum.ttype <= trecv)
-                #   binding.pry
-                #   ch1 = RDL::Type::DynamicType.new()
-                #   m = methods_of(ch1)
-                #   i = m[:take][:type]
-                #   t1 = compute_targs(ch1, i, true)
-                #   z = t1.zip(i)
-                #   k = z[1]
-                #   binding.pry
-                #   compute_tout(RDL::Type::DynamicType.new(), k[0], k[1])
-                # end
+                
                 next unless accum.ttype <= trecv
                 accum = TypedNode.new(tret, :begin, s(tret, :send, accum, mth, *hole_args))
                 
