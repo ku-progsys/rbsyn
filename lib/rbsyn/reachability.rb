@@ -122,21 +122,38 @@ class Reachability
 
   private
   def chains_with_type(chains, type, variance)
+    #binding.pry
     chains.filter { |chain|
       case variance
       when COVARIANT
 
         type <= chain.last
       when CONTRAVARIANT
-
+        #BR added in functionality for generics
         if chain.last.is_a? RDL::Type::UnionType
           chain.last.types.any? { |t| t <= type }
+        elsif chain.last.is_a? RDL::Type::GenericType
+          if type.is_a? RDL::Type::GenericType
+            if chain.last.base <= type.base
+              # ASSUMING THAT IF BASE IS SAME THAT THERE WILL BE SAME NUMBER AND ORDER OF PARAMETERS 
+              chain.last.params.zip(type.params).all? do |c, t|
+                #binding.pry
+                c <= t || c.is_a?(RDL::Type::VarType)
+              end
+            else
+              false
+            end
+          else
+            false
+          end
         else
           chain.last <= type
         end
       else
         raise RbSynError, "unexpected variance"
       end
+
+
     }
   end
 
