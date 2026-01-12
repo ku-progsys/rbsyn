@@ -3,7 +3,7 @@ module TypeOperations
 
   require_relative 'type_helper'
 
-  def compute_targs(trec, tmeth, is_moi=false)
+  def compute_targs(trec, tmeth, is_moi=false, peeknext: nil)
     # This is were you should allow it to use more than the first definition, ONLY
     # when it is an MOI. 
     # TODO: we use only the first definition, ignoring overloaded method definitions
@@ -19,19 +19,65 @@ module TypeOperations
     # end
     return targs.map {|t| t.map { |targ| RDL::Type::DynamicType.new }} if ENV.key? 'DISABLE_TYPES'
 
-    targs.map {|t| 
-      t.map { |targ|
-        case targ
-        when RDL::Type::ComputedType
-          bind = Class.new.class_eval { binding }
-          bind.local_variable_set(:trec, trec)
-          targ.compute(bind)
-        else
-          targ
-        end
-      }
-    }
+    if peeknext.is_a?(RDL::Type::GenericType)
+      accum = []
+      index = 0
+      targs.map {|t|
+        inner_accum = [[]]
+        t.map {|targ|
+          case targ
+            
+          when RDL::Type::VarType
+            match = nil
+            targs[index].each_with_index do |type, ind|
+              if type == targ
+                match = peeknext.params[ind] # For now assuming only one match_type per type_variable
+                break
+              end
+            end
 
+            if match.is_a?(RDL::Type::VarType)
+              types = ParentsHelper.getParents
+              temp_accum = []
+              inner_accum.each do |i|
+                types.map do |k|
+                  temp_accum << (i << k)
+                end
+              
+              end
+              inner_accum = temp_accum
+
+            else
+              inner_accum.each do |i|
+                i << match
+              end
+            end
+          else 
+            targ
+          end
+        }
+        accum += inner_accum
+        index += 1
+      }
+      accum
+      
+    else 
+      targs.map {|t| 
+        t.map { |targ|
+          case targ
+          when RDL::Type::ComputedType
+            bind = Class.new.class_eval { binding }
+            bind.local_variable_set(:trec, trec)
+            targ.compute(bind)
+
+
+          else
+            targ
+          end
+        }
+      }
+    end
+    
   end
 
   def compute_tout(trec, tmethod, targs)

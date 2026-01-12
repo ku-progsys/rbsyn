@@ -136,10 +136,21 @@ class Reachability
           if type.is_a? RDL::Type::GenericType
             if chain.last.base <= type.base
               # ASSUMING THAT IF BASE IS SAME THAT THERE WILL BE SAME NUMBER AND ORDER OF PARAMETERS 
-              chain.last.params.zip(type.params).all? do |c, t|
+              accumulator = true
+              chain.last.params.zip(type.params).each_with_index do |val, ind|
                 #binding.pry
-                c <= t || c.is_a?(RDL::Type::VarType)
+                if val[0].is_a?(RDL::Type::VarType)
+                  #binding.pry
+                  chain.last.params[ind] = type.params[ind]
+                  next
+                elsif val[0] <= val[1]
+                  next
+                else 
+                  accumulator = false
+                  break
+                end
               end
+              accumulator
             else
               false
             end

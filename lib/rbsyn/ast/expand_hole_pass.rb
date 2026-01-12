@@ -102,12 +102,11 @@ class ExpandHolePass < ::AST::Processor
       expanded.concat envref(node.ttype)
     elsif depth > 0 && !@effect #MODIFY THIS NEXT BR
       # synthesize function calls
-
+      #binding.pry
       r = Reachability.new(@ctx.tenv, @moi)
-      # if ENV["FLAG"] == "TRUE"
-      #   binding.pry
-      # end
+
       paths = r.paths_to_type(node.ttype, depth, @variance)
+
       expanded.concat paths.map { |path| fn_call(path) }.flatten
       
 
@@ -189,7 +188,7 @@ class ExpandHolePass < ::AST::Processor
             @read_effs << read_eff
           end
         when RDL::Type::GenericType
-          # ignore
+          # 
           next
         when RDL::Type::FiniteHashType
           if klass == Hash
@@ -246,9 +245,23 @@ class ExpandHolePass < ::AST::Processor
       .map { |ref| s(type, :envref, ref) }
   end
 
+  def generic_compare(left, right)
+    # since type vars are considered concrete but we are building not checking we need to 
+    # have a way to compare expand and refine type vars. 
+    # left is the constructed type and right is the target which might have type variables
+    if left.base <= right.base
+      left.params.zip(right.params).all? do |l, r|
+        l <= r || r.is_a?(RDL::Type::VarType)
+      end
+    else
+      false
+    end
+
+  end
+
   def fn_call(path)
-    # puts "\nBEGIN"
-    # puts "path: #{path.path}"
+
+    #binding.pry
     tokens = path.path.to_enum
     accum_1 = nil
     nested_accum = [accum_1]
@@ -260,26 +273,21 @@ class ExpandHolePass < ::AST::Processor
         mth = tokens.next
 
         mthds = methods_of(trecv)
-        # BRYAN this is where you need to allow for multiple return signatures. 
-        # and update to allow for it. 
         info = mthds[mth]
-
         tmeths = info[:type]
-        # end
+        #BR
+        peeknext = tokens.peek
 
-        # begin
         is_moi = @moi.include?(mth)
-        targs_1 = compute_targs(trecv, tmeths, is_moi)
-        # puts mth
-        # puts targs_1.size
-        # puts "----------"
 
-        # if mth == :<< && @ctx.type_info.type_successes[mth].filter {|i| i[:recvr] == trecv}.size == 1
+        targs_mult = compute_targs(trecv, tmeths, is_moi, peeknext: peeknext)
+        # if mth == :<<
         #   binding.pry
         # end
+
         new_nesting = []
-        targs_1.zip(tmeths[0 .. targs_1.size]).each do |targs, tmeth|
-          
+        targs_mult.zip(tmeths[0 .. targs_mult.size]).each do |targs, tmeth|
+
           tret = compute_tout(trecv, [tmeth], targs)
 
           hole_args = targs.map { |targ| s(targ, :hole, 0, {hash_depth: @curr_hash_depth, method_arg: true}) }
@@ -295,8 +303,14 @@ class ExpandHolePass < ::AST::Processor
                 
 
               else
-                
-                next unless accum.ttype <= trecv
+                # allowing for generics
+                if accum.ttype.is_a?(RDL::Type::GenericType) && trecv.is_a?(RDL::Type::GenericType)
+                  if !generic_compare(accum.ttype, trecv)
+                    next
+                  end
+                else   
+                  next unless accum.ttype <= trecv
+                end
                 accum = TypedNode.new(tret, :begin, s(tret, :send, accum, mth, *hole_args))
                 
 
@@ -307,7 +321,15 @@ class ExpandHolePass < ::AST::Processor
                 accum = s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),
                   mth, *hole_args)
               else
-                raise RbSynError, "expected type" unless accum.ttype <= trecv
+                # allowing for generics
+                if accum.ttype.is_a?(RDL::Type::GenericType) && trecv.is_a?(RDL::Type::GenericType)
+                  #binding.pry
+                  if !generic_compare(accum.ttype, trecv)
+                    next
+                  end
+                else   
+                  next unless accum.ttype <= trecv
+                end
                 accum = s(tret, :send, accum, mth, *hole_args)
               end
             end

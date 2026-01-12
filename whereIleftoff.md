@@ -6,12 +6,16 @@ the specifications to get a more accurate type spec.
 
 I also learned that Arrays and List Like objects are not really capturing the type info about the lists Array\<Thing\>,  WELL I didn't really learn that so much as I am learning how limiting this is. 
 
+### Current
 I might be able to get the fully typed version working again if I make the Arrays have the type Array\<K\> method args\<J\> -> Array\<Union[K, J]\>. 
 
 Steps
 
-- Look up the annotation for what I described above
+- Look up the annotation for what I described above *** Done no perfect solution without dependent types ***
 
+- I am currently updating RbSyn to handle dependent types with a type variable included, *** this might be an issue for the type system as my variation uses NominalTypes for most everything. ***  
+
+### End Current
 
 Next I might have a way to check types for type errors but I don't think I have created a means of updating type signatures in the presence of new information. 
 

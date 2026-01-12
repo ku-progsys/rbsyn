@@ -93,12 +93,13 @@ module SynHelper
       
       #puts t.process(base)
       #debug(base.to_ast().to_s, ":<<")
-      x = duplicates([base] + work_list)
-      if x.size > 0
-        binding.pry
-      end
+      # x = duplicates([base] + work_list)
+      # if x.size > 0
+      #   binding.pry
+      # end
 
       generated = base.build_candidates()
+      # binding.pry
       #puts "\n\nBASE : \n#{base.to_ast}"
       # puts "\nTTYPE: #{base.ttype}"
       # binding.pry

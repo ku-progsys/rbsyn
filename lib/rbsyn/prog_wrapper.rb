@@ -99,7 +99,7 @@ class ProgWrapper
   end
 
   def build_candidates()
-
+    #binding.pry
     update_types_pass = RefineTypesPass.new
     case @looking_for
     when :type
@@ -120,10 +120,14 @@ class ProgWrapper
         #BR, this is where you should really be counting the number of dynamic types. ???
         #even the number of errors??
         program = refiner.process(program)
-        if !(program.ttype <= @target)
-          next
-        end
-        
+        begin
+          if !(program.ttype <= @target)
+            next
+          end
+        rescue Exception => e
+          binding.pry
+        end 
+
         prog_wrap = ProgWrapper.new(@ctx, program, new_env)
         prog_wrap.look_for(:type, @target)
         prog_wrap.passed_asserts = @passed_asserts
