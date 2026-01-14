@@ -12,9 +12,11 @@ module TypeOperations
     if !is_moi
       targs = [tmeth[0].args]
       exp_tret = [tmeth[0].ret]
+      param_matches = [index_of_var_in_ret(tmeth[0])]
     else
       targs = tmeth.map {|t| t.args }
       exp_tret = tmeth.map {|t| t.ret}
+      param_matches = tmeth.map {|t| index_of_var_in_ret(t)}
     end
     # if targs.size > 1
     #   binding.pry
@@ -24,13 +26,13 @@ module TypeOperations
     # handling multiple possible argument types for polymoprhism in the expected return. 
 
     accum = []
-    targs.zip(exp_tret).map {|argsig, retsig|
+    targs.zip(exp_tret, param_matches).map {|argsig, retsig, parammatch|
       # t is the specific method signature we are on, among many
       # r is the expected return type
       accum << [[]]
 
       # add in a blank list for each enou method signature, (one list per method)
-      argsig.map {|targ|
+      argsig.zip(parammatch).map {|targ, param_index|
         
         # targ is the specific positional argument of the specific signature we are on
         case targ
@@ -41,24 +43,18 @@ module TypeOperations
           # and use that position to look and see if the expected return has a filled type in that position
           match_ahead = nil
           match_behind = nil
-          index = nil
-          retsig.params.each_with_index do |param_var, ind|
-            #look into the method signature to determine which type_variable correspond to which parameter_indices
-            if param_var == targ
-              index = ind # assuming only one match_ahead_type per type_variable
-              break
-            end
-          end
 
-          if !(trec.is_a?(RDL::Type::GenericType) && trec.base == retsig.base)
+          if !(trec.is_a?(RDL::Type::GenericType) && trec.base == retsig.base) || param_index.nil?
+            # we don't perfom Union Operation if Return base is not the same as Receiver Base
             match_behind = nil
           else
-            match_behind = trec.params[index]
+            match_behind = trec.params[param_index]
           end
-          if peeknext.nil?
+          if peeknext.nil? || param_index.nil?
+            # don't bother lookahead if the varaible in the formal doesn't match anything in the expected return, or if there is no concrete expected to match
             match_ahead = nil
           else
-            match_ahead = peeknext.params[index]
+            match_ahead = peeknext.params[param_index]
           end
         
 
@@ -91,6 +87,7 @@ module TypeOperations
             # case where there is a specific argument, so we can feel free to just add it to each possible copy of our current list need to add Unioning operation here too. 
             
             accum[-1].each do |i|
+              # adding Union Operation
               if !match_behind.nil? && !(match_behind <= match_ahead)
                 i << RDL::Type::UnionType.new([match_behind, match_ahead])
               else
@@ -174,6 +171,18 @@ module TypeOperations
     else
       return RDL::Type::NominalType.new(string.strip())
     end
+  end
+
+  def index_of_var_in_ret(method)
+
+    args = method.args
+    ret = method.ret
+    if !ret.is_a?(RDL::Type::GenericType)
+      return [nil]*args.size
+    end 
+    params = ret.params
+    args.map {|i| params.index(i)}
+    
   end
 
   def compute_tout(trec, tmethod, targs)
