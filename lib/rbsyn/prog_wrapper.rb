@@ -125,7 +125,10 @@ class ProgWrapper
             next
           end
         rescue Exception => e
-          binding.pry
+         
+          refiner = DynamicRefineTypes.new(@ctx, new_env)
+           binding.pry
+          p = refiner.process(program)
         end 
 
         prog_wrap = ProgWrapper.new(@ctx, program, new_env)

@@ -11,73 +11,166 @@ module TypeOperations
     #type = tmeth[0]
     if !is_moi
       targs = [tmeth[0].args]
+      exp_tret = [tmeth[0].ret]
     else
       targs = tmeth.map {|t| t.args }
+      exp_tret = tmeth.map {|t| t.ret}
     end
     # if targs.size > 1
     #   binding.pry
     # end
     return targs.map {|t| t.map { |targ| RDL::Type::DynamicType.new }} if ENV.key? 'DISABLE_TYPES'
 
-    if peeknext.is_a?(RDL::Type::GenericType)
-      accum = []
-      index = 0
-      targs.map {|t|
-        inner_accum = [[]]
-        t.map {|targ|
-          case targ
-            
-          when RDL::Type::VarType
-            match = nil
-            targs[index].each_with_index do |type, ind|
-              if type == targ
-                match = peeknext.params[ind] # For now assuming only one match_type per type_variable
-                break
-              end
-            end
+    # handling multiple possible argument types for polymoprhism in the expected return. 
 
-            if match.is_a?(RDL::Type::VarType)
-              types = ParentsHelper.getParents
-              temp_accum = []
-              inner_accum.each do |i|
-                types.map do |k|
-                  temp_accum << (i << k)
-                end
-              
-              end
-              inner_accum = temp_accum
+    accum = []
+    targs.zip(exp_tret).map {|argsig, retsig|
+      # t is the specific method signature we are on, among many
+      # r is the expected return type
+      accum << [[]]
 
-            else
-              inner_accum.each do |i|
-                i << match
-              end
+      # add in a blank list for each enou method signature, (one list per method)
+      argsig.map {|targ|
+        
+        # targ is the specific positional argument of the specific signature we are on
+        case targ
+          
+        when RDL::Type::VarType
+          # when the argument to be filled is a variable type
+          # we use the signatures return argument to find a match_aheading typevar in the return signature 
+          # and use that position to look and see if the expected return has a filled type in that position
+          match_ahead = nil
+          match_behind = nil
+          index = nil
+          retsig.params.each_with_index do |param_var, ind|
+            #look into the method signature to determine which type_variable correspond to which parameter_indices
+            if param_var == targ
+              index = ind # assuming only one match_ahead_type per type_variable
+              break
             end
-          else 
-            targ
           end
-        }
-        accum += inner_accum
-        index += 1
-      }
-      accum
-      
-    else 
-      targs.map {|t| 
-        t.map { |targ|
-          case targ
-          when RDL::Type::ComputedType
-            bind = Class.new.class_eval { binding }
-            bind.local_variable_set(:trec, trec)
-            targ.compute(bind)
 
+          if !(trec.is_a?(RDL::Type::GenericType) && trec.base == retsig.base)
+            match_behind = nil
+          else
+            match_behind = trec.params[index]
+          end
+          if peeknext.nil?
+            match_ahead = nil
+          else
+            match_ahead = peeknext.params[index]
+          end
+        
+
+          if match_ahead.is_a?(RDL::Type::VarType) || match_ahead.nil?
+            # case where the expected return is not concrete yet
+            # or the match_ahead spuriously has nothing to do with generic (not likely)
+            # we enumerate all possibilities (this could be made more elegant for better constraints)
+            all_types = ParentsHelper.getParents
+            temp_accum = []
+
+            all_types.each do |conc|
+              # for the k new concrete values which we can use to fill this formal_argument, clone the existing j arg lists k times and add each of the k args, gives j*k
+              # new arg_lists
+              conc = str_to_type(conc)
+              accum[-1].each do |arglist|
+                #binding.pry # THIS IS WHERE I AM TRYING TO CREATE THE UNION OPERATION
+                begin
+                  if !match_behind.nil? && !(match_behind <= conc)
+                    conc = RDL::Type::UnionType.new(conc, match_behind) # this seems too simple there is probably a need for nesting consideration
+                  end
+                rescue Exception => e 
+                  binding.pry
+                end
+                dupe = arglist.clone << conc
+                temp_accum << dupe
+              end
+            
+            end
+            accum[-1] = temp_accum
 
           else
-            targ
+            # case where there is a specific argument, so we can feel free to just add it to each possible copy of our current list
+            accum[-1].each do |i|
+              i << match_ahead
+            end
           end
-        }
+        when RDL::Type::ComputedType
+          bind = Class.new.class_eval { binding }
+          bind.local_variable_set(:trec, trec)
+          accum[-1].each do |i|
+            i << targ.compute(bind)
+          end
+
+        else 
+          accum[-1].each do |i|
+            i << targ
+          end
+        end
       }
+      
+    }
+    accum
+  end
+
+  def splitter(string)
+    
+    lst = []
+    while string != ""
+      flag = true
+      index = -1
+      while flag
+        index = string.index(";", index + 1)
+        if string[0 .. index].count("(") == string[0 .. index].count(")")
+          lst << string[0 ... index]
+          string = string[index + 1 ..]
+          flag = false
+        end
+      end
+    end
+  end
+
+  def type_to_string(tipe)
+    if tipe.is_a?(String)
+      return tipe
+    end
+    case tipe
+    when RDL::Type::UnionType
+      return "union(#{tipe.types.map {|i| type_to_string(i)}.join(";")})"
+    when RDL::Type::NominalType
+      return "#{tipe.name}"
+    when RDL::Type::GenericType
+      return "generic(#{type_to_string(tipe.base)};#{tipe.params.map {|i| type_to_string(i)}.join(";")})"
+    when RDL::Type::VarType
+      return "variable(#{tipe.name.to_s})"
+    when RDL::Type::SingletonType
+      raise StandardError "We shouldn't be converting singleton types to strings, that is not a reversible operation"
+    else
+      raise StandardError "No Type Found"
+    end
+  end
+
+  def str_to_type(string)
+    if !string.is_a?(String)
+      return string
     end
     
+    control = string[/\S+/]
+    case control 
+    when "union" 
+      lst = splitter(string[5, -1])
+      return RDL::Type::UnionType.new(lst.map {|i| str_to_type(i)})
+    when "generic"
+      lst = splitter(string[7, -1])
+      RDL::Type::GenericType.new(str_to_type(lst[0]),lst[1 ..].map {|i| str_to_type(i)})
+    when "variable"
+      lst = splitter(string[8, -1])
+      RDL::Type::VarType.new(lst[0].to_sym)
+    when "DynamicType"
+      return RDL::Type::DynamicType.new()
+    else
+      return RDL::Type::NominalType.new(string.strip())
+    end
   end
 
   def compute_tout(trec, tmethod, targs)
@@ -87,9 +180,13 @@ module TypeOperations
     
     tmethod.each do |t|
 
-      if targs.zip(t.args).any? {|actual, prescribed| !(actual <= prescribed)}
-        next
-      end
+      begin
+        if targs.zip(t.args).any? {|actual, prescribed| (!(str_to_type(actual) <= prescribed) && !prescribed.is_a?(RDL::Type::VarType)) }
+          next
+        end
+      rescue Exception => e
+        binding.pry
+      end 
 
       #type = tmeth[0]
       return RDL::Type::DynamicType.new if ENV.key? 'DISABLE_TYPES'
@@ -117,6 +214,8 @@ module TypeOperations
           raise RbSynError, "unexpected" if idx.nil?
           return trec.params[idx]
         end
+      when RDL::Type::GenericType
+        # fill in to get generics fully up and running. 
       else
         return tret
       end
@@ -159,6 +258,7 @@ module TypeOperations
       ParentsHelper.getParents()
     else
       raise RbSynError, "unhandled type #{trecv.inspect}"
+
     end
   end
 

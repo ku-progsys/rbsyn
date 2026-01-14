@@ -16,7 +16,12 @@ class DynamicRefineTypes < ::AST::Processor
       @env.update_expr(ref, info[:expr].update_ttype(processed.ttype))
       info = @env.get_expr(ref)
     end
-    x = node.update_ttype(info[:expr].ttype)
+    if info[:expr].ttype.is_a?(RDL::Type::MethodType)
+      ttype = info[:expr].ttype.ret
+    else
+      ttype = info[:expr].ttype
+    end
+    x = node.update_ttype(ttype)
     x
   end
 
@@ -33,6 +38,7 @@ class DynamicRefineTypes < ::AST::Processor
     targs = node.children[2..].map &:ttype
     
     begin
+
       tret = compute_tout(trecv, tmeth, targs)
       node.update_ttype(tret)
     rescue

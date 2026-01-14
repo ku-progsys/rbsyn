@@ -284,7 +284,8 @@ class ExpandHolePass < ::AST::Processor
         # if mth == :<<
         #   binding.pry
         # end
-
+        tmeths = tmeths.zip(targs_mult).flat_map { |label, items| [label] * items.length }
+        targs_mult = targs_mult.flatten(1)
         new_nesting = []
         targs_mult.zip(tmeths[0 .. targs_mult.size]).each do |targs, tmeth|
 

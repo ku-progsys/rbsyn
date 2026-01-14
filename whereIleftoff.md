@@ -11,9 +11,23 @@ I might be able to get the fully typed version working again if I make the Array
 
 Steps
 
-- Look up the annotation for what I described above *** Done no perfect solution without dependent types ***
-
 - I am currently updating RbSyn to handle dependent types with a type variable included, *** this might be an issue for the type system as my variation uses NominalTypes for most everything. ***  
+
+
+I have set it up so that the system can use generics, but there are 2 parts of that missing. 
+1. The generics are not yet set up to handle union types in the parameters. At the very least, with arrays this is possible, we can mkae claim that an Array not yet declared generic, the type will become whatever is put in it. Then we might assume that any method which invokes the type param in the argument might be able to alter the 
+type param in the result. 
+From this we might be able to look up the type of the param in the reciever (we can easily circumvent the limitations of the sytem since we are constructing not checking) and union it with the param in the output, if not already part of the union. This is tricky though::!! because we are synthesizing not checking, we need to go for variant, NOT contravariant leq operation (IE Type1 <= Union[Type1, Type2]) because we want to search for the more specific program. 
+
+BIG CAVIOT, THIS ONLY WORKS WHEN THE INPUT AND OUTPUT TYPE ARE GENERICS WITH THE SAME BASE. AND IT MIGHT END UP BITING YOU BACK SO MAKE SURE IT CAN BE DISABLED
+
+2. I currently have the reachability function in paths to type replacing the final element in the chain with the target type, but none of the intermediate elements. ex
+A<t> -> A<t> -> A<concrete>. Since at each point in the system it can replace <t> with all possible types, we can make several chains and use the Union operation described above to eliminate overly gerneral types. EX << will definitely cause a union, so, we can see that any A<t> -> A<t,j> might be overly general.
+
+
+3. I have almost gotten the Union operation done, it is done for the type_ops compute t_args, but the problem with this is that I need to implement a special 
+type to string and string to type thing for it. Not really a problem just something to integrate. 
+
 
 ### End Current
 

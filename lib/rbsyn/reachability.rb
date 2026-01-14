@@ -83,18 +83,24 @@ class Reachability
           
           tmeths = info[:type]
           is_moi = @moi.include?(mthd)
-          targs_1 = compute_targs(trecv, tmeths,is_moi)
+
+          targs_mult = compute_targs(trecv, tmeths,is_moi)
           
           tout = []
-          # if (tmeths.size > 1) && is_moi
-          #   binding.pry
-          # end
-          targs_1.zip(tmeths[0 .. targs_1.size]).each do |targs, tmeth|
+
+          tmeths = tmeths.zip(targs_mult).flat_map { |label, items| [label] * items.length }
+          targs_mult = targs_mult.flatten(1)
+
+          targs_mult.zip(tmeths[0 .. targs_mult.size]).each do |targs, tmeth|
             next if targs.any? { |t| t.is_a? RDL::Type::BotType }
 
             begin
+              
               x = compute_tout(trecv, [tmeth], targs)
-              tout << x unless tout.include?(x)
+              puts x
+              binding.pry
+              tout << x unless tout.include?(x) # since the arguments are only used to compute the type out, we don't need to worry ourselves 
+                                                # about duplicates 
             rescue NoMethodError => e
               binding.pry
               puts "NO METHOD ERROR IN #{mthd}"
