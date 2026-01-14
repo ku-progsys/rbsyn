@@ -25,9 +25,12 @@ BIG CAVIOT, THIS ONLY WORKS WHEN THE INPUT AND OUTPUT TYPE ARE GENERICS WITH THE
 A<t> -> A<t> -> A<concrete>. Since at each point in the system it can replace <t> with all possible types, we can make several chains and use the Union operation described above to eliminate overly gerneral types. EX << will definitely cause a union, so, we can see that any A<t> -> A<t,j> might be overly general.
 
 
-3. I have almost gotten the Union operation done, it is done for the type_ops compute t_args, but the problem with this is that I need to implement a special 
-type to string and string to type thing for it. Not really a problem just something to integrate. 
+3. I have gottent the string to type function created. This is implemented in the 
+get_args funciton in type_ops ***DONE***
 
+4. My system currently doesn't correctly calculate the output type. I am working on that now.
+
+5. I really need to update the reachability function so that the paths correctly update. 
 
 ### End Current
 

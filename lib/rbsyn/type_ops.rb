@@ -75,13 +75,11 @@ module TypeOperations
               conc = str_to_type(conc)
               accum[-1].each do |arglist|
                 #binding.pry # THIS IS WHERE I AM TRYING TO CREATE THE UNION OPERATION
-                begin
-                  if !match_behind.nil? && !(match_behind <= conc)
-                    conc = RDL::Type::UnionType.new(conc, match_behind) # this seems too simple there is probably a need for nesting consideration
-                  end
-                rescue Exception => e 
-                  binding.pry
+
+                if !match_behind.nil? && !(match_behind <= conc)
+                  conc = RDL::Type::UnionType.new([conc, match_behind]) # this seems too simple there is probably a need for nesting consideration
                 end
+
                 dupe = arglist.clone << conc
                 temp_accum << dupe
               end
@@ -90,9 +88,14 @@ module TypeOperations
             accum[-1] = temp_accum
 
           else
-            # case where there is a specific argument, so we can feel free to just add it to each possible copy of our current list
+            # case where there is a specific argument, so we can feel free to just add it to each possible copy of our current list need to add Unioning operation here too. 
+            
             accum[-1].each do |i|
-              i << match_ahead
+              if !match_behind.nil? && !(match_behind <= match_ahead)
+                i << RDL::Type::UnionType.new([match_behind, match_ahead])
+              else
+                i << match_ahead
+              end
             end
           end
         when RDL::Type::ComputedType
@@ -176,6 +179,7 @@ module TypeOperations
   def compute_tout(trec, tmethod, targs)
 
     # TODO: we use only the first definition, ignoring overloaded method definitions
+    # BR: Note: this might be where our problem of duplicates is happening. 
     # BR Here is where you need to give the overloaded method definitions. 
     
     tmethod.each do |t|
@@ -216,6 +220,7 @@ module TypeOperations
         end
       when RDL::Type::GenericType
         # fill in to get generics fully up and running. 
+        
       else
         return tret
       end
