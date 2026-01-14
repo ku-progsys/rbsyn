@@ -89,7 +89,7 @@ describe "Hamster" do
     lst = L[*[1,2,3,4]]
 
     #define :split_at, "(Array, Hamster::Cons_1, Integer)-> Array", [], consts: :true, moi: [:<<, :take, :drop] do
-    define :split_at, "(Array<Hamster::LazyList_1>, Hamster::Cons_1, Integer)-> Array<Hamster::LazyList_1>", [], consts: :true, moi: [] do  
+    define :split_at, "(Array, Hamster::Cons_1, Integer)-> Array<Hamster::LazyList_1>", [], consts: :true, moi: [] do  
       spec "checks that prefix and remainder is correct" do
 
         setup {

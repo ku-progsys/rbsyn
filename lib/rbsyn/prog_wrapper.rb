@@ -142,6 +142,7 @@ class ProgWrapper
       #   binding.pry
       # end      
       x = remove_duplicates(x)
+      #binding.pry
       x
     when :effect
 

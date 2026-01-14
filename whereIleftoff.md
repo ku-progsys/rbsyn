@@ -21,6 +21,8 @@ From this we might be able to look up the type of the param in the reciever (we 
 
 BIG CAVIOT, THIS ONLY WORKS WHEN THE INPUT AND OUTPUT TYPE ARE GENERICS WITH THE SAME BASE. AND IT MIGHT END UP BITING YOU BACK SO MAKE SURE IT CAN BE DISABLED
 
+ALSO NOTE THAT THIS DOESN'T ACTUALLY WORK IN ALL CASES, SOME METHODS WONT DO THAT, EX SOME ACT AS FILTERS, SOME MIGHT ACT AS TRANSFORMERS. SO PERHAPS INSTEAD OF DISABLING SOMETHING WE CAN INSTEAD DEPRIORITIZE IT IF IT HAS THAT POTENTIAL FOR A UNION. 
+
 2. I currently have the reachability function in paths to type replacing the final element in the chain with the target type, but none of the intermediate elements. ex
 A<t> -> A<t> -> A<concrete>. Since at each point in the system it can replace <t> with all possible types, we can make several chains and use the Union operation described above to eliminate overly gerneral types. EX << will definitely cause a union, so, we can see that any A<t> -> A<t,j> might be overly general.
 
@@ -28,9 +30,32 @@ A<t> -> A<t> -> A<concrete>. Since at each point in the system it can replace <t
 3. I have gottent the string to type function created. This is implemented in the 
 get_args funciton in type_ops ***DONE***
 
-4. My system currently doesn't correctly calculate the output type. I am working on that now.
+4. My system currently doesn't correctly calculate the output type. I am working on that now. ***DONE***
 
-5. I really need to update the reachability function so that the paths correctly update. 
+5. I really need to update the reachability function so that the paths correctly update. ***DONE**
+
+### Current Part 2
+
+I have done most of the above
+
+Currently the typed version of the benchmark split_at, is working, not perfectly. Only if I provide an array of the restricted type. 
+
+I have implemented the polymorphic receiver/argument/return linking function. The way it currently works is a bit different from what you might expect: 
+
+EX Array, <<, "(t) -> Array(t)" Now the thing is that this disconnects the receiver from the return. As well, in this case t can acutally be thought of as all possible elements that have ever been held in the array before it was garbage collected. 
+
+In other words we treat the generics and parameters as a type discovery process, not a type checking process. Yes we have a concrete type for t, but that concrete type could have just been a subtype. 
+
+The issue of course is that this changes it to be a dependently typed system, BECAUSE our discovery of the concrete type parameter the values of the functions matter. 
+
+NOW importantly this only really matters for when we have some means of designating what types are polymorphic, and in what arguments. 
+
+SECOND MORE ACTIONABLE IS THAT I CAN TEST IN MY WRAPPER FUNCTION IF A RETURN IS THE SAME OBJECT AS THE RECIEVER, OR ANY OF THE ARGUMENTS. THIS IS POWERFUL FOR 
+A) INFERRING EFFECTS
+B) MAYBE DETERMINING IF A FUNCTION IS POLYMORPHIC. 
+
+
+
 
 ### End Current
 

@@ -9,6 +9,7 @@ module TypeOperations
     # TODO: we use only the first definition, ignoring overloaded method definitions
     #puts ("from type_ops.rb compute_targs: trec #{trec}\n\n")
     #type = tmeth[0]
+    #binding.pry
     if !is_moi
       targs = [tmeth[0].args]
       exp_tret = [tmeth[0].ret]
@@ -63,6 +64,9 @@ module TypeOperations
             # or the match_ahead spuriously has nothing to do with generic (not likely)
             # we enumerate all possibilities (this could be made more elegant for better constraints)
             all_types = ParentsHelper.getParents
+            if !(ENV["ADD_DYN"] == "TRUE")
+              all_types.delete("DynamicType")
+            end
             temp_accum = []
 
             all_types.each do |conc|
@@ -72,8 +76,13 @@ module TypeOperations
               accum[-1].each do |arglist|
                 #binding.pry # THIS IS WHERE I AM TRYING TO CREATE THE UNION OPERATION
 
-                if !match_behind.nil? && !(match_behind <= conc)
-                  conc = RDL::Type::UnionType.new([conc, match_behind]) # this seems too simple there is probably a need for nesting consideration
+                if !match_behind.nil? && (conc <= match_behind)
+                  conc = match_behind
+
+                elsif !match_behind.nil? && !(match_behind <= conc)
+
+                  conc = RDL::Type::UnionType.new(conc, match_behind)# this seems too simple there is probably a need for nesting consideration
+
                 end
 
                 dupe = arglist.clone << conc
@@ -88,7 +97,9 @@ module TypeOperations
             
             accum[-1].each do |i|
               # adding Union Operation
-              if !match_behind.nil? && !(match_behind <= match_ahead)
+              if !match_behind.nil? && (match_ahead <= match_behind)
+                i << match_behind
+              elsif !match_behind.nil? && !(match_behind <= match_ahead)
                 i << RDL::Type::UnionType.new([match_behind, match_ahead])
               else
                 i << match_ahead
@@ -162,7 +173,7 @@ module TypeOperations
       return RDL::Type::UnionType.new(lst.map {|i| str_to_type(i)})
     when "generic"
       lst = splitter(string[7, -1])
-      RDL::Type::GenericType.new(str_to_type(lst[0]),lst[1 ..].map {|i| str_to_type(i)})
+      RDL::Type::GenericType.new(str_to_type(lst[0]),*lst[1 ..].map {|i| str_to_type(i)})
     when "variable"
       lst = splitter(string[8, -1])
       RDL::Type::VarType.new(lst[0].to_sym)
@@ -174,7 +185,7 @@ module TypeOperations
   end
 
   def index_of_var_in_ret(method)
-
+    #binding.pry
     args = method.args
     ret = method.ret
     if !ret.is_a?(RDL::Type::GenericType)
@@ -228,8 +239,31 @@ module TypeOperations
           return trec.params[idx]
         end
       when RDL::Type::GenericType
+        #binding.pry
         # fill in to get generics fully up and running. 
+        indices = index_of_var_in_ret(t)
         
+        merged_params = []
+        indices.zip(targs).each do |ind, tipe|
+          if ind.nil?
+            next
+          else
+            merged_params[ind] = tipe
+          end
+        end
+
+        if trec.is_a?(RDL::Type::GenericType) && trec.base == tret.base
+          merged_params = merged_params.zip(trec.params).map do |pre, post|
+            if post <= pre
+              pre
+            
+            elsif !(pre <= post)
+              RDL::Type::UnionType.new(pre, post)
+            end
+          end
+        end
+
+        return RDL::Type::GenericType.new(tret.base, *merged_params)
       else
         return tret
       end

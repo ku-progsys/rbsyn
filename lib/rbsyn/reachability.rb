@@ -65,14 +65,14 @@ class Reachability
     curr_depth = 0
     types = types_from_tenv(@initial_tenv)
     queue = types.map { |t| CallChain.new([t], types) }
-  
+    
     until curr_depth == depth do
 
       new_queue = []
       queue.each { |path|
         trecv = path.last
         mthds = methods_of(trecv)
-        #binding.pry
+
         mthds.delete(:__getobj__)
         #BR added in a respond_to here so that we can avoid methods that don't actually respond. 
         #mthds = mthds.filter {|i, _| RDLRespondTo(trecv, i)} # a bit hackey though 
@@ -97,21 +97,19 @@ class Reachability
             begin
               
               x = compute_tout(trecv, [tmeth], targs)
-              puts x
-              binding.pry
+              # puts x
+              # binding.pry
               tout << x unless tout.include?(x) # since the arguments are only used to compute the type out, we don't need to worry ourselves 
                                                 # about duplicates 
             rescue NoMethodError => e
               binding.pry
               puts "NO METHOD ERROR IN #{mthd}"
+              raise e 
               next
             end
           end
           next if tout == []
-          # convert :self types to actual object
-          # if mthd.to_s == "make_splitter" or mthd.to_s == "<<"
-          #   binding.pry
-          # end
+
           tout.each do |t|
             t = trecv if t.is_a?(RDL::Type::VarType) && t.name == :self
             new_tenv = make_new_tenv(t, path.tenv)
@@ -123,12 +121,13 @@ class Reachability
       queue = new_queue
       curr_depth += 1
     end
-    chains_with_type(queue, target, variance)
+    m = chains_with_type(queue, target, variance)
+
+    m
   end
 
   private
   def chains_with_type(chains, type, variance)
-    #binding.pry
     chains.filter { |chain|
       case variance
       when COVARIANT
@@ -144,9 +143,7 @@ class Reachability
               # ASSUMING THAT IF BASE IS SAME THAT THERE WILL BE SAME NUMBER AND ORDER OF PARAMETERS 
               accumulator = true
               chain.last.params.zip(type.params).each_with_index do |val, ind|
-                #binding.pry
                 if val[0].is_a?(RDL::Type::VarType)
-                  #binding.pry
                   chain.last.params[ind] = type.params[ind]
                   next
                 elsif val[0] <= val[1]

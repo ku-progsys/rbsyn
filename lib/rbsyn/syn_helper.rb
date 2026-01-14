@@ -77,36 +77,10 @@ module SynHelper
         next
       end
       basehashlist << base.typehash
-      # puts "BASE----------------\n"
-      # t = TTypePrint.new()
-      # puts t.process(base).to_a.join(" ")
-      # t.reset()
-      # puts "WORKLIST--------------------\n"
-      # work_list.each do |i|
-      #   puts t.process(i).to_a.join(" ")
-      #   t.reset()
-      #   puts "\n********\n"
-      # end
-      # puts "END--------------------\n"
-      # binding.pry
       effect_needed = []  
-      
-      #puts t.process(base)
-      #debug(base.to_ast().to_s, ":<<")
-      # x = duplicates([base] + work_list)
-      # if x.size > 0
-      #   binding.pry
-      # end
 
       generated = base.build_candidates()
-      # binding.pry
-      #puts "\n\nBASE : \n#{base.to_ast}"
-      # puts "\nTTYPE: #{base.ttype}"
-      # binding.pry
-      #generated = discard_impossible_types(generated, @ctx.functype.ret)
-
       evaluable = generated.reject &:has_hole?
-
       tempbool = false
 
 
