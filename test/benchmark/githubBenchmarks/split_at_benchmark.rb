@@ -39,6 +39,7 @@ describe "Hamster" do
     RDL.nowrap :BasicObject
     RDL.nowrap :String
     RDL.type :Array, :size, "() -> Integer"
+    RDL.type :Array, :<<, '(t) -> Array<t>'#, effect: [:-, :+]
     RDL.type :"Hamster::LazyList_1", :eql?, "(Hamster::LazyList_1) -> %bool"
     RDL.type :"Integer", :==, "(Integer) -> %bool"
     RDL.type :TrueClass, :!, '() -> %bool'
@@ -47,49 +48,32 @@ describe "Hamster" do
     RDL.nowrap :TrueClass
     RDL.nowrap :FalseClass
 
-    # RDL.type :"DynamicType", :take, "(%dyn) -> %dyn"
-    # RDL.type :"DynamicType", :drop, "(%dyn) -> %dyn"
-    # RDL.type :"DynamicType", :<<, '(%dyn) -> %dyn'
+    ## Comment out and uncomment the commented types to switch to fully typed. 
+    RDL.type :"DynamicType", :take, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :drop, "(%dyn) -> %dyn"
 
-
-    #RDL.type :Object, :freeze, '() -> self'
 
     ## METHODS TO DECLARE AS UNKNOWNS
     #
-    RDL.type :"Hamster::Cons_1", :take, "(Integer) -> Hamster::LazyList_1"
-    RDL.type :"Hamster::Cons_1", :drop, "(Integer) -> Hamster::LazyList_1"
-    # RDL.type :Array, :<<, '(%dyn) -> Array'
-    RDL.type :"Hamster::LazyList_1", :take, "(Integer) -> Hamster::LazyList_1"
-    RDL.type :"Hamster::LazyList_1", :drop, "(Integer) -> Hamster::LazyList_1"
-    # RDL.type :Array, :<<, '(Hamster::Cons_1) -> Array'
-    RDL.type :Array, :<<, '(t) -> Array<t>'#, effect: [:-, :+]
-    
-    
+    # RDL.type :"Hamster::Cons_1", :take, "(Integer) -> Hamster::LazyList_1"
+    # RDL.type :"Hamster::Cons_1", :drop, "(Integer) -> Hamster::LazyList_1"
 
-
-
-
+    # RDL.type :"Hamster::LazyList_1", :take, "(Integer) -> Hamster::LazyList_1"
+    # RDL.type :"Hamster::LazyList_1", :drop, "(Integer) -> Hamster::LazyList_1"
 
     ParentsHelper.subtract()
 
-
-
     #solution: 
-    # def split_at(arr, Hlist,  number)
-    #  arr << Hlist.take(number)
-    #  arr << Hlist.drop(number)
-    #  arr.freeze # not sure how to implement assignment in rbsyn yet so not sure how to do freeze
-    # end
 
-
-    # arr << take(Int)
-
+    #def split_at(arg0, arg1, arg2)
+    #arg0 << arg1.take(arg2) << arg1.drop(arg2)
+    #end
 
 
     lst = L[*[1,2,3,4]]
 
-    #define :split_at, "(Array, Hamster::Cons_1, Integer)-> Array", [], consts: :true, moi: [:<<, :take, :drop] do
-    define :split_at, "(Array, Hamster::Cons_1, Integer)-> Array<Hamster::LazyList_1>", [], consts: :true, moi: [] do  
+    #define :split_at, "(Array, Hamster::Cons_1, Integer)-> Array<Hamster::LazyList_1>", [], consts: :true, moi: [:take, :drop] do
+    define :split_at, "(Array, Hamster::Cons_1, Integer)-> Array<Hamster::LazyList_1>", [], consts: :true, moi: [:take, :drop] do  
       spec "checks that prefix and remainder is correct" do
 
         setup {

@@ -56,6 +56,7 @@ module SynHelper
   include TypeOperations
   
   def generate(seed_hole, preconds, postconds, return_all=false)
+    ENV["GLOBAL_COUNT"]= 1.to_s
     #puts "\n\n\n------------------------------\n\n\n"
     correct_progs = []
     # env = seed_hole.env
@@ -68,9 +69,7 @@ module SynHelper
 
     until work_list.empty?
       counter += 1
-      if counter == 7
-        ENV['FLAG'] = "TRUE"
-      end
+      #puts counter
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
       if basehashlist.include? base.typehash

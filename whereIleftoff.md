@@ -55,7 +55,15 @@ A) INFERRING EFFECTS
 B) MAYBE DETERMINING IF A FUNCTION IS POLYMORPHIC. 
 
 
+### Current 1/23
 
+Today I found a small error, that is a bit illuminating about the process for building the dynamically typed stuff. The fix was easy, I want to follow up though because there is 
+a small question dangling. The issue is that it was generating something of the form (H take B):H << C:A. But the type system explicitly has NO function << for type H as receiver. 
+This is just easily ignored by catching the NoMethod Error. BUT! I don't see where the system might be updating the type information of H take B -> H, becuase it shouldn't enumerate it if this form is seen, unless it is treated as dynamic. 
+
+As well I am seeing that the final output Type in the paths to type chain is sometimes %dyn and sometimes Array<%dyn> NO IT SHOULDN'T. We KNOW the output type, and that should never expand in scope. 
+
+Second, If I want efficient enumeration I should really create a custom type called ANYTHING_BUT<UNION<TYPEA, TYPEB>> type. This shouldn't capture type errors, instead it should capture what has already been enumerated because we already have type information about it. That way, as we discover types we don't need to update the %dyn set for each enumerated program, we will know what was already had known types at the time of generation. Additionally we can use it as a constraint mechanism. IE the larger the ANYTHING_BUT list is, the more programs we have already enumerated of this form already. We could use that as a means of balancing efficient enumeration with type discovery. It really wouldn't be that hard to build, I don't think.  
 
 ### End Current
 

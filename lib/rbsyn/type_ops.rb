@@ -362,9 +362,7 @@ module TypeOperations
   end
 
   def methods_of(trecv)
-
-
-
+    
     parents = parents_of(trecv)
 
       if ENV["ADD_DYN"] == "TRUE"

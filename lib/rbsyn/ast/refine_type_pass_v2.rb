@@ -36,13 +36,9 @@ class DynamicRefineTypes < ::AST::Processor
     info = mthds[mth]
     tmeth = info[:type]
     targs = node.children[2..].map &:ttype
-    
-    begin
+    tret = compute_tout(trecv, tmeth, targs)
+    node.update_ttype(tret)
 
-      tret = compute_tout(trecv, tmeth, targs)
-      node.update_ttype(tret)
-    rescue
-    end
   end
 
   def handler_missing(node)
