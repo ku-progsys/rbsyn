@@ -375,7 +375,7 @@ module TypeOperations
     #   
     
   
-    x = parents.reduce({}) {|acc, klass| 
+    parents.reduce({}) {|acc, klass| 
       methods = Marshal.load(Marshal.dump(RDL::Globals.info.info[klass]))
       if methods == nil
         acc

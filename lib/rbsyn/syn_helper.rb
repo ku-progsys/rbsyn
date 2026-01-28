@@ -55,21 +55,23 @@ end
 module SynHelper
   include TypeOperations
   
-  def generate(seed_hole, preconds, postconds, return_all=false)
-    ENV["GLOBAL_COUNT"]= 1.to_s
-    #puts "\n\n\n------------------------------\n\n\n"
+  def generate(seed_hole, preconds, postconds, return_all=false, add_dyn: false, type_search_depth: 20 )
+    if add_dyn 
+      ENV['ADD_DYN'] = "TRUE"
+    else
+      ENV['ADD_DYN'] = 'FALSE'
+    end
+    #ENV["GLOBAL_COUNT"]= 1.to_s
     correct_progs = []
-    # env = seed_hole.env
-    # seed = ProgWrapper.new(@ctx, s(RDL::Type::DynamicType.new(), :hole, 0, {}), env)
-    # seed.look_for(:type, RDL::Type::DynamicType.new())
-
     work_list = [seed_hole,]
     basehashlist = []
     counter = 0
 
     until work_list.empty?
+      if counter >= type_search_depth && add_dyn
+        raise NameError 
+      end
       counter += 1
-      #puts counter
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
       if basehashlist.include? base.typehash
@@ -77,7 +79,7 @@ module SynHelper
       end
       basehashlist << base.typehash
       effect_needed = []  
-
+      #puts "base: \n#{base.to_ast}\n--------------\ntypes:\n#{TTypePrint.new().process(base.to_ast).to_s}\n<<<<<<<<<<<<<<<\n\n"
       generated = base.build_candidates()
       evaluable = generated.reject &:has_hole?
       tempbool = false
@@ -96,7 +98,7 @@ module SynHelper
             #arg0 << arg1.take(arg2) << arg1.drop(arg2)
             #puts Unparser.unparse(prog_wrap.to_ast)
 
-            #debug(Unparser.unparse(prog_wrap.to_ast()), "arg1.take(arg2)")
+            #debug(Unparser.unparse(prog_wrap.to_ast()), "arg0 << arg1.drop")
 
             res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
           rescue RbSynError => err

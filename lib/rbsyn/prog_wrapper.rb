@@ -103,8 +103,8 @@ class ProgWrapper
     update_types_pass = RefineTypesPass.new
     case @looking_for
     when :type
-      ENV["GLOBAL_COUNT"] = (ENV["GLOBAL_COUNT"].to_i + 1).to_s
-      puts ENV["GLOBAL_COUNT"]
+      
+      # puts ENV["GLOBAL_COUNT"]
       pass1 = ExpandHolePass.new(@ctx, @env)
       
       expanded = pass1.process(@seed)
@@ -112,12 +112,15 @@ class ProgWrapper
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
 
       x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
-
+        # ENV["GLOBAL_COUNT"] = (ENV["GLOBAL_COUNT"].to_i + 1).to_s
+        # if ENV["GLOBAL_COUNT"] == "245" 
+        #   binding.pry
+        # end
         pass2 = ExtractASTPass.new(selection, @env) 
         temp = pass2.process(expanded)
-        # new_env = pass2.env
-        # to_type = TTypePrint.new(env: new_env)
-        # puts to_type.process(temp).to_s
+        #new_env = pass2.env
+        #to_type = TTypePrint.new(env: new_env)
+        #x = to_type.process(temp).to_s
         # puts "\n\n\n"
         program = update_types_pass.process(temp)
         new_env = pass2.env
@@ -135,17 +138,19 @@ class ProgWrapper
           end
         rescue NoMethodError => e
           # we created an ill typed program that went undiscovered when it is still using dynamic types
+          # what I am assuming is that we discovered a type, then we attempted to use it after we have corrected its 
+          # type errors. 
           # so skip
-          to_type = TTypePrint.new(env: new_env)
-          puts to_type.process(temp).to_s
-          puts "\n\n\n"
-          binding.pry
+          # to_type = TTypePrint.new(env: new_env)
+          # puts to_type.process(temp).to_s
+          # puts "\n\n\n"
+          # binding.pry
           next
         rescue Exception => e
          
-          refiner = DynamicRefineTypes.new(@ctx, new_env)
+          #refiner = DynamicRefineTypes.new(@ctx, new_env)
           binding.pry
-          p = refiner.process(program)
+          #p = refiner.process(program)
           next
         end 
 

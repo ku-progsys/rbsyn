@@ -122,11 +122,12 @@ class Reachability
       curr_depth += 1
     end
     m = chains_with_type(queue, target, variance)
-
-    m
+    k = correct_dynamic_last(m, target)
+    k
   end
 
   private
+
   def chains_with_type(chains, type, variance)
     chains.filter { |chain|
       case variance
@@ -134,14 +135,19 @@ class Reachability
 
         type <= chain.last
       when CONTRAVARIANT
+
+        if type.is_a?(RDL::Type::DynamicType)
+          # anything goes if we are looking for anything
+          true
         #BR added in functionality for generics
-        if chain.last.is_a? RDL::Type::UnionType
+        elsif chain.last.is_a? RDL::Type::UnionType
           chain.last.types.any? { |t| t <= type }
         elsif chain.last.is_a? RDL::Type::GenericType
           if type.is_a? RDL::Type::GenericType
             if chain.last.base <= type.base
               # ASSUMING THAT IF BASE IS SAME THAT THERE WILL BE SAME NUMBER AND ORDER OF PARAMETERS 
               accumulator = true
+              # now checking accumulator types
               chain.last.params.zip(type.params).each_with_index do |val, ind|
                 if val[0].is_a?(RDL::Type::VarType)
                   chain.last.params[ind] = type.params[ind]
@@ -165,6 +171,48 @@ class Reachability
         end
       else
         raise RbSynError, "unexpected variance"
+      end
+
+
+    }
+  end
+
+  def correct_dynamic_last(chains, type)
+    # If we know the type of the final type we shouldn't expand its definiton to allow  dynamic type
+    # we should keep the definition narrow so that it errors when it knows it should error 
+    chains.map { |chain|
+      last = chain.last
+      # puts "last\n"
+      # puts chain.last
+      # puts "\n\n\ntype\n"
+      # puts type
+      # puts "\n\n\n"
+      if type.is_a?(RDL::Type::DynamicType)
+        # if we are looking for something dynamic then all bets are off. 
+        chain
+      elsif last.is_a?(RDL::Type::DynamicType) && !type.is_a?(RDL::Type::DynamicType)
+        chain.path[-1] = type
+        chain
+      elsif last.is_a?(RDL::Type::GenericType)
+        begin
+          newparams = last.params.zip(type.params).map {|l, t|  
+            if l.is_a?(RDL::Type::DynamicType) && !t.is_a?(RDL::Type::DynamicType)
+              t
+            else
+              l
+            end
+          }
+        rescue Exception => e 
+          binding.pry
+        end
+        
+        chain.path[-1] = RDL::Type::GenericType.new(last.base, *newparams)
+        # puts "newchain"
+        # puts chain.path 
+        # puts "\n\n\n---------------------\n"
+        chain
+      else
+        chain
       end
 
 

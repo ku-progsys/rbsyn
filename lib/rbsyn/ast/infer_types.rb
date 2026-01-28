@@ -47,8 +47,16 @@ class InferTypes
 
     begin
 
+      # if meth == :take && args[0].class.to_s == "String"
+      #   binding.pry
+      # end
 
       result = recvr.public_send(meth, *args)
+
+      result.inspect # this forces an inspection on an object 
+      # for some reason with hamster lazy list take and drop the error isn't caught without it. 
+      # this might ruin lazyness for now I don't have an alternative route. 
+      
       
     rescue TypeError => e
       if !@set_exception 

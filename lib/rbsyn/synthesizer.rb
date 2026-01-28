@@ -54,6 +54,7 @@ class Synthesizer
       @ctx.logger.debug("Finding sln for subspec: #{desc}")
       #binding.pry
       prog = prog_cache.find_prog(precond, postcond)
+      
       # if prog.nil? 
       #   binding.pry
       #   prog = prog_cache.find_prog(precond,postcond)
@@ -62,15 +63,22 @@ class Synthesizer
       if prog.nil?
 
         env = LocalEnvironment.new
-
         prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
-        
         seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
-        
         seed.look_for(:type, @ctx.functype.ret)
 
-
-        prog = generate(seed, [precond], [postcond], false) 
+        begin
+          # first run a small pass with a 
+          prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: 20  ) 
+        rescue NameError => e 
+          
+          env = LocalEnvironment.new
+          prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
+          seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
+          seed.look_for(:type, @ctx.functype.ret)
+          #binding.pry
+          prog = generate(seed, [precond], [postcond], false, add_dyn: false) 
+        end
         prog_cache.add(prog)
 
         @ctx.logger.debug("Synthesized program:\n#{format_ast(prog.to_ast)}")
