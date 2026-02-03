@@ -70,17 +70,9 @@ class Synthesizer
         begin
           # first run a small pass with a 
           #puts "STARTING"
-          prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: 400  ) 
+          prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: 80 ) 
         rescue NameError => e 
-          # puts "GOT HERE"
-          # log = "Type Sucesses"
-          # @ctx.type_info.type_successes.each {|i, j| 
-          #   j.each { |k|
-          #     log = log + "\n--- #{@ctx.type_info.type_to_s(k)}"
-          #   }
-          # };
-          # puts log
-          # binding.pry
+          puts "GOT HERE"
           env = LocalEnvironment.new
           prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
           seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
@@ -196,6 +188,9 @@ class Synthesizer
 
       return ast if test_outputs.all? true
     }
+    puts "NO CANDIDATES FOUND "
+
+
     raise RbSynError, "No candidates found"
   end
 

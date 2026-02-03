@@ -80,9 +80,9 @@ Rake::TestTask.new(:hamster) do |t|
   t.test_files = FileList[
                            #"test/benchmark/githubBenchmarks/split_at_benchmark.rb", #WORKING WITH TYPES AND WITHOUT TYPES: NEEDED 20 passes
                            #"test/benchmark/githubBenchmarks/set_delete.rb" #WORKING WITH TYPES #WORKING WITHOUT TYPES, UNSURE OF HELP OF MY SYSTEM
-                           "test/benchmark/githubBenchmarks/hash_clear_benchmark.rb", # WORKING WITH TYPES, 
-                           #"test/benchmark/githubBenchmarks/hash_values_benchmark.rb", # WORKING WITH TYPES 
-                           #"test/benchmark/githubBenchmarks/hash_eql_benchmark.rb", # WORKING WITH TYPES
+                           #"test/benchmark/githubBenchmarks/hash_clear_benchmark.rb", # PREVIOUSLY WORKING WITH TYPES, NO LONGER WORKING WITH TYPES 
+                           #"test/benchmark/githubBenchmarks/hash_values_benchmark.rb", # WORKING WITH TYPES #WORKING WITHOUT TYPES, BUT THE TYPE INFERENCE DOESN'T REALLY ADD VALUE FOR THIS BENCHMARK 48 ITER TO FIND RELEVANT TYPES, 55 TO FIND SOLUTION NAIVELY
+                           "test/benchmark/githubBenchmarks/hash_eql_benchmark.rb", # WORKING WITH TYPES
                            #"test/benchmark/githubBenchmarks/hash_get_benchmark.rb", # WORKING WITH TYPES
                            #"test/benchmark/githubBenchmarks/hash_delete_benchmark.rb", # WORKING WITH TYPES
                            #"test/benchmark/githubBenchmarks/span_benchmark.rb", #VERY DIFFICULT ONE MIGHT NEED ASSISTANCE FORCING ASSIGNMENT OPERATIONS TO GET IT TO WORK

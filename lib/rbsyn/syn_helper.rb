@@ -69,7 +69,7 @@ module SynHelper
 
     until work_list.empty?
       if counter >= type_search_depth && add_dyn
-        raise NameError 
+        raise NameError, "done checking for type"
       end
       counter += 1
       work_list = work_list.sort { |a, b| comparator(a, b) }
@@ -148,7 +148,7 @@ module SynHelper
         end
         # passes all tests
         #debug(Unparser.unparse(prog_wrap.to_ast), "arg1.take(arg2)")
-        if test_outputs.all? true
+        if test_outputs.all? true && !add_dyn
             #puts "correct program \n#{format_ast(prog_wrap.to_ast)}"
             correct_progs << prog_wrap
           return prog_wrap unless return_all
@@ -198,7 +198,7 @@ module SynHelper
       # always a just hole, with next possible call chain length. If the
       # work_list is empty and we have all correct programs that means we have
       # all correct programs up that length
-      if !correct_progs.empty? && return_all
+      if !correct_progs.empty? && return_all && !add_dyn
         return correct_progs
       end
       
@@ -206,7 +206,21 @@ module SynHelper
 #      test_ordering(work_list)
       work_list
     end
-    raise RbSynError, "No candidates found"
+    log = "Type Sucesses"
+    @ctx.type_info.type_successes.each {|i, j| 
+      j.each { |k|
+        log = log + "\n--- #{@ctx.type_info.type_to_s(k)}"
+      }
+    }
+    log2 = "Type Failures"
+    @ctx.type_info.type_errs.each do |i, j|
+      j.each { |k|
+        log2 = log2 + "\n--- #{@ctx.type_info.type_to_s(k)}"
+      }
+    end
+
+    raise RbSynError, "No candidates found" + "\n\n" + log + "\n\n" + log2 + "\n\n"
+
   end
 
   def comparator(a, b)
@@ -225,9 +239,9 @@ module SynHelper
           -1
         elsif a.prog_size == b.prog_size
           if a.dynamic_components < b.dynamic_components
-            -1
-          elsif a.dynamic_components > b.dynamic_components
             1
+          elsif a.dynamic_components > b.dynamic_components
+            -1
           elsif a.dynamic_components == b.dynamic_components
             if a.ttype == @ctx.functype.ret
               -1

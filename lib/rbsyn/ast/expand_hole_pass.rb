@@ -44,6 +44,7 @@ class ExpandHolePass < ::AST::Processor
 
     if depth == 0
       # nil constant
+      expanded.concat lvar(node.ttype)
       if @ctx.enable_nil# && !@recv
         expanded << nil_const
       end
@@ -84,7 +85,7 @@ class ExpandHolePass < ::AST::Processor
       end
 
       # real program variables in the environment
-      expanded.concat lvar(node.ttype)
+      # expanded.concat lvar(node.ttype)
 
       # hashes
       # receivers are not hashes for now

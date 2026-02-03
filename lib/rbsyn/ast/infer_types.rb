@@ -42,9 +42,22 @@ class InferTypes
 
   def w_instrument(recvr, meth, *args)
 
+    truefalse = RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true))
     # trace form: {method, reciever, args, result, exception}
-    trace = {:method => meth,:recvr => RDL::Type::NominalType.new(recvr.class.to_s),
-      :args => args.map {|i| RDL::Type::NominalType.new(i.class.to_s)}, :result => nil, :except => nil} # why is this nominal type this might need to change because of generics 
+    trace = {
+      :method => meth,
+      :recvr => if recvr.is_a?(TrueClass) || recvr.is_a?(FalseClass)
+          truefalse
+        else
+          RDL::Type::NominalType.new(recvr.class.to_s)
+        end,
+      :args => args.map {|i| if i.is_a?(TrueClass) || i.is_a?(FalseClass) 
+                            truefalse 
+                          else RDL::Type::NominalType.new(i.class.to_s) 
+                          end},
+      :result => nil, 
+      :except => nil} # why is this nominal type this might need to change because of generics 
+
 
     begin
 
@@ -62,19 +75,15 @@ class InferTypes
       
     rescue TypeError => e
       if !@set_exception 
-
         trace[:except] = e
         update_errlist(trace)
         @set_exception = true
       end
       raise e
-      #this is technically something that you should put in. 
-    rescue NoMethodError => e # BR TODO TEST THIS NEW FUNCITONALITY
+
+    rescue NoMethodError => e 
+      # don't even bother using this program because it DEFINITELY has a type error, not just a potential error. 
       if !@set_exception 
-           
-
-
-
         trace[:except] = e
         trace[:args] = :ALL
         update_errlist(trace)
@@ -85,8 +94,6 @@ class InferTypes
     rescue NameError => e 
       if !@set_exception 
         if e.to_s.downcase.include?("undefined method")
-      
-
           trace[:except] = e
           trace[:args] = :ALL
           update_errlist(trace)
@@ -97,29 +104,26 @@ class InferTypes
 
     rescue ArgumentError => e 
        if !@set_exception  
-  
         trace[:except] = e
         update_errlist(trace)
         @set_exception = true
       end
       raise e
+
     rescue StandardError => e
       if !@set_exception 
-
-
         trace[:except] = e
         update_errlist(trace)
         @set_exception = true
       end
       raise e
     end
-
     
-    
-    
-    trace[:result] = RDL::Type::NominalType.new(result.class.to_s)
-
-
+    if result.is_a?(TrueClass) || result.is_a?(FalseClass) 
+      trace[:result] = truefalse 
+    else 
+      trace[:result] = RDL::Type::NominalType.new(result.class.to_s)
+    end
 
     update_success(trace)
     result
@@ -132,13 +136,13 @@ class InferTypes
     if @exclude[trace[:recvr].to_s.to_sym].nil?
       @exclude[:"%any"].include?(trace[:method].to_s.to_sym)
     else
-      @exclude[trace[:recvr]].include?(:"%all") || @exclude[trace[:recvr]].include?(trace[:method].to_s.to_sym)
+      @exclude[trace[:recvr].to_s.to_sym].include?(:"%all") || @exclude[trace[:recvr].to_s.to_sym].include?(trace[:method].to_s.to_sym)
     end
   end
 
 
   def update_errlist(trace)
-
+    
     consolidate_type_errors(trace)
     @type_errs
 
@@ -154,8 +158,6 @@ class InferTypes
     @new_types = []
     temp
   end
-
-
 
 
 

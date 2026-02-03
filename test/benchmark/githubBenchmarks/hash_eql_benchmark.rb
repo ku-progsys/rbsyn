@@ -21,7 +21,6 @@ end
 describe "Hamster" do
   it "" do
 
-
     ParentsHelper.init_list()
     RDL::Type::NominalType.new("Hamster::Hash_1")
     RDL.nowrap :"Hamster::Hash_1"
@@ -37,12 +36,19 @@ describe "Hamster" do
     #METHODS
     RDL.type :"TrueClass", :!, '() -> %bool' 
     RDL.type :"FalseClass", :!, '() -> %bool' 
-    RDL.type :"Hamster::Hash_1", :instance_of?, "(Class) -> %bool"
-    RDL.type :Object, :equal?, "(Hamster::Hash_1) -> %bool"
-    RDL.type :"Hamster::Trie", :eql?, "(Hamster::Trie) -> %bool"
-    RDL.type :"Object", :helper1, "() -> Hamster::Trie"
-    RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
     RDL.type :Object, :class, "() -> Class"
+
+    #METHODS FOR DYNAMIC
+    # RDL.type :Object, :equal?, "(Hamster::Hash_1) -> %bool"
+    # RDL.type :"Hamster::Hash_1", :instance_of?, "(Class) -> %bool"
+    # RDL.type :"Hamster::Trie", :eql?, "(Hamster::Trie) -> %bool"
+    # RDL.type :"Object", :helper1, "() -> Hamster::Trie"
+    # RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
+    RDL.type :DynamicType, :equal?, "(%dyn) -> %dyn"
+    RDL.type :DynamicType, :instance_of?, "(%dyn) -> %dyn"
+    RDL.type :DynamicType, :eql?, "(%dyn) -> %dyn"
+    RDL.type :DynamicType, :helper1, "() -> %dyn"
+    RDL.type :DynamicType, :trie, "() -> %dyn"
 
 
     #Solution
@@ -60,9 +66,11 @@ describe "Hamster" do
     #       false
     #   end
     # end
+    
     ParentsHelper.subtract()
-
-    define :eql? , "(Hamster::Hash_1, Object)-> %bool", [], consts: :true, moi: [] do
+    
+    define :eql? , "(Hamster::Hash_1, Object)-> %bool", [], consts: :true, moi: [:equal?, :instance_of?, :eql?, :helper1, :trie], 
+    exclude: [[:TrueClass, :"%any"], [:"%bool", :"%any"], [:String, :"%any"], [:FalseClass, :"%any"]] do
       
 
 

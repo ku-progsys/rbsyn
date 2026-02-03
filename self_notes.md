@@ -38,10 +38,16 @@ we might also try scanning through instance_variables, and recursively looking f
 
 Notes: 
 to me it seems that we might be able to send a first class object in place of a key through funcitons that aren't c-calls .
-This would require the object to be hashable.
+This would require the object to be hashable. (PROXY)
 
 then we could use module redefinitions to make sure that any time the object was called across some known data structure we record what that structure is 
 and what it's keys are. 
+
+
+
+## UPDATE
+
+Currently I have moved towards a: synthesize types, then restart with new type information, this is very limited because searching for types is very naive right now. I need to make it A) prioritize type discovery during discovery mode B) upon discovery of a new shallow type, save it as a sort of cannonical instance, then immediately test it in a separate shallow type discovery instance. 
 
 
 ## LLM Solution:

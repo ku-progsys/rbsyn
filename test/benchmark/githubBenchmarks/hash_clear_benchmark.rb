@@ -54,12 +54,12 @@ describe "Hamster" do
     #
     #
     #METHODS TO MAKE DYNAMIC
-    # RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
-    # RDL.type :"Class", :alloc, "(Hamster::Trie, Proc) -> Hamster::Hash_1"
-    # RDL.type :"Class", :empty, "() -> Hamster::Hash_1"
-    RDL.type :"DynamicType", :default, "() -> %dyn"
-    RDL.type :"DynamicType", :alloc, "(%dyn, %dyn) -> %dyn"
-    RDL.type :"DynamicType", :empty, "() -> %dyn"
+    RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
+    RDL.type :"Class", :alloc, "(Hamster::Trie, Proc) -> Hamster::Hash_1"
+    RDL.type :"Class", :empty, "() -> Hamster::Hash_1"
+    # RDL.type :"DynamicType", :default, "() -> %dyn"
+    # RDL.type :"DynamicType", :alloc, "(%dyn, %dyn) -> %dyn"
+    # RDL.type :"DynamicType", :empty, "() -> %dyn"
 
     #Solution
 # def clear
@@ -81,16 +81,7 @@ describe "Hamster" do
 
 
         
-        spec "maintains the default proc" do 
-            setup {
-            
-                clear(hash2, empty)
 
-            }
-            post {|ret|
-                assert {ret[:q] == 1}
-            }    
-        end
 
         spec "returns an empty hash" do 
             setup {
@@ -103,7 +94,16 @@ describe "Hamster" do
             }    
         end
 
+        spec "maintains the default proc" do 
+            setup {
+            
+                clear(hash2, empty)
 
+            }
+            post {|ret|
+                assert {ret[:q] == 1}
+            }    
+        end
        
 
 
