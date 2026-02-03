@@ -227,7 +227,18 @@ class CheckErrorPass < ::AST::Processor
       l = [lower]
     end
 
-    return l.any? { |t_left| u.any? { |t_right| t_left <= t_right }}
+
+    x = l.any? do |t_left| u.any? do |t_right| 
+      begin 
+        t_left <= t_right 
+      rescue NoMethodError
+        #accounts for non-related types
+        false 
+      end 
+    end end
+
+    #return l.any? { |t_left| u.any? { |t_right| t_left <= t_right  }}
+    return x
 
   end
 
@@ -247,8 +258,16 @@ class CheckErrorPass < ::AST::Processor
     else 
       l = [lower]
     end
-
-    return l.any? { |t_left| u.any? { |t_right| t_right <= t_left  }}
+    x = l.any? do |t_left| u.any? do |t_right| 
+      begin 
+        t_right <= t_left
+      rescue NoMethodError
+        # accounts for non-related types
+        false 
+      end 
+    end end
+    #return l.any? { |t_left| u.any? { |t_right| t_right <= t_left  }}
+    return x
 
   end
 

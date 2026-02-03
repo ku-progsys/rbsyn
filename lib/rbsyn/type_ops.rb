@@ -10,15 +10,15 @@ module TypeOperations
     #puts ("from type_ops.rb compute_targs: trec #{trec}\n\n")
     #type = tmeth[0]
     #binding.pry
-    if !is_moi
-      targs = [tmeth[0].args]
-      exp_tret = [tmeth[0].ret]
-      param_matches = [index_of_var_in_ret(tmeth[0])]
-    else
+    # if !is_moi
+    #   targs = [tmeth[0].args]
+    #   exp_tret = [tmeth[0].ret]
+    #   param_matches = [index_of_var_in_ret(tmeth[0])]
+    # else
       targs = tmeth.map {|t| t.args }
       exp_tret = tmeth.map {|t| t.ret}
       param_matches = tmeth.map {|t| index_of_var_in_ret(t)}
-    end
+    # end
     # if targs.size > 1
     #   binding.pry
     # end
@@ -39,7 +39,7 @@ module TypeOperations
         case targ
           
         when RDL::Type::VarType
-          # when the argument to be filled is a variable type
+          # when the argument to be filled is a Type variable
           # we use the signatures return argument to find a match_aheading typevar in the return signature 
           # and use that position to look and see if the expected return has a filled type in that position
           match_ahead = nil

@@ -6,10 +6,11 @@ require_relative "../type_helper"
 
 class InferTypes
 
-  attr_reader :type_errs, :type_successes, :moi, :new_types, :newerror, :newsuccess
+  attr_reader :type_errs, :type_successes, :moi, :new_types, :newerror, :newsuccess, :exclude
 
-  def initialize(moi)
+  def initialize(moi, exclude)
     @moi = moi
+    @exclude = exclude
     @type_errs = {}
     @type_successes = {}
     moi.each do |i|
@@ -51,6 +52,7 @@ class InferTypes
       #   binding.pry
       # end
 
+     
       result = recvr.public_send(meth, *args)
 
       result.inspect # this forces an inspection on an object 
@@ -124,6 +126,16 @@ class InferTypes
 
   end
 
+  def match_exclusion?(trace)
+
+    #check if we need to exclude any known types from the search
+    if @exclude[trace[:recvr].to_s.to_sym].nil?
+      @exclude[:"%any"].include?(trace[:method].to_s.to_sym)
+    else
+      @exclude[trace[:recvr]].include?(:"%all") || @exclude[trace[:recvr]].include?(trace[:method].to_s.to_sym)
+    end
+  end
+
 
   def update_errlist(trace)
 
@@ -145,11 +157,17 @@ class InferTypes
 
 
 
+
+
   def update_success(trace)
 
-    ParentsHelper.addTypeManually(trace[:recvr].to_s)
-    ParentsHelper.addTypeManually(trace[:result].to_s)
-    consolidate_type_successes(trace)
+    if !match_exclusion?(trace)
+
+      ParentsHelper.addTypeManually(trace[:recvr].to_s)
+      ParentsHelper.addTypeManually(trace[:result].to_s)
+      consolidate_type_successes(trace)
+
+    end
 
     @type_successes
 

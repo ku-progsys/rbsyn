@@ -22,7 +22,7 @@ class SynthesizerProxy
 
   attr_accessor :assertions
 
-  def initialize(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, moi)
+  def initialize(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, moi, exclude)
     @ctx = Context.new
     @ctx.max_prog_size = prog_size
     @ctx.components = components
@@ -32,10 +32,28 @@ class SynthesizerProxy
     @ctx.enable_nil = enable_nil
     raise RbSynError, "expected method type" unless @ctx.functype.is_a? RDL::Type::MethodType
     @ctx.moi = moi
+    @ctx.exclude = extract_exclude(exclude)
     @mth_name = mth_name.to_sym
     @ctx.mth_name = @mth_name
     @specs = []
     @assertions = 0
+  end
+
+  def extract_exclude(exclude)
+    exclude_dict = {:"%any" => []}
+
+    exclude.each do |i|
+
+      exclude_dict[i[0]] ||= []
+      if i.length == 1
+        exclude_dict[i[0]] = [:"%any"]
+      else
+        exclude_dict[i[0]].append(i[1])
+      end
+        
+
+    end
+    exclude_dict
   end
 
   def spec(desc, &blk)
@@ -77,8 +95,9 @@ class SynthesizerProxy
 end
 
 module SpecDSL
-  def define(mth_name, type, components, prog_size: 5, max_hash_size: 1, consts: false, enable_nil: false, moi: [], &blk)
-    syn_proxy = SynthesizerProxy.new(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, moi)
+
+  def define(mth_name, type, components, prog_size: 5, max_hash_size: 1, consts: false, enable_nil: false, moi: [], exclude: [], &blk)
+    syn_proxy = SynthesizerProxy.new(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, moi, exclude)
     syn_proxy.instance_eval(&blk)
   end
 end

@@ -50,11 +50,16 @@ describe "Hamster" do
     #RDL.type :"Hamster::Trie", :eql?, "(Hamster::Trie) -> %bool"
     RDL.type :"BasicObject", :truthy?, "() -> %bool"
     #RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
-    RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
-    RDL.type :"Object", :class, "() -> Class"
-    RDL.type :"Class", :alloc, "(Hamster::Trie, Proc) -> Hamster::Hash_1"
-    RDL.type :"Class", :empty, "() -> Hamster::Hash_1"
-
+    #RDL.type :"Object", :class, "() -> Class"
+    #
+    #
+    #METHODS TO MAKE DYNAMIC
+    # RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
+    # RDL.type :"Class", :alloc, "(Hamster::Trie, Proc) -> Hamster::Hash_1"
+    # RDL.type :"Class", :empty, "() -> Hamster::Hash_1"
+    RDL.type :"DynamicType", :default, "() -> %dyn"
+    RDL.type :"DynamicType", :alloc, "(%dyn, %dyn) -> %dyn"
+    RDL.type :"DynamicType", :empty, "() -> %dyn"
 
     #Solution
 # def clear

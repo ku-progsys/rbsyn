@@ -37,10 +37,16 @@ describe "Hamster" do
 
 
     ## METHODS TO DECLARE AS UNKNOWNS
-    RDL.type :"Hamster::Trie", :delete, "(String) -> Hamster::Trie"
-    RDL.type :"Hamster::Set_1", :new_trie, "(Hamster::Trie) -> Hamster::Set_1"
-    RDL.type :"Hamster::Set_1", :trie, "() -> Hamster::Trie"
+    # RDL.type :"Hamster::Trie", :delete, "(String) -> Hamster::Trie"
+    # RDL.type :"Hamster::Set_1", :new_trie, "(Hamster::Trie) -> Hamster::Set_1"
+    # RDL.type :"Hamster::Set_1", :trie, "() -> Hamster::Trie"
 
+    RDL.type :"DynamicType", :delete, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :new_trie, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :trie, "() -> %dyn"
+
+
+    #SOLUTION
     # def delete(item)
     #   trie = @trie.delete(item)
     #   new_trie(trie)
@@ -50,15 +56,9 @@ describe "Hamster" do
 
     ParentsHelper.subtract()
 
-    #solution: 
-    # def split_at(arr, number)
-    #  arr << take(number)
-    #  arr << drop(number)
-    #  arr.freeze # not sure how to implement assignment in rbsyn yet so not sure how to do freeze
-    # end
 
     helperSet = S["A", "B", "C"]
-    define :delete_item, "(Hamster::Set_1, String)-> Hamster::Set_1", [], consts: :true, moi: [] do
+    define :delete_item, "(Hamster::Set_1, String)-> Hamster::Set_1", [], consts: :true, moi: [:delete, :new_trie, :trie], exclude: [[:String, :delete]] do
       
       
 

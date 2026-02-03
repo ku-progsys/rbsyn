@@ -65,6 +65,19 @@ As well I am seeing that the final output Type in the paths to type chain is som
 
 Second, If I want efficient enumeration I should really create a custom type called ANYTHING_BUT<UNION<TYPEA, TYPEB>> type. This shouldn't capture type errors, instead it should capture what has already been enumerated because we already have type information about it. That way, as we discover types we don't need to update the %dyn set for each enumerated program, we will know what was already had known types at the time of generation. Additionally we can use it as a constraint mechanism. IE the larger the ANYTHING_BUT list is, the more programs we have already enumerated of this form already. We could use that as a means of balancing efficient enumeration with type discovery. It really wouldn't be that hard to build, I don't think.  
 
+### Current 2/2
+
+Right now I am getting the existing benchmarks to work. I have gone with the version of this system that I don't really like, we terminate enumeration and then use the list of types to enumerate further. 
+
+Even with this version there are still many challenges: namely, first I have it hard coded how many passes to go through to check types, really it should be more like we know how many nominal types there are, then we terminate when the nominal types have been permuted enough, alternatively we can test based on how frequently we are discovering new types. 
+
+This system has a discovery versus exploitation factor to be resolved. 
+
+#### What I did as change
+
+I added in a function that allows the user to specify methods and receivers to ignore, ex [:String, :method] or [:%any, :method] or [:Receiver, :%any], 
+this is because there are some types that we already know which overlap with methods we are interested in for other types. This should really be automated, not hard, just a few hours work. 
+
 ### End Current
 
 Next I might have a way to check types for type errors but I don't think I have created a means of updating type signatures in the presence of new information. 

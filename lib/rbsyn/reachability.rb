@@ -78,16 +78,15 @@ class Reachability
         #mthds = mthds.filter {|i, _| RDLRespondTo(trecv, i)} # a bit hackey though 
         mthds.each { |mthd, info|
           if @moi.include?(mthd) && !RDLRespondTo(trecv, mthd)
+            # if the receiver doesn't respond to the method just skip
             next
           end
           
           tmeths = info[:type]
           is_moi = @moi.include?(mthd)
-
           targs_mult = compute_targs(trecv, tmeths,is_moi)
           
           tout = []
-
           tmeths = tmeths.zip(targs_mult).flat_map { |label, items| [label] * items.length }
           targs_mult = targs_mult.flatten(1)
 

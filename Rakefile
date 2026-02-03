@@ -78,9 +78,9 @@ Rake::TestTask.new(:hamster) do |t|
   t.libs << "lib"
   t.libs << "models"
   t.test_files = FileList[
-                           "test/benchmark/githubBenchmarks/split_at_benchmark.rb", #WORKING WITH TYPES THIS ONE REVEALS SOME ERROR WITH THE TYPE INFERENCE SYSTEM
-                           #"test/benchmark/githubBenchmarks/set_delete.rb" #WORKING WITH TYPES
-                           #"test/benchmark/githubBenchmarks/hash_clear_benchmark.rb", # WORKING WITH TYPES
+                           #"test/benchmark/githubBenchmarks/split_at_benchmark.rb", #WORKING WITH TYPES AND WITHOUT TYPES: NEEDED 20 passes
+                           #"test/benchmark/githubBenchmarks/set_delete.rb" #WORKING WITH TYPES #WORKING WITHOUT TYPES, UNSURE OF HELP OF MY SYSTEM
+                           "test/benchmark/githubBenchmarks/hash_clear_benchmark.rb", # WORKING WITH TYPES, 
                            #"test/benchmark/githubBenchmarks/hash_values_benchmark.rb", # WORKING WITH TYPES 
                            #"test/benchmark/githubBenchmarks/hash_eql_benchmark.rb", # WORKING WITH TYPES
                            #"test/benchmark/githubBenchmarks/hash_get_benchmark.rb", # WORKING WITH TYPES
