@@ -67,17 +67,24 @@ class Synthesizer
         seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
         seed.look_for(:type, @ctx.functype.ret)
 
-        begin
-          # first run a small pass with a 
-          #puts "STARTING"
-          prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: 80 ) 
-        rescue NameError => e 
-          puts "GOT HERE"
-          env = LocalEnvironment.new
-          prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
-          seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
-          seed.look_for(:type, @ctx.functype.ret)
-          #binding.pry
+
+        if @ctx.moi != []
+          
+      
+          begin
+            # first run a small pass with a 
+            #puts "STARTING"
+            prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: 80 ) 
+          rescue NameError => e 
+            puts "GOT HERE"
+            env = LocalEnvironment.new
+            prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
+            seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
+            seed.look_for(:type, @ctx.functype.ret)
+            #binding.pry
+            prog = generate(seed, [precond], [postcond], false, add_dyn: false) 
+          end
+        else
           prog = generate(seed, [precond], [postcond], false, add_dyn: false) 
         end
         prog_cache.add(prog)

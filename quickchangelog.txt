@@ -11,4 +11,9 @@ Purpose: to merge all instances of true/false class.
 
 Altered: lib/rbsyn/syn_helper.rb
 
-Purpose: to prioritize type discovery. 
+Purpose: to prioritize type discovery during type discovery process.  
+
+
+
+-------------------
+Current
