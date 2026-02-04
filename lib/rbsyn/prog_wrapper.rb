@@ -3,6 +3,7 @@ class ProgWrapper
   require_relative "ast/check_error_pass"
   require_relative "ast/refine_type_pass_v2"
   require_relative "ast/ttype_print"
+  require_relative "./complex_error"
 
   attr_reader :seed, :env, :exprs, :looking_for, :target, :inferred_errors, :exprs
   attr_accessor :passed_asserts, :inferred_errors, :ctx, :env, :ttype, :dynamic_components, :typehash, :typestring
@@ -112,16 +113,8 @@ class ProgWrapper
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
 
       x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
-        # ENV["GLOBAL_COUNT"] = (ENV["GLOBAL_COUNT"].to_i + 1).to_s
-        # if ENV["GLOBAL_COUNT"] == "245" 
-        #   binding.pry
-        # end
         pass2 = ExtractASTPass.new(selection, @env) 
         temp = pass2.process(expanded)
-        #new_env = pass2.env
-        #to_type = TTypePrint.new(env: new_env)
-        #x = to_type.process(temp).to_s
-        # puts "\n\n\n"
         program = update_types_pass.process(temp)
         new_env = pass2.env
         refiner = DynamicRefineTypes.new(@ctx, new_env)
@@ -133,18 +126,15 @@ class ProgWrapper
           # puts to_type.process(program).to_s
           # puts "\n\n\n"
           program = refiner.process(program)
-          if !(program.ttype <= @target)
+          if !(program.ttype <= @target) 
+            # nil is a subtype of somethings
             next
           end
-        rescue NoMethodError => e
+        rescue NoMethodError, NameError, ComplexError  => e
           # we created an ill typed program that went undiscovered when it is still using dynamic types
           # what I am assuming is that we discovered a type, then we attempted to use it after we have corrected its 
           # type errors. 
           # so skip
-          # to_type = TTypePrint.new(env: new_env)
-          # puts to_type.process(temp).to_s
-          # puts "\n\n\n"
-          # binding.pry
           next
         rescue Exception => e
          

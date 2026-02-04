@@ -83,7 +83,7 @@ Rake::TestTask.new(:hamster) do |t|
                            #"test/benchmark/githubBenchmarks/hash_clear_benchmark.rb", # PREVIOUSLY WORKING WITH TYPES, NO LONGER WORKING WITH TYPES 
                            #"test/benchmark/githubBenchmarks/hash_values_benchmark.rb", # WORKING WITH TYPES #WORKING WITHOUT TYPES, BUT THE TYPE INFERENCE DOESN'T REALLY ADD VALUE FOR THIS BENCHMARK 48 ITER TO FIND RELEVANT TYPES, 55 TO FIND SOLUTION NAIVELY
                            #"test/benchmark/githubBenchmarks/hash_eql_benchmark.rb", # WORKING WITH TYPES
-                           "test/benchmark/githubBenchmarks/hash_get_benchmark.rb", # WORKING WITH TYPES
+                           "test/benchmark/githubBenchmarks/hash_get_benchmark.rb", # WORKING WITH TYPES, WORKING WITHOUT TYPES
                            #"test/benchmark/githubBenchmarks/hash_delete_benchmark.rb", # WORKING WITH TYPES
                            #"test/benchmark/githubBenchmarks/span_benchmark.rb", #VERY DIFFICULT ONE MIGHT NEED ASSISTANCE FORCING ASSIGNMENT OPERATIONS TO GET IT TO WORK
                            #"test/benchmark/githubBenchmarks/partition_benchmark.rb", #THIS ONE LOOKS RATHER SIMILAR TO THE SPAN BENCHMARK

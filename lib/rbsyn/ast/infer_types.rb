@@ -3,6 +3,8 @@ require_relative "check_error_pass"
 require "pry"
 require "pry-byebug"
 require_relative "../type_helper"
+require_relative "../complex_error"
+
 
 class InferTypes
 
@@ -18,12 +20,14 @@ class InferTypes
       @type_successes[i] = []
     end
     @typestack = []
+    @tracelist = {}
     @checker = CheckErrorPass.new(@type_errs, @type_successes)
     @updated = false
     @set_exception = false
     @new_types = []
     @new_success = false
     @new_error = false
+    @counter = 0
   end
 
   def compare_hashes(left, right)
@@ -32,47 +36,52 @@ class InferTypes
 
   end
 
-  def reset_instrumentation()
+  def reset_instrumentation(tracelist)
     @updated = false
     @typestack = []
     @set_exception = false
     @new_types = []
-
+    @counter = 0
+    @tracelist = tracelist
   end
 
   def w_instrument(recvr, meth, *args)
 
+    argtypes = @tracelist[@counter] # so that we can elevate types when they are arguments. There is nuance to this that I am missing rn. 
+    @counter += 1
     truefalse = RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true))
     # trace form: {method, reciever, args, result, exception}
+    recarg = argtypes.shift
     trace = {
       :method => meth,
-      :recvr => if recvr.is_a?(TrueClass) || recvr.is_a?(FalseClass)
+      :recvr => 
+        if !recarg.nil?
+          recarg
+        elsif recvr.is_a?(TrueClass) || recvr.is_a?(FalseClass)
           truefalse
         else
           RDL::Type::NominalType.new(recvr.class.to_s)
         end,
-      :args => args.map {|i| if i.is_a?(TrueClass) || i.is_a?(FalseClass) 
+      :args => args.map {|i| x = argtypes.shift
+                          if !x.nil?
+                            x
+                          elsif i.is_a?(TrueClass) || i.is_a?(FalseClass) 
                             truefalse 
-                          else RDL::Type::NominalType.new(i.class.to_s) 
+                          else 
+                            RDL::Type::NominalType.new(i.class.to_s) 
                           end},
       :result => nil, 
       :except => nil} # why is this nominal type this might need to change because of generics 
 
 
     begin
-
-      # if meth == :take && args[0].class.to_s == "String"
-      #   binding.pry
-      # end
-
-     
-      result = recvr.public_send(meth, *args)
+      
+      result = recvr.send(meth, *args)
 
       result.inspect # this forces an inspection on an object 
       # for some reason with hamster lazy list take and drop the error isn't caught without it. 
       # this might ruin lazyness for now I don't have an alternative route. 
-      
-      
+            
     rescue TypeError => e
       if !@set_exception 
         trace[:except] = e
@@ -82,10 +91,18 @@ class InferTypes
       raise e
 
     rescue NoMethodError => e 
+      
       # don't even bother using this program because it DEFINITELY has a type error, not just a potential error. 
       if !@set_exception 
         trace[:except] = e
-        trace[:args] = :ALL
+        if e.receiver.to_s == recvr.class.to_s && e.name == meth
+          # ensure that error arose from outer class, not inner call. 
+          trace[:args] = :ALL
+        else
+
+          e = ComplexError.new(e, outer_receiver: recvr.class, outer_method: meth)
+          trace[:except] = e
+        end
         update_errlist(trace)
         @set_exception = true
       end
@@ -93,11 +110,14 @@ class InferTypes
 
     rescue NameError => e 
       if !@set_exception 
-        if e.to_s.downcase.include?("undefined method")
-          trace[:except] = e
+        trace[:except] = e
+        if e.to_s.downcase.include?("undefined method") &&  e.receiver.to_s == recvr.class.to_s && e.name == meth
           trace[:args] = :ALL
-          update_errlist(trace)
+        else
+          e = ComplexError.new(e, outer_receiver: recvr.class, outer_method: meth)
+          trace[:except] = e
         end
+        update_errlist(trace)
         @set_exception = true
       end
       raise e
@@ -149,8 +169,6 @@ class InferTypes
   end
 
 
-
-
   def get_reset_newtypes()
     temp = @new_types.dup
     @new_success = false
@@ -158,7 +176,6 @@ class InferTypes
     @new_types = []
     temp
   end
-
 
 
   def update_success(trace)
@@ -173,11 +190,7 @@ class InferTypes
 
     @type_successes
 
-      
-
   end
-
-
 
     def consolidate_type_errors(trace)
 
@@ -244,28 +257,35 @@ class InferTypes
             return @type_successes
           end
 
-          if !(sigzip.any? {|old, current| !(old <= current) && !(current <= old)}) 
+          if !(sigzip.any? {|old, current| !(old <= current) && !(current <= old)}) # if all of the arguments are comparable
 
-            # otherwise we can consider the previous observation to be a call to an instance of this function 
+            # we can consider the previous observation to be a call to an instance of this function 
             # or a more specific instance of this function (perhaps we should not fold in, but RUBY only allows one function of the same arity per reciever" 
             @type_successes[meth][ind][:args] = sigzip.map {|old, current| current <= old ? old : current}
             @type_successes[meth][ind][:result] = sig[:result] <= trace[:result] ? trace[:result] : sig[:result]
+            # preserve the most generic version of the type
             update = @type_successes[meth][ind]
+
             @newsuccess = true
             @new_types << update
-            RDL::Globals.info.info[update[:result].to_s][meth][:type].each_with_index do |type, index|
-              if type.args.zip(update[:args]).all? {|left, right| left == right} && type.returns == update[:result] 
-                RDL::Globals.info.info[update[:result].to_s][meth][:type].pop(index)
-                RDL::Globals.info.info[update[:result].to_s][meth][:effect].pop(index)
+
+            RDL::Globals.info.info[update[:recvr].to_s][meth][:type].each_with_index do |tipe, index|
+              # now destroy any entries that are more precise than this one. 
+              if tipe.args.zip(update[:args]).all? {|left, right| left <= right} && tipe.ret <= update[:result] 
+                # any that is more specific we can destroy
+                RDL::Globals.info.info[update[:recvr].to_s][meth][:type].pop(index)
+                RDL::Globals.info.info[update[:recvr].to_s][meth][:effect].pop(index)
               end  
             end
 
+            # build the new, more general type into RDL
             RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
             return @type_successes
           end
         end
       end
 
+      # we have not found any type that is a comprable version of this one, we can add it in as is
       @type_successes[meth].append(trace)
       update = @type_successes[meth][-1]
       @newsuccess = true

@@ -1,19 +1,20 @@
+2/3
+------------------
 Altered: lib/rbsyn/syn_helper.rb 
 
 Purpose: so that even if it finds a solution quickly during type discovery it will not terminate, instead it will continue searching for a type.
-
-------------------
+-------------------
 
 Altered: lib/rbsyn/ast/infer_types.rb 
 
 Purpose: to merge all instances of true/false class. 
-
+-------------------
 
 Altered: lib/rbsyn/syn_helper.rb
 
 Purpose: to prioritize type discovery during type discovery process.  
+--------------------
 
-
-
--------------------
 Current
+
+

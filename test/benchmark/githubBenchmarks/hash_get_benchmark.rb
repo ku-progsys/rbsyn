@@ -50,34 +50,42 @@ describe "Hamster" do
 
     #METHODS
     #RDL.type :"%bool", :"!", '() -> %bool' 
-    RDL.type :TrueClass, :!, '() -> %bool'
-    RDL.type :FalseClass, :!, '() -> %bool'
-    RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
-    RDL.type :"Hamster::Trie", :get, "(Object) -> Array"
-    RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
-    RDL.type :"Proc", :"call", "(Object) -> String"
+    
+
     RDL.type :"Array", :"[]", "(Integer) -> String"
     RDL.type :"Array", :truthy?, "() -> %bool"
+    RDL.type :TrueClass, :!, '() -> %bool'
+    RDL.type :FalseClass, :!, '() -> %bool'
+
+    #DECLARE AS DYNAMIC
+    # RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
+    # RDL.type :"Hamster::Trie", :get, "(Object) -> Array"
+    # RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
+    # RDL.type :"Proc", :"call", "(Object) -> String"
+    RDL.type :DynamicType, :trie, "() -> %dyn"
+    RDL.type :DynamicType, :get, "(%dyn) -> %dyn"
+    RDL.type :DynamicType, :default, "() -> %dyn"
+    RDL.type :DynamicType, :"call", "(%dyn) -> %dyn"
 
 
-    # def get(key)
-    #   entry = @trie.get(key)
-    #   if entry.truthy?
-    #     entry[1]
-    #   elsif @default
-    #     @default.call(key)
-    #   end
+    #SOLUTION 
+    #
+    # def get(arg0, arg1)
+    # if arg0.trie.get(arg1).truthy?
+    #     arg0.trie.get(arg1).[](1)
+    # else
+    #     arg0.default.call(arg1)
     # end
-    # alias :[] :get
-    
+    # end
     
     ParentsHelper.subtract()
 
-    define :get , "(Hamster::Hash_1, Object)-> String", [], consts: :true, moi: [], prog_size: 7 do
-      
+    define :get , "(Hamster::Hash_1, Object)-> String", [], consts: :true, moi: [:trie, :get, :default, :call], exclude: [[:Array, :"%any" ], [:TrueClass, :"%any"], [:FalseClass, :"%any"]] do
+    # define :get , "(Hamster::Hash_1, Object)-> String", [], consts: :true, prog_size: 7 do
 
         spec "if key exists" do 
             setup {
+
                 hash = H.new("A" => "aye") { |key| fail }
                 get(hash, "A")
 

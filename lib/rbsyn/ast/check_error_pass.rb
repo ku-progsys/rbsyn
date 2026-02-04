@@ -198,12 +198,15 @@ class CheckErrorPass < ::AST::Processor
         ([signature[:recvr]] + signature[:args])).any? {|t,s|
 
         # t <= s || left_intersection_subtype(t, s)  # same as above, uncomment second predicate if you want it to be overzealous
+
         !left_intersection_supertype(t, s)
+
         #   return false
         # end
         } )
       rescue Exception => e 
         binding.pry
+        
       end
 
     #return true
@@ -264,6 +267,8 @@ class CheckErrorPass < ::AST::Processor
       rescue NoMethodError
         # accounts for non-related types
         false 
+      rescue FrozenError => e 
+        thaw(t_right) <= thaw(t_left)
       end 
     end end
     #return l.any? { |t_left| u.any? { |t_right| t_right <= t_left  }}
@@ -277,6 +282,38 @@ class CheckErrorPass < ::AST::Processor
 end
 
 
+
+  def thaw(type)
+    case type
+    when RDL::Type::NominalType
+      type.frozen? ? RDL::Type::NominalType.new(type.name) : type
+
+    when RDL::Type::SingletonType
+      RDL::Type::SingletonType.new(type.val)
+
+    when RDL::Type::UnionType
+      RDL::Type::UnionType.new(type.types.map { |t| thaw(t) })
+
+    when RDL::Type::TupleType
+      RDL::Type::TupleType.new(type.types.map { |t| thaw(t) })
+
+    when RDL::Type::GenericType
+      RDL::Type::GenericType.new(
+        thaw(type.base),
+        type.params.map { |p| thaw(p) }
+      )
+
+    when RDL::Type::MethodType
+      RDL::Type::MethodType.new(
+        type.args.map { |a| thaw(a) },
+        thaw(type.ret),
+        type.block ? thaw(type.block) : nil
+      )
+
+    else
+      type
+    end
+  end
 
 
 

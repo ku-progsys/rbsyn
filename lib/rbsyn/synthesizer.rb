@@ -69,19 +69,34 @@ class Synthesizer
 
 
         if @ctx.moi != []
-          
-      
+          # skip looking for types if 
           begin
             # first run a small pass with a 
             #puts "STARTING"
-            prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: 80 ) 
+            # ENV["TEMP"]="TRUE"
+            prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: 50 ) 
           rescue NameError => e 
-            puts "GOT HERE"
+            #puts "GOT HERE"
+            #    log = "Type Sucesses"
+          log = "Type Successes"
+          @ctx.type_info.type_successes.each {|i, j| 
+            j.each { |k|
+              log = log + "\n--- #{@ctx.type_info.type_to_s(k)}"
+            }
+          }
+          log2 = "Type Failures"
+
+          @ctx.type_info.type_errs.each do |i, j|
+            j.each { |k|
+              log2 = log2 + "\n--- #{@ctx.type_info.type_to_s(k)}"
+            }
+          end
+
             env = LocalEnvironment.new
             prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
             seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
             seed.look_for(:type, @ctx.functype.ret)
-            #binding.pry
+            #ENV["TEMP"]="TRUE"
             prog = generate(seed, [precond], [postcond], false, add_dyn: false) 
           end
         else

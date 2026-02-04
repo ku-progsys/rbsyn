@@ -45,9 +45,11 @@ class TTypePrint < ::AST::Processor
 
   def handler_missing(node)
 
-
+    @stack.append("(")
     node.updated(nil, node.children.map { |k|
       k.is_a?(TypedNode) ? process(k) : @stack.append(k)
     })
+    @stack.append("):#{node.ttype.to_s}")
+
   end
 end

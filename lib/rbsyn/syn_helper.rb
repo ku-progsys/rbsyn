@@ -5,6 +5,7 @@ require 'parser/current'
 require "set"
 require_relative 'ast/infer_types'
 require_relative 'debugger'
+require_relative 'complex_error'
 #require_relative "proliferate_pass"
 
 
@@ -69,11 +70,20 @@ module SynHelper
 
     until work_list.empty?
       if counter >= type_search_depth && add_dyn
-        raise NameError, "done checking for type"
+        raise NameError, "done checking for types at count: #{counter}"
       end
       counter += 1
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
+      # if ENV["TEMP"]=="TRUE"
+      #   puts "<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n"
+      #   puts base.to_ast
+      #   puts "."
+      #   puts "typehash:\n#{base.to_typestring}"
+      #   puts "."
+      #   puts "already here?: #{basehashlist.include? base.typehash}\n"
+      #   binding.pry
+      # end
       if basehashlist.include? base.typehash
         next
       end
@@ -109,6 +119,9 @@ module SynHelper
           rescue StandardError => err
             tempbool = true
             next
+          rescue ComplexError => err
+            tempbool = true
+            next
           end
 
           begin
@@ -128,6 +141,7 @@ module SynHelper
             if orig_prog.looking_for == :teffect && !(orig_prog.target.size == 1 || orig_prog.target[0] == '')
               orig_prog.passed_asserts = e.passed_count
               orig_prog.look_for(:teffect, orig_prog.target)
+              puts "HERE OMG"
               effect_needed << orig_prog
             end
 
@@ -135,6 +149,8 @@ module SynHelper
             raise e
 
           rescue StandardError => e
+            next
+          rescue ComplexError => e 
             next
           end
           
@@ -208,7 +224,7 @@ module SynHelper
     end
     log = "Type Sucesses"
     @ctx.type_info.type_successes.each {|i, j| 
-      j.each { |k|
+      j.each { |k|  
         log = log + "\n--- #{@ctx.type_info.type_to_s(k)}"
       }
     }
@@ -218,7 +234,7 @@ module SynHelper
         log2 = log2 + "\n--- #{@ctx.type_info.type_to_s(k)}"
       }
     end
-
+    binding.pry
     raise RbSynError, "No candidates found" + "\n\n" + log + "\n\n" + log2 + "\n\n"
 
   end

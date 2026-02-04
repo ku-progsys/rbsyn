@@ -1,5 +1,6 @@
 require_relative "./ast/track_rewrite"
 #require_relative "./ast/parenthesize"
+require_relative "./complex_error"
 require 'unparser'
 require 'parser/current'
 require 'pry'
@@ -95,29 +96,26 @@ module AST
       extend Assertions
     }
     bind = klass.instance_eval { binding }
-    ctx.curr_binding = bind
+    ctx.curr_binding = bind 
     DBUtils.reset
     ctx.reset_func.call unless ctx.reset_func.nil?
-    rewriter = TrackerRewrite.new(ctx.moi)
+    rewriter = TrackerRewrite.new(ctx.moi, ctx.tenv)
+
     ast = rewriter.process(ast)
+    tracelist = rewriter.tracelist
 
     func = s(ctx.functype, :def, ctx.mth_name,
     s(RDL::Globals.types[:top], :args, *args.map { |arg|
       s(RDL::Globals.types[:top], :arg, arg)
     }), ast)
-  
 
-      klass.instance_eval Unparser.unparse(func) 
-      klass.instance_variable_set(:@dummyclass, ctx.type_info)
 
     begin
-      
-      ctx.type_info.reset_instrumentation()
+      klass.instance_eval Unparser.unparse(func) 
+      klass.instance_variable_set(:@dummyclass, ctx.type_info)
+      ctx.type_info.reset_instrumentation(tracelist)
       result = klass.instance_eval(&precond) unless precond.nil?
-      
-      
     rescue Exception => e
-      
       raise e
     end
     
