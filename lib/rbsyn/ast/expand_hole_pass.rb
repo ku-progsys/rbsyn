@@ -315,6 +315,16 @@ class ExpandHolePass < ::AST::Processor
 
               end
 
+            elsif mth == :! # forcing precidence of receiver when ! used. 
+
+              if accum.nil?
+                accum = s(tret, :send, TypedNode.new(trecv, :begin, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true})),
+                  mth, *hole_args)
+              else
+                next unless accum.ttype <= trecv
+                accum = s(tret, :send, TypedNode.new(accum.ttype, :begin, accum), mth, *hole_args)
+              end
+              
             else
               if accum.nil?
                 accum = s(tret, :send, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true}),

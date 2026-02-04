@@ -50,16 +50,16 @@ describe "Hamster" do
     #RDL.type :"Hamster::Trie", :eql?, "(Hamster::Trie) -> %bool"
     RDL.type :"BasicObject", :truthy?, "() -> %bool"
     #RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
-    #RDL.type :"Object", :class, "() -> Class"
+    RDL.type :"Object", :class, "() -> Class"
     #
     #
     #METHODS TO MAKE DYNAMIC
-    RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
-    RDL.type :"Class", :alloc, "(Hamster::Trie, Proc) -> Hamster::Hash_1"
-    RDL.type :"Class", :empty, "() -> Hamster::Hash_1"
-    # RDL.type :"DynamicType", :default, "() -> %dyn"
-    # RDL.type :"DynamicType", :alloc, "(%dyn, %dyn) -> %dyn"
-    # RDL.type :"DynamicType", :empty, "() -> %dyn"
+    # RDL.type :"Hamster::Hash_1", :default, "() -> Proc"
+    # RDL.type :"Class", :alloc, "(Hamster::Trie, Proc) -> Hamster::Hash_1"
+    # RDL.type :"Class", :empty, "() -> Hamster::Hash_1"
+    RDL.type :"DynamicType", :default, "() -> %dyn"
+    RDL.type :"DynamicType", :alloc, "(%dyn, %dyn) -> %dyn"
+    RDL.type :"DynamicType", :empty, "() -> %dyn"
 
     #Solution
 # def clear
@@ -76,7 +76,7 @@ describe "Hamster" do
     hash = H["A" => "aye", "B" => "bee", "C" => "see"]
     hash2 = H.new(a: 1) { 1 }
     empty = Hamster::Trie.new(0)
-    define :clear , "(Hamster::Hash_1, Hamster::Trie)-> Hamster::Hash_1", [], consts: :true, moi: [] do
+    define :clear , "(Hamster::Hash_1, Hamster::Trie)-> Hamster::Hash_1", [], consts: :true, moi: [:default, :alloc, :empty] do
       
 
 

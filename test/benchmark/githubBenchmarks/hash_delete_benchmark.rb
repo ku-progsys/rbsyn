@@ -38,23 +38,25 @@ describe "Hamster" do
     RDL.type :BasicObject, :!, '()-> %bool'
     RDL.type :"TrueClass", :!, '() -> %bool' 
     RDL.type :"FalseClass", :!, '() -> %bool' 
-    # RDL.type :"Hamster::Hash_1", :instance_of?, "(Class) -> %bool"
-    # RDL.type :Object, :equal?, "(Hamster::Hash_1) -> %bool"
-    # RDL.type :"Hamster::Trie", :eql?, "(Hamster::Trie) -> %bool"
-    # RDL.type :"Object", :helper1, "() -> Hamster::Trie"
-    RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
-    #RDL.type :Object, :class, "() -> Class"
-    RDL.type :"Hamster::Hash_1", :helper1, "(Hamster::Trie) -> Hamster::Hash_1"
-    RDL.type :"Hamster::Trie", :delete, "(Object) -> Hamster::Trie"
+
+    #MAKE DYNAMIC
+    # RDL.type :"Hamster::Hash_1", :trie, "() -> Hamster::Trie"
+    # RDL.type :"Hamster::Hash_1", :helper1, "(Hamster::Trie) -> Hamster::Hash_1"
+    # RDL.type :"Hamster::Trie", :delete, "(Object) -> Hamster::Trie"
+    
+    RDL.type :"DynamicType", :trie, "() -> %dyn"
+    RDL.type :"DynamicType", :helper1, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :delete, "(%dyn) -> %dyn"
 
 
     #Solution
-    # def delete(key)
-    #   derive_new_hash(@trie.delete(key))
+    # def delete(arg0, arg1)
+    #   arg0.helper1(arg0.trie.delete(arg1))
     # end
     ParentsHelper.subtract()
     hash =  H["A" => "aye", "B" => "bee", "C" => "see"]
-    define :delete , "(Hamster::Hash_1, Object)-> Hamster::Hash_1", [], consts: :true, moi: [] do
+    define :delete , "(Hamster::Hash_1, Object)-> Hamster::Hash_1", [], consts: :true, moi: [:trie, :helper1, :delete], 
+    exclude: [[:"Hamster::Hash_1", :delete]]  do
       
 
 

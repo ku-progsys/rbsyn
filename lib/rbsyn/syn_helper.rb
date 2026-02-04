@@ -234,7 +234,7 @@ module SynHelper
         log2 = log2 + "\n--- #{@ctx.type_info.type_to_s(k)}"
       }
     end
-    binding.pry
+
     raise RbSynError, "No candidates found" + "\n\n" + log + "\n\n" + log2 + "\n\n"
 
   end

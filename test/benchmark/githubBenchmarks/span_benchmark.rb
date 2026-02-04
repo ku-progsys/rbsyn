@@ -95,6 +95,7 @@ describe "Hamster" do
     # end
     # 
     # if 
+
     proc = Proc.new() {|item| item <= 2}
     define :span, "(Hamster::List_1, Array, Mutex, Proc)-> Array", [], consts: :true, moi: [] do
       

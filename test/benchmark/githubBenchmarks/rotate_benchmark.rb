@@ -41,18 +41,24 @@ describe "Hamster" do
     RDL.type :"Integer", :>=, "(Integer) -> %bool"
     RDL.type :"Integer", :"-", "(Integer) -> Integer"
     RDL.type :"Integer", :~, "() -> Integer"
-    RDL.type :BasicObject, :!, '() -> %bool' 
+    RDL.type :Object, :!, '() -> %bool' 
     RDL.type :Integer, :%, "(Integer) -> Integer"
     
   
 
     ## METHODS TO DECLARE AS UNKNOWNS
     #
-    RDL.type :"Hamster::List_1", :take, "(Integer) -> Hamster::List_1"
-    RDL.type :"Hamster::List_1", :drop, "(Integer) -> Hamster::List_1"
-    RDL.type :"Hamster::List_1", :append, "(Hamster::List_1) -> Hamster::List_1"
-    RDL.type :"Hamster::List_1", :empty?, "() -> %bool"
-    RDL.type :"Hamster::List_1", :size, "() -> Integer"
+    # RDL.type :"Hamster::List_1", :take, "(Integer) -> Hamster::List_1"
+    # RDL.type :"Hamster::List_1", :drop, "(Integer) -> Hamster::List_1"
+    # RDL.type :"Hamster::List_1", :append, "(Hamster::List_1) -> Hamster::List_1"
+    # RDL.type :"Hamster::List_1", :empty?, "() -> %bool"
+    # RDL.type :"Hamster::List_1", :size, "() -> Integer"
+    # 
+    RDL.type :"DynamicType", :take, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :drop, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :append, "(%dyn) -> %dyn"
+    RDL.type :"DynamicType", :empty?, "() -> %dyn"
+    RDL.type :"DynamicType", :size, "() -> %dyn"
 
 
     ParentsHelper.subtract()
@@ -76,8 +82,27 @@ describe "Hamster" do
     #     
     #   drop(count).append(take(count))
     # end
+    # 
+    #solution found: 
+    # def rotate(arg0, arg1)
+    #   if (arg1 == 1)
+    #     arg0.drop(arg1).append(arg0.take(arg1))
+    #   else
+    #     if !(arg0.take(arg1).eql?(arg0))
+    #       if arg1 >= 1
+    #         arg0.drop(1).append(arg0.take(1))
+    #       else
+    #         if arg1 == 0
+    #           arg0.drop(arg1).append(arg0.take(arg1))
+    #         end
+    #       end
+    #     else
+    #       arg0.drop(arg1).append(arg0.take(arg1))
+    #     end
+    #   end
+    # end
     lst = L[1,2,3,4,5]
-    define :rotate, "(Hamster::List_1, Integer)-> Hamster::List_1", [], consts: :true, moi: [] do
+    define :rotate, "(Hamster::List_1, Integer)-> Hamster::LazyList_1", [], consts: :true, moi: [:take, :drop, :append, :empty?, :size], exclude: [[:"String", :"%any"], [:"Integer", :"%any"], [:"Array", :"%any"]] do
       
       spec "when passed 1 as argument rotates list by 1" do
 

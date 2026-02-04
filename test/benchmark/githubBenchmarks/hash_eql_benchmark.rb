@@ -34,7 +34,7 @@ describe "Hamster" do
     RDL.nowrap :Class
 
     #METHODS
-    RDL.type :"TrueClass", :!, '() -> %bool' 
+    RDL.type :"TrueClass", :!, '() -> %bool'    
     RDL.type :"FalseClass", :!, '() -> %bool' 
     RDL.type :Object, :class, "() -> Class"
 

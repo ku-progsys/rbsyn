@@ -74,24 +74,27 @@ class Synthesizer
             # first run a small pass with a 
             #puts "STARTING"
             # ENV["TEMP"]="TRUE"
-            prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: 50 ) 
+            prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: 30*@ctx.moi.size ) 
           rescue NameError => e 
-            #puts "GOT HERE"
-            #    log = "Type Sucesses"
-          log = "Type Successes"
-          @ctx.type_info.type_successes.each {|i, j| 
-            j.each { |k|
-              log = log + "\n--- #{@ctx.type_info.type_to_s(k)}"
-            }
-          }
-          log2 = "Type Failures"
+            puts "GOT HERE"
 
-          @ctx.type_info.type_errs.each do |i, j|
-            j.each { |k|
-              log2 = log2 + "\n--- #{@ctx.type_info.type_to_s(k)}"
+            log = "Type Successes"
+            @ctx.type_info.type_successes.each {|i, j| 
+              j.each { |k|
+                log = log + "\n--- #{@ctx.type_info.type_to_s(k)}"
+              }
             }
-          end
+            log2 = "Type Failures"
 
+            @ctx.type_info.type_errs.each do |i, j|
+              j.each { |k|
+                log2 = log2 + "\n--- #{@ctx.type_info.type_to_s(k)}"
+              }
+            end
+            puts log
+            puts "\n\n"
+            puts log2
+            puts "\n\n"
             env = LocalEnvironment.new
             prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
             seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
