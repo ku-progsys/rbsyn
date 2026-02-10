@@ -78,7 +78,7 @@ class Reachability
         #mthds = mthds.filter {|i, _| RDLRespondTo(trecv, i)} # a bit hackey though 
         mthds.each { |mthd, info|
           # if @moi.include?(mthd) && !RDLRespondTo(trecv, mthd)
-          #   binding.pry
+          #   # binding.pry
           #   # if the receiver doesn't respond to the method just skip
           #   next
           # end
@@ -121,6 +121,7 @@ class Reachability
       queue = new_queue
       curr_depth += 1
     end
+
     m = chains_with_type(queue, target, variance)
     k = correct_dynamic_last(m, target)
     k

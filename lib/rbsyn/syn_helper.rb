@@ -75,6 +75,15 @@ module SynHelper
       counter += 1
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
+
+      # if [":empty"].all? {|i| base.to_ast.to_s.include?(i)}
+      #   puts "NEW\n\n"
+      #   puts base.to_ast
+      #   puts "\n<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>\n"
+      #   puts base.to_typestring
+      #   puts "\n###############################\n"
+      #   binding.pry
+      # end
       # if ENV["TEMP"]=="TRUE"
       #   puts "<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n"
       #   puts base.to_ast

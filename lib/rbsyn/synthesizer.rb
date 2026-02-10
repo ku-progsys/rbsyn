@@ -74,7 +74,7 @@ class Synthesizer
             # first run a small pass with a 
             #puts "STARTING"
             # ENV["TEMP"]="TRUE"
-            prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: (@ctx.moi.size)*20 ) 
+            prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: (@ctx.moi.size)*50 ) 
           rescue NameError => e 
             #puts "GOT HERE"
             #    log = "Type Sucesses"

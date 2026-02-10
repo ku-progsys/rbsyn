@@ -82,13 +82,13 @@ Rake::TestTask.new(:hamster) do |t|
                            
                            #"test/benchmark/githubBenchmarks/set_delete.rb" #WORKING WITH TYPES #WORKING WITHOUT TYPES, UNSURE OF HELP OF MY SYSTEM
                            
-                           "test/benchmark/githubBenchmarks/hash_clear_benchmark.rb", # WORKING WITH TYPES, NOT YET WORKING WITHOUT TYPES GOOD LESSON HERE i BELIEVE
+                           #"test/benchmark/githubBenchmarks/hash_clear_benchmark.rb", # WORKING WITH TYPES, WORKING WITHOUT TYPES IF! WE DON'T IGNORE TYPE CHECK FOR RESPOND TO. BECUASE IN THIS CASE THE INSTANCE OF A TYPE MIGHT RESPOND TO BUT THE GENERIC TYPE DOESN'T
                            
                            #"test/benchmark/githubBenchmarks/hash_values_benchmark.rb", # WORKING WITH TYPES #WORKING WITHOUT TYPES, BUT THE TYPE INFERENCE DOESN'T REALLY ADD VALUE FOR THIS BENCHMARK 48 ITER TO FIND RELEVANT TYPES, 55 TO FIND SOLUTION NAIVELY
                            
                            #"test/benchmark/githubBenchmarks/hash_eql_benchmark.rb", # WORKING WITH TYPES, WORKING WITHOUT TYPES
                            
-                           #"test/benchmark/githubBenchmarks/hash_get_benchmark.rb", # WORKING WITH TYPES, WORKING WITHOUT TYPES
+                           #"test/benchmark/githubBenchmarks/hash_get_benchmark.rb", # WORKING WITH TYPES, WORKING WITHOUT TYPES IF! WE DONT IGNORE RESPOND TO CHECK 
                            
                            #"test/benchmark/githubBenchmarks/hash_delete_benchmark.rb", # WORKING WITH TYPES, WORKING WITHOUT TYPES
                            
@@ -96,7 +96,7 @@ Rake::TestTask.new(:hamster) do |t|
                            
                            #"test/benchmark/githubBenchmarks/partition_benchmark.rb", #THIS ONE LOOKS RATHER SIMILAR TO THE SPAN BENCHMARK
                            
-                           #"test/benchmark/githubBenchmarks/rotate_benchmark.rb", # WORKING WITH TYPES
+                           "test/benchmark/githubBenchmarks/rotate_benchmark.rb", # WORKING WITH TYPES, NOT WORKING WITHOUT TYPES, THIS ONE MIGHT BE A GOOD DEMONSTRATION OF THE VALUE OF DEPENDENT TYPES, AS [].take(NONNUMERIC) WILL NEVER THROW AN ERROR BUT A FILLED LIST WILL.
 
                           ]
 end
