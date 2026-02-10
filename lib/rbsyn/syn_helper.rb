@@ -56,7 +56,7 @@ end
 module SynHelper
   include TypeOperations
   
-  def generate(seed_hole, preconds, postconds, return_all=false, add_dyn: false, type_search_depth: 20 )
+  def generate(seed_hole, preconds, postconds, return_all=false, add_dyn: false, type_search_depth: 120 )
     if add_dyn 
       ENV['ADD_DYN'] = "TRUE"
     else
@@ -94,7 +94,7 @@ module SynHelper
       evaluable = generated.reject &:has_hole?
       tempbool = false
 
-
+      
       evaluable.each { |prog_wrap|
         res = 1
         klass = 1

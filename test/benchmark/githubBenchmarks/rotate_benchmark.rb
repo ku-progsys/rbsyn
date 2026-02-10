@@ -102,7 +102,9 @@ describe "Hamster" do
     #   end
     # end
     lst = L[1,2,3,4,5]
-    define :rotate, "(Hamster::List_1, Integer)-> Hamster::LazyList_1", [], consts: :true, moi: [:take, :drop, :append, :empty?, :size], exclude: [[:"String", :"%any"], [:"Integer", :"%any"], [:"Array", :"%any"]] do
+    define :rotate, "(Hamster::List_1, Integer)-> Hamster::List_1", [], consts: :true, moi: [:take, :drop, :append, :empty?, :size], exclude: [[:"String", :"%any"], [:"Integer", :"%any"], [:"Array", :"%any"]] do
+    
+    # define :rotate, "(Hamster::List_1, Integer)-> Hamster::List_1", [], consts: :true, moi: [], exclude: [] do
       
       spec "when passed 1 as argument rotates list by 1" do
 

@@ -62,13 +62,13 @@ describe "Hamster" do
     RDL.type :"DynamicType", :empty, "() -> %dyn"
 
     #Solution
-# def clear
-#       if arg0.default.truthy?
-#         arg0.class.alloc(arg1, arg0.default)
-#       else
-#         arg0.class.empty
-#       end
-#     end
+        # def clear(arg0, arg1)
+        #   if !(arg0.default.truthy?)
+        #     arg0.class.empty
+        #   else
+        #     arg0
+        #   end
+        # end
 #     
 #
 #

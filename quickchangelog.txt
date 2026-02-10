@@ -18,3 +18,14 @@ Purpose: to prioritize type discovery during type discovery process.
 Current
 
 
+2/4
+
+lib/rbsyn/ast/expand_hole_pass.rb
+
+Updated so that the ! operator binds tightest
+
+
+2/10
+
+Currently tracking down error in code where ( ( (hole0: Hamster::Hash_1) empty ):%dyn ):%dyn is generated but I'm not seeing the code for 
+( ( (hole0: %dyn) empty ):%dyn ):%dyn

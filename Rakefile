@@ -82,7 +82,7 @@ Rake::TestTask.new(:hamster) do |t|
                            
                            #"test/benchmark/githubBenchmarks/set_delete.rb" #WORKING WITH TYPES #WORKING WITHOUT TYPES, UNSURE OF HELP OF MY SYSTEM
                            
-                           #"test/benchmark/githubBenchmarks/hash_clear_benchmark.rb", # WORKING WITH TYPES, NOT YET WORKING WITHOUT TYPES GOOD LESSON HERE i BELIEVE
+                           "test/benchmark/githubBenchmarks/hash_clear_benchmark.rb", # WORKING WITH TYPES, NOT YET WORKING WITHOUT TYPES GOOD LESSON HERE i BELIEVE
                            
                            #"test/benchmark/githubBenchmarks/hash_values_benchmark.rb", # WORKING WITH TYPES #WORKING WITHOUT TYPES, BUT THE TYPE INFERENCE DOESN'T REALLY ADD VALUE FOR THIS BENCHMARK 48 ITER TO FIND RELEVANT TYPES, 55 TO FIND SOLUTION NAIVELY
                            
@@ -96,7 +96,7 @@ Rake::TestTask.new(:hamster) do |t|
                            
                            #"test/benchmark/githubBenchmarks/partition_benchmark.rb", #THIS ONE LOOKS RATHER SIMILAR TO THE SPAN BENCHMARK
                            
-                           "test/benchmark/githubBenchmarks/rotate_benchmark.rb", # WORKING WITH TYPES
+                           #"test/benchmark/githubBenchmarks/rotate_benchmark.rb", # WORKING WITH TYPES
 
                           ]
 end

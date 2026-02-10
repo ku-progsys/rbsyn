@@ -77,10 +77,11 @@ class Reachability
         #BR added in a respond_to here so that we can avoid methods that don't actually respond. 
         #mthds = mthds.filter {|i, _| RDLRespondTo(trecv, i)} # a bit hackey though 
         mthds.each { |mthd, info|
-          if @moi.include?(mthd) && !RDLRespondTo(trecv, mthd)
-            # if the receiver doesn't respond to the method just skip
-            next
-          end
+          # if @moi.include?(mthd) && !RDLRespondTo(trecv, mthd)
+          #   binding.pry
+          #   # if the receiver doesn't respond to the method just skip
+          #   next
+          # end
           
           tmeths = info[:type]
           is_moi = @moi.include?(mthd)

@@ -75,7 +75,9 @@ class InferTypes
 
 
     begin
-      
+      # if type_to_s(trace).to_s.include?("Hamster::Hash_1 :default")
+      #   binding.pry
+      # end
       result = recvr.send(meth, *args)
 
       result.inspect # this forces an inspection on an object 
@@ -144,7 +146,10 @@ class InferTypes
     else 
       trace[:result] = RDL::Type::NominalType.new(result.class.to_s)
     end
-
+    
+    # if type_to_s(trace).to_s == "Hamster::Hash_1 :alloc => Hamster::Trie => nil => :except"
+    #   binding.pry
+    # end
     update_success(trace)
     result
 
