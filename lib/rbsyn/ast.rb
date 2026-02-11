@@ -116,9 +116,9 @@ module AST
       ctx.type_info.reset_instrumentation(tracelist)
       result = klass.instance_eval(&precond) unless precond.nil?
     rescue Exception => e
-      if e.is_a?(SyntaxError)
-        binding.pry
-      end
+      # if e.is_a?(SyntaxError)
+      #   binding.pry
+      # end
       raise e
     end
     

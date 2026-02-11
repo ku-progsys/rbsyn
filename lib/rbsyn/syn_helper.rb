@@ -131,6 +131,10 @@ module SynHelper
           rescue ComplexError => err
             tempbool = true
             next
+          rescue SyntaxError => err
+            # really this shouldn't happen, our generator shouldn't be attempting to create ill formed formulae, but right now I don't have a workaround for some ad hoc constructs.  
+            tempbool = true
+            next
           end
 
           begin

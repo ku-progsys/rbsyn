@@ -72,6 +72,17 @@ Rake::TestTask.new(:twospecs) do |t|
                           ] 
 end
 
+Rake::TestTask.new(:chunkypngcolor) do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.libs << "models"
+  t.test_files = FileList[
+    "test/benchmark/colorBenchmarks/benchmarks/parse.rb",
+    #WORKING WITH TYPES
+    
+  ]
+end
+
 
 Rake::TestTask.new(:hamster) do |t|
   t.libs << "test"

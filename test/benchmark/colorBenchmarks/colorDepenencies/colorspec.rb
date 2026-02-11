@@ -1,7 +1,7 @@
 #require "spec_helper"
 require_relative "./color"
 
-describe "ChunyPNG.Color" do
+describe "ChunkyPNG.Color" do
   it "should interpret 4 arguments as RGBA values" do
     expect(ChunkyPNG::Color(1, 2, 3, 4)).to eql ChunkyPNG::Color.rgba(1, 2, 3, 4)
   end

@@ -2,6 +2,11 @@
 
 module ChunkyPNG
 
+  #helper function for regex match statements
+  def matches?(string, regex) 
+    regex.match?(string) 
+  end
+
   # Indicates that the PNG image uses grayscale colors, i.e. only a
   # single teint channel.
   # @private
@@ -147,6 +152,9 @@ module ChunkyPNG
     # @private
     # @return [Regexp] The regexp to parse named color values.
     HTML_COLOR_REGEXP = /^([a-z][a-z_ ]+[a-z])(?:\ ?\@\ ?(1\.0|0\.\d+))?$/i
+
+
+    DIGITS = /^\d+$/
 
     ####################################################################
     # CONSTRUCTING COLOR VALUES
