@@ -109,9 +109,9 @@ class ExpandHolePass < ::AST::Processor
       paths = r.paths_to_type(node.ttype, depth, @variance)
 
       #puts "GLOBAL: #{ENV["GLOBAL_COUNT"].to_i}"
-      if ENV["GLOBAL_COUNT"].to_i == 10
-        binding.pry
-      end
+      # if ENV["GLOBAL_COUNT"].to_i == 10
+      #   binding.pry
+      # end
 
       expanded.concat paths.map { |path| fn_call(path) }.flatten
       

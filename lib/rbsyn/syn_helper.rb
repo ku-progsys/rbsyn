@@ -62,7 +62,7 @@ module SynHelper
     else
       ENV['ADD_DYN'] = 'FALSE'
     end
-    #ENV["GLOBAL_COUNT"]= 1.to_s
+
     correct_progs = []
     work_list = [seed_hole,]
     basehashlist = []
@@ -76,23 +76,8 @@ module SynHelper
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
 
-      # if [":empty"].all? {|i| base.to_ast.to_s.include?(i)}
-      #   puts "NEW\n\n"
-      #   puts base.to_ast
-      #   puts "\n<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>\n"
-      #   puts base.to_typestring
-      #   puts "\n###############################\n"
-      #   binding.pry
-      # end
-      # if ENV["TEMP"]=="TRUE"
-      #   puts "<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n"
-      #   puts base.to_ast
-      #   puts "."
-      #   puts "typehash:\n#{base.to_typestring}"
-      #   puts "."
-      #   puts "already here?: #{basehashlist.include? base.typehash}\n"
-      #   binding.pry
-      # end
+
+
       if basehashlist.include? base.typehash
         next
       end

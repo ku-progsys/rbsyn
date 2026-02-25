@@ -179,7 +179,7 @@ class Reachability
   end
 
   def correct_dynamic_last(chains, type)
-    # If we know the type of the final type we shouldn't expand its definiton to allow  dynamic type
+    # If we know the type we are looking for the type we shouldn't expand its definiton to allow  dynamic type
     # we should keep the definition narrow so that it errors when it knows it should error 
     chains.map { |chain|
       last = chain.last

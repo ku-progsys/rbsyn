@@ -8,7 +8,7 @@ require 'pry-byebug'
 
 module AST
   def s(ttype, type, *children)
-    TypedNode.new(ttype, type, *children)
+    TypedNode.new( ttype, type, *children )
   end
 
   def eval_ast(ctx, ast, precond) #modified by me to parenthesize
@@ -109,16 +109,19 @@ module AST
       s(RDL::Globals.types[:top], :arg, arg)
     }), ast)
 
-
+    # if ENV['FLAG'] == '2'
+    #   binding.pry
+    # end
     begin
-      klass.instance_eval Unparser.unparse(func) 
+      x = Unparser.unparse(func)
+      klass.instance_eval x 
       klass.instance_variable_set(:@dummyclass, ctx.type_info)
       ctx.type_info.reset_instrumentation(tracelist)
       result = klass.instance_eval(&precond) unless precond.nil?
     rescue Exception => e
-      # if e.is_a?(SyntaxError)
-      #   binding.pry
-      # end
+      if e.is_a?(SyntaxError)
+        binding.pry
+      end
       raise e
     end
     

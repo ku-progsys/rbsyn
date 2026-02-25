@@ -27,17 +27,7 @@ require 'pry-byebug'
 
 
 #small helper methods
-def is_str?(arg0)
-  arg0.is_a? String
-end
 
-def is_int?(arg0)
-  arg0.is_a? Integer
-end
-
-def is_regex?(arg0)
-  arg0.is_a? Regexp
-end
 
 describe "ChunkyPNG::Color" do
   it "Parses colors correctly" do 
@@ -52,29 +42,32 @@ describe "ChunkyPNG::Color" do
     RDL.nowrap :Object
     RDL.nowrap :"ChunkyPNG::Color"
 
+
     # RDL.type :Object, :is_str?, "(Class) -> %bool"
     # RDL.type :Object, :is_int?, "(Class) -> %bool"
     # RDL.type :Object, :is_regex?, "(Class) -> %bool"
     RDL.type :Object, :is_a?, "(Class) -> %bool"
     RDL.type :Object, :to_s, "() -> String"
     RDL.type :Object, :to_i, "() -> Integer"
+    RDL.type :Regexp, :match?, "(String) -> %bool"
     
 
-    # RDL.type :"ChunkyPNG::Color", :HEX3_COLOR_REGEXP, "() -> Regexp"
-    # RDL.type :"ChunkyPNG::Color", :HEX6_COLOR_REGEXP, "() -> Regexp"
-    # RDL.type :"ChunkyPNG::Color", :HTML_COLOR_REGEXP, "() -> Regexp"
-    RDL.type :"ChunkyPNG::Color", :DIGITS, "() -> Regexp"
+
     RDL.type :"ChunkyPNG::Color", :html_color, "(String) -> Integer"
-    RDL.type :"from_hex", "(String) -> Integer"
+    RDL.type :"ChunkyPNG::Color", :"from_hex", "(String) -> Integer"
 
     ParentsHelper.subtract()
-
-    define :parse , "(String or Integer or Symbol)-> Integer", [ChunkyPNG::Color::HEX3_COLOR_REGEXP, ChunkyPNG::Color::HEX6_COLOR_REGEXP, ChunkyPNG::Color::HTML_COLOR_REGEXP, 2.class], consts: :true, moi: [] do
+    CHC = ChunkyPNG::Color
+    define :parse , "(ChunkyPNG::Color ,String or Integer or Symbol)-> Integer", [/\A(?:#|0x)?([0-9a-f]{3})\z/i , 
+                         /\A(?:#|0x)?([0-9a-f]{6})([0-9a-f]{2})?\z/i, 
+                         /^([a-z][a-z_ ]+[a-z])(?:\ ?\@\ ?(1\.0|0\.\d+))?$/i, 
+                         /^\d+$/,  
+                         1.class ], consts: :true, moi: [] do
       
       spec  "should interpret a hex string correctly" do
         setup {
 
-          parse("")
+          parse(CHC,"0x0a649664")
         }
         post {|ret|
           assert {ret == ChunkyPNG::Color.from_hex("#0a649664")}
@@ -83,14 +76,14 @@ describe "ChunkyPNG::Color" do
 
       spec  "should interpret a color name correctly 1" do
         setup {
-          parse(:spring_green)}
+          parse(CHC,:spring_green)}
         post {|ret|
           assert {ret == 0x00ff7fff}
         }
       end
 
       spec "should interpret a color name correctly 2" do
-        setup { parse("spring green") }
+        setup { parse(CHC,"spring green") }
         
         post {|ret|
           assert {ret == 0x00ff7fff}
@@ -98,21 +91,21 @@ describe "ChunkyPNG::Color" do
       end
 
       spec "should interpret a color name correctly 3" do
-        setup { parse("spring green @ 0.6666") }
+        setup { parse(CHC,"spring green @ 0.6666") }
         post {|ret|
           assert {ret == 0x00ff7faa}
         }
       end                                           
 
       spec "should return numbers as is 1" do
-        setup {parse("12345")} 
+        setup {parse(CHC,"12345")} 
         post {|ret|
           assert {ret ==12345}
         }
       end
 
       spec "should return numbers as is 2" do
-        setup { parse(12345) }
+        setup { parse(CHC,12345) }
         post {|ret|
           assert {ret == 12345}
         }

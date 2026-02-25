@@ -164,7 +164,7 @@ class ProgTuple
   end
 
   def merge_impl(first, second)
-    #binding.pry
+
     if first.prog == second.prog && first.branch.implies(second.branch)
       return [ProgTuple.new(@ctx, first.prog, first.branch, [*first.preconds, *second.preconds], [*first.postconds, *second.postconds])]
     elsif first.prog == second.prog && !first.branch.implies(second.branch)
