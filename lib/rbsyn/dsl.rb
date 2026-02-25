@@ -92,6 +92,11 @@ module SpecDSL
     rewrite_holes = SketchToHolePass.new
     new_ast = rewrite_holes.process(ast)
 
+    hole_to_var = HoleToVariablePass.new
+    var_ast = hole_to_var.process(new_ast)
+
+    print(var_ast)
+
     gtenv_pass = GlobalTEnv.new
     gtenv_pass.process(new_ast)
     gtenv = gtenv_pass.tenv
