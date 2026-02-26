@@ -9,21 +9,7 @@ require_relative 'complex_error'
 #require_relative "proliferate_pass"
 
 
-def debug(var, *conds, message: "") 
-  
-  if ENV['DEBUG'] == 'PRY' || ENV['DEBUG'] == 'PRINT'
-    
-    if conds.all? {|m| var.include?(m)}
-      puts "DEBUG # #{ENV['COUNTER']} in file: #{__FILE__}\n#{message}\n"
-      ENV['COUNTER'] = (ENV['COUNTER'].to_i + 1).to_s
-      puts var
-      puts "-----------------------\n"
-      if ENV['DEBUG'] == 'PRY'
-        binding.pry
-      end
-    end
-  end
-end
+
 
 def duplicates(list)
   t = TTypePrint.new()
@@ -83,11 +69,14 @@ module SynHelper
       end
       basehashlist << base.typehash
       effect_needed = []  
-      #puts "base: \n#{base.to_ast}\n--------------\ntypes:\n#{TTypePrint.new().process(base.to_ast).to_s}\n<<<<<<<<<<<<<<<\n\n"
+
+
+      debug(base.to_ast.to_s, /send[\s\S]*"\#\%08x"[\s\S]*wrap_to_s[\s\S]*/ ) 
+
       generated = base.build_candidates()
       evaluable = generated.reject &:has_hole?
       tempbool = false
-
+      
       
       evaluable.each { |prog_wrap|
         res = 1

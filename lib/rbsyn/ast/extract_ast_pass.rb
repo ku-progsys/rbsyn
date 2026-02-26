@@ -26,9 +26,9 @@ class ExtractASTPass < ::AST::Processor
         opts = TypedNode.new(nil, :regopt, :i)
         TypedNode.new(RDL::Type::NominalType.new('Regexp'), :regexp, string, opts )
       else
-      selected
+        selected
+      end
     end
-  end
   end
 
   def env

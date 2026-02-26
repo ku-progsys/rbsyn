@@ -195,8 +195,8 @@ class ProgTuple
       seed.look_for(:type, RDL::Globals.types[:bool])
       #binding.pry
       bsyn1 = generate(seed, [*first.preconds, *second.preconds], output1, true)
-     
 
+     
       output2 = (Array.new(first.preconds.size, false) + Array.new(second.preconds.size, true)).map { |item|
         Proc.new { |result| RDL.type_cast(result, '%bool', force: true) == item }}
       opp_branch = speculate_opposite_branch(bsyn1, [*first.preconds, *second.preconds], output2)

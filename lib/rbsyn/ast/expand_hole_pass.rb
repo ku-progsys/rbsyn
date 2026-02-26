@@ -44,7 +44,11 @@ class ExpandHolePass < ::AST::Processor
 
     if depth == 0
       # nil constant
+      # puts expanded; puts "\n------\n";puts node; puts "\n-----\n" ; puts node.ttype; puts "-------\n<<<<<<<<<<\n"
       expanded.concat lvar(node.ttype)
+      # puts "AFTER LVARS";
+      # puts expanded; puts "\n>>>>>>>>>>>\n"
+      # binding.pry
       if @ctx.enable_nil# && !@recv
         expanded << nil_const
       end
@@ -67,7 +71,7 @@ class ExpandHolePass < ::AST::Processor
       if node.ttype <= RDL::Globals.types[:integer] && @ctx.enable_constants
         expanded.concat int_const
       end
-
+      
       # string constants
       if node.ttype <= RDL::Globals.types[:string] && @ctx.enable_constants
         expanded.concat string_const
@@ -75,7 +79,7 @@ class ExpandHolePass < ::AST::Processor
 
       # symbols
       if node.ttype.is_a?(RDL::Type::SingletonType) && node.ttype.val.is_a?(Symbol)
-        expanded.concat symbols([node.ttype])
+          expanded.concat symbols([node.ttype])
       end
 
       # union of symbols
@@ -239,9 +243,35 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def lvar(type)
+    #binding.pry
+    if !type.is_a?(RDL::Type::SingletonType)
 
-    @ctx.tenv.select { |k, v| v <= type }
-      .map { |k, v| s(v, :lvar, k) }
+      x = @ctx.tenv.select { |k, v| v <= type }
+
+      x.map { |k, v| 
+        if k.to_s.include?("arg")
+          s(v, :lvar, k)
+        else
+          case v 
+            when RDL::Globals.types[:class]
+              s(RDL::Globals.types[:class], :class, k)
+            when RDL::Globals.types[:object]
+              s(RDL::Globals.types[:object], :object, k)
+            when RDL::Globals.types[:integer]
+              s(RDL::Globals.types[:integer], :int, k)
+            when RDL::Globals.types[:string]
+              s(RDL::Globals.types[:string], :str, k.to_s)
+            when RDL::Globals.types[:regexp]
+              s(RDL::Globals.types[:regexp], :regexp, s(RDL::Globals.types[:string], :str, k), s(nil, :regopt, :i))
+            else
+              s(v, :lvar, k)
+          end
+        end
+      }
+    else
+      @ctx.tenv.select { |k, v| v <= type }
+        .map { |k, v| s(v, :lvar, k) }
+    end
 
   end
 

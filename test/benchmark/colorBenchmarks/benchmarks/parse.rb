@@ -17,7 +17,7 @@
   #   end
   # end
 
-  
+
 require_relative "../../../test_helper"
 include RDL::Annotate
 require_relative "../colorDepenencies/color"

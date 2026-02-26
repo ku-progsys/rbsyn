@@ -8,7 +8,14 @@ def debug(var, *conds, message: "")
   
   if ENV['DEBUG'] == 'PRY' || ENV['DEBUG'] == 'PRINT'
     
-    if conds.all? {|m| var.include?(m)}
+    if conds.all? {|m|  if m.is_a?(String)
+                          var.include?(m)
+                        elsif m.is_a?(Regexp)
+                          var.match(m)
+                        else
+                          false
+                        end
+                      }
       puts "DEBUG # #{ENV['COUNTER']} in file: #{__FILE__}\n#{message}\n"
       ENV['COUNTER'] = (ENV['COUNTER'].to_i + 1).to_s
       puts var

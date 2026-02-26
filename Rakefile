@@ -77,9 +77,13 @@ Rake::TestTask.new(:chunkypngcolor) do |t|
   t.libs << "lib"
   t.libs << "models"
   t.test_files = FileList[
-    "test/benchmark/colorBenchmarks/benchmarks/parse.rb",
+    #NOT YET WORKING WITH TYPES
+    #"test/benchmark/colorBenchmarks/benchmarks/parse.rb",
+    #"test/benchmark/colorBenchmarks/benchmarks/pass_bytesize.rb",
+      "test/benchmark/colorBenchmarks/benchmarks/to_hex.rb"
     #WORKING WITH TYPES
     
+
   ]
 end
 

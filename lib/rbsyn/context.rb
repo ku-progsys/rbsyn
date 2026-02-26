@@ -64,7 +64,12 @@ class Context
       @tenv["arg#{i}".to_sym] = type
     }
     @components.each { |component|
-      @tenv[component] = RDL::Type::SingletonType.new(component)
+
+      if ["Symbol", "Integer", "String", "Regexp"].include? component.class.to_s
+        @tenv[component] = RDL::Globals.types[component.class.to_s.downcase.to_sym]
+      else
+        @tenv[component] = RDL::Type::SingletonType.new(component)
+      end
     }
   end
 
