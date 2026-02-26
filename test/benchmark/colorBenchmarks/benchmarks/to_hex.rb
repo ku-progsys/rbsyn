@@ -43,7 +43,11 @@ end
 
 describe "ChunkyPNG::Color" do
 
-
+    @white             = 0xffffffff
+    @black             = 0x000000ff
+    @opaque            = 0x0a6496ff
+    @non_opaque        = 0x0a649664
+    @fully_transparent = 0x0a649600
 
   it "should represent colors correctly using hex notation" do
     ParentsHelper.init_list()
@@ -99,6 +103,15 @@ describe "ChunkyPNG::Color" do
         }
       end
 
+      spec "should represent a fully-transparent color with alpha" do
+        setup {
+          to_hex(CHC, 0x0a649600, true)
+        }
+        post {|ret|
+          assert {ret == "#0a649600"}
+        }
+      end
+
       spec "should represent white without alpha" do
         setup {
           to_hex(CHC, 0xffffffff, false)
@@ -132,6 +145,15 @@ describe "ChunkyPNG::Color" do
         }
         post {|ret|
           assert {ret == "#0a6496"}
+        }
+      end
+
+      spec "should represent a non-opaque color with alpha" do
+        setup {
+          to_hex(CHC, 0x0a649600, false)
+        }
+        post {|ret|
+          assert {ret ==  "#0a6496"}
         }
       end
 
