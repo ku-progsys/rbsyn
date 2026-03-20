@@ -89,13 +89,10 @@ module SpecDSL
   def sketch(src, mth_name, type, components, prog_size: 5, max_hash_size: 1, consts: false, enable_nil: false, &blk)
     sk_src = File.read(src)
     ast = Parser::CurrentRuby.parse(sk_src)
-    rewrite_holes = SketchToHolePass.new
-    new_ast = rewrite_holes.process(ast)
+    sketch_to_var = SketchToVariablePass.new
+    new_ast = sketch_to_var.process(ast)
 
-    hole_to_var = HoleToVariablePass.new
-    var_ast = hole_to_var.process(new_ast)
-
-    print(var_ast)
+    print(new_ast)
 
     gtenv_pass = GlobalTEnv.new
     gtenv_pass.process(new_ast)

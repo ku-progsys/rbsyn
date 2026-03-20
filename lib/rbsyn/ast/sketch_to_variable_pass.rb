@@ -1,13 +1,21 @@
-class SketchToHolePass < ::AST::Processor
+class SketchToVariablePass < ::AST::Processor
   include AST
+  attr_reader :hole_vars
 
   def initialize
     @methods = []
+    @hole_counter = 0
+    @hole_vars = {}
   end
 
   def on_send(node)
     if node.children[0].nil? && node.children[1] == :_?
-      s(RDL::Type::TopType.new, :hole, 0, {})
+      # Create a variable for the placeholder instead of a hole
+      var_name = "rbsyn_hole_#{@hole_counter}".to_sym
+      @hole_counter += 1
+      new_node = s(RDL::Type::TopType.new, :lvar, var_name)
+      @hole_vars[var_name] = RDL::Type::TopType.new
+      new_node
     else
       handler_missing(node)
     end
