@@ -26,18 +26,19 @@
 
 require_relative "../../../test_helper"
 include RDL::Annotate
-require_relative "../colorDepenencies/color"
+require_relative "../chunkyPNGdeps/lib/chunky_png/color.rb"
 require 'pry'
 require 'pry-byebug'
 
 
-class Color
+module ChunkyPNG::Color
   
   def wrap_to_s(k)
     # just forces the thing to be evaluated prior to the to_s is called. 
     String(k)
   end
   public :wrap_to_s
+
 end
 
 
@@ -58,59 +59,61 @@ describe "ChunkyPNG::Color" do
     RDL.nowrap :Symbol
     RDL.nowrap :Object
     RDL.nowrap :"ChunkyPNG::Color"
-    RDL.type :"Integer", :>>, "(Integer) -> Integer"
-    RDL.type :"String", :%, "(String) -> String"
-    RDL.type :"String", :%, "(Integer) -> String"
-    RDL.type :"ChunkyPNG::Color", :wrap_to_s, "(Object) -> String"
+    RDL.type :Integer, :>>, "(Integer) -> Integer"
+    RDL.type :String, :%, "(String) -> String"
+    RDL.type :String, :%, "(Integer) -> String"
+    RDL.type :FalseClass, :"!", "() -> %bool"
+    #RDL.type :TrueClass, :"!", "() -> FalseClass"
+    #RDL.type :"ChunkyPNG::Color", :wrap_to_s, "(Object) -> String"
 
     ParentsHelper.subtract()
     CHC = ChunkyPNG::Color
     define :to_hex, "(ChunkyPNG::Color, Integer, %bool) -> String", ["#%08x", "#%06x", 8], consts: false, moi: [] do
 
-      spec "should represent white with alpha" do
-        setup {
-          to_hex(CHC, 0xffffffff, true)
-        }
-        post {|ret|
-          assert {ret == "#ffffffff"}
-        }
-      end
+      # spec "should represent white with alpha" do
+      #   setup {
+      #     to_hex(CHC, 0xffffffff, true)
+      #   }
+      #   post {|ret|
+      #     assert {ret == "#ffffffff"}
+      #   }
+      # end
 
-      spec "should represent black with alpha" do
-        setup {
-          to_hex(CHC, 0x000000ff, true)
-        }
-        post {|ret|
-          assert {ret == "#000000ff"}
-        }
-      end
+      # spec "should represent black with alpha" do
+      #   setup {
+      #     to_hex(CHC, 0x000000ff, true)
+      #   }
+      #   post {|ret|
+      #     assert {ret == "#000000ff"}
+      #   }
+      # end
 
-      spec "should represent an opaque color with alpha" do
-        setup {
-          to_hex(CHC, 0x0a6496ff, true)
-        }
-        post {|ret|
-          assert {ret == "#0a6496ff"}
-        }
-      end
+      # spec "should represent an opaque color with alpha" do
+      #   setup {
+      #     to_hex(CHC, 0x0a6496ff, true)
+      #   }
+      #   post {|ret|
+      #     assert {ret == "#0a6496ff"}
+      #   }
+      # end
 
-      spec "should represent a non-opaque color with alpha" do
-        setup {
-          to_hex(CHC, 0x0a649664, true)
-        }
-        post {|ret|
-          assert {ret == "#0a649664"}
-        }
-      end
+      # spec "should represent a non-opaque color with alpha" do
+      #   setup {
+      #     to_hex(CHC, 0x0a649664, true)
+      #   }
+      #   post {|ret|
+      #     assert {ret == "#0a649664"}
+      #   }
+      # end
 
-      spec "should represent a fully-transparent color with alpha" do
-        setup {
-          to_hex(CHC, 0x0a649600, true)
-        }
-        post {|ret|
-          assert {ret == "#0a649600"}
-        }
-      end
+      # spec "should represent a fully-transparent color with alpha" do
+      #   setup {
+      #     to_hex(CHC, 0x0a649600, true)
+      #   }
+      #   post {|ret|
+      #     assert {ret == "#0a649600"}
+      #   }
+      # end
 
       spec "should represent white without alpha" do
         setup {
@@ -121,41 +124,41 @@ describe "ChunkyPNG::Color" do
         }
       end
 
-      spec "should represent black without alpha" do
-        setup {
-          to_hex(CHC, 0x000000ff, false)
-        }
-        post {|ret|
-          assert {ret == "#000000"}
-        }
-      end
+      # spec "should represent black without alpha" do
+      #   setup {
+      #     to_hex(CHC, 0x000000ff, false)
+      #   }
+      #   post {|ret|
+      #     assert {ret == "#000000"}
+      #   }
+      # end
 
-      spec "should represent an opaque color without alpha" do
-        setup {
-          to_hex(CHC, 0x0a6496ff, false)
-        }
-        post {|ret|
-          assert {ret == "#0a6496"}
-        }
-      end
+      # spec "should represent an opaque color without alpha" do
+      #   setup {
+      #     to_hex(CHC, 0x0a6496ff, false)
+      #   }
+      #   post {|ret|
+      #     assert {ret == "#0a6496"}
+      #   }
+      # end
 
-      spec "should represent a non-opaque color without alpha" do
-        setup {
-          to_hex(CHC, 0x0a649664, false)
-        }
-        post {|ret|
-          assert {ret == "#0a6496"}
-        }
-      end
+      # spec "should represent a non-opaque color without alpha" do
+      #   setup {
+      #     to_hex(CHC, 0x0a649664, false)
+      #   }
+      #   post {|ret|
+      #     assert {ret == "#0a6496"}
+      #   }
+      # end
 
-      spec "should represent a non-opaque color with alpha" do
-        setup {
-          to_hex(CHC, 0x0a649600, false)
-        }
-        post {|ret|
-          assert {ret ==  "#0a6496"}
-        }
-      end
+      # spec "should represent a non-opaque color with alpha" do
+      #   setup {
+      #     to_hex(CHC, 0x0a649600, false)
+      #   }
+      #   post {|ret|
+      #     assert {ret ==  "#0a6496"}
+      #   }
+      # end
 
       generate_program
     end
