@@ -88,6 +88,18 @@ Rake::TestTask.new(:chunkypngcolor) do |t|
 end
 
 
+Rake::TestTask.new(:mastadon) do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.libs << "models"
+  t.test_files = FileList[
+
+    "test/benchmark/mastadon/generated_spec/spec/models/concerns/account/counters_synthesis_spec.rb", # NOT YET TESTED MADE BY AI
+  
+  ]
+end
+
+
 Rake::TestTask.new(:hamster) do |t|
   t.libs << "test"
   t.libs << "lib"
