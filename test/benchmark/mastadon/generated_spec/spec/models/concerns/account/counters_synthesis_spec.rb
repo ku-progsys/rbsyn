@@ -5,20 +5,26 @@ describe "Account" do
   it "account#update_count!" do
     load_typedefs :stdlib, :active_record
 
-
+    class Account
+      def helper_updated_account_stat(key, value)
+  
+          updated_account_stat(key, value.to_i, status_created_at: nil)
+      end
+    end
+    #RDL.type_params Array, [:A], :all?
 
     # RDL.type Account, :updated_account_stat, '(Symbol, Integer, ?{status_created_at: Time}) -> %any', wrap: false
     #RDL.type Account, 'self.account_stat', '() -> AccountStat', wrap: false
-    RDL.type Account, "self.account_stat", "() -> AccountStat", wrap: false
+    RDL.type Account, "account_stat", "() -> AccountStat", wrap: false
 
     # RDL.type Account, "self.association(:account_stat)", '() -> AssociationMock', wrap: false
     # RDL.type AssociationMock, :loaded?, '() -> %bool', wrap: false
-    RDL.type Account, "self.updated_account_stat", "(:Symbol, Integer, {status_created_at: Time}) -> Array<Hash>", write: [AccountStat], wrap: false
-    RDL.type Account, "self.account_stat", "() -> AccountStat", wrap: false
+    RDL.type Account, "helper_updated_account_stat", "(Symbol, Integer) -> Array", write: ["AccountStat"], wrap: false
+    RDL.type Account, "account_stat", "() -> AccountStat", wrap: false
     #RDL.type AccountStat, "id=", "(Int) -> Int", write: [AccountStat.id],wrap: false
     # RDL.type Array, :first, '() -> Hash', wrap: false
     # RDL.type Hash, "[:id]", '() -> Int', wrap: false
-    RDL.type AccountStat, :reload, '() -> AccountStat', wrap: false
+    RDL.type AccountStat, :reload, '() -> AccountStat', write: ["Account"], wrap: false
     RDL.type Account, :followers_count, '() -> Integer', wrap: false
     # RDL.type AccountStat, :changed?, '() -> %bool', wrap: false
     # RDL.type AccountStat, :changed_attribute_names_to_save, '() -> Array', wrap: false
@@ -36,11 +42,11 @@ describe "Account" do
     RDL.type Integer, :to_i, '() -> Integer', wrap: false
     #binding.pry
 
-    define :update_count!, "(Symbol, Integer, ?{status_created_at: Time}) -> AccountStat", [Account], prog_size: 50 do
+    define :update_count!, "(Account, Symbol, Integer, status_created_at: ?Time) -> %any", [], prog_size: 50 do
       spec "increments the count" do
         setup {
           @account = Fabricate(:account)
-          update_count!( :followers_count, 1)
+          update_count!(@account, :followers_count, 1 ,nil)
         }
         post { |result|
           assert { @account.followers_count == 1 }

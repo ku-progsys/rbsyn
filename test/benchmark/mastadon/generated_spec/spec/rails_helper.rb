@@ -4,11 +4,11 @@
 require 'active_support/all'
 
 # Mock Arel
-module Arel
-  def self.sql(str)
-    str
-  end
-end
+# module Arel
+#   def self.sql(str)
+#     str
+#   end
+# end
 
 
 # Multi-threaded execution mock
