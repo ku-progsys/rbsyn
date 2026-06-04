@@ -14,6 +14,14 @@ describe "Account" do
 
     end
 
+    # class Array
+    #     def all_dead?
+    #         all? { |x| x.alive? }
+    #     end
+    # end
+
+    # RDL.type Array, :all_dead?, '() -> %bool', wrap: false
+
     RDL.type Account, "account_stat", "() -> AccountStat", wrap: false
 
     RDL.type Account, "association", "(Symbol) -> AssociationMock", wrap: false
@@ -40,9 +48,11 @@ describe "Account" do
         setup {
           @account = Fabricate(:account)
           increment_by = 15
-          multi_threaded_execution(increment_by) do
+          x = multi_threaded_execution(increment_by) do
             update_count!(@account, :statuses_count, 1, nil)
           end
+
+          x.all? { |t| !t.alive? }
         }
         post { |result|
           assert { @account.statuses_count == 15 }
