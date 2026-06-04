@@ -6,43 +6,51 @@ describe "Account" do
     load_typedefs :stdlib, :active_record
 
     class Account
-      def helper_updated_account_stat(key, value)
+      def helper_updated_account_stat(key, value, status_created_at: nil)
   
           updated_account_stat(key, value.to_i, status_created_at: nil)
       end
+
+
     end
-    #RDL.type_params Array, [:A], :all?
 
-    # RDL.type Account, :updated_account_stat, '(Symbol, Integer, ?{status_created_at: Time}) -> %any', wrap: false
-    #RDL.type Account, 'self.account_stat', '() -> AccountStat', wrap: false
     RDL.type Account, "account_stat", "() -> AccountStat", wrap: false
 
-    # RDL.type Account, "self.association(:account_stat)", '() -> AssociationMock', wrap: false
-    # RDL.type AssociationMock, :loaded?, '() -> %bool', wrap: false
+    RDL.type Account, "association", "(Symbol) -> AssociationMock", wrap: false
+
     RDL.type Account, "helper_updated_account_stat", "(Symbol, Integer) -> Array", write: ["AccountStat"], wrap: false
-    RDL.type Account, "account_stat", "() -> AccountStat", wrap: false
-    #RDL.type AccountStat, "id=", "(Int) -> Int", write: [AccountStat.id],wrap: false
-    # RDL.type Array, :first, '() -> Hash', wrap: false
-    # RDL.type Hash, "[:id]", '() -> Int', wrap: false
-    RDL.type AccountStat, :reload, '() -> AccountStat', write: ["Account"], wrap: false
-    RDL.type Account, :followers_count, '() -> Integer', wrap: false
-    # RDL.type AccountStat, :changed?, '() -> %bool', wrap: false
-    # RDL.type AccountStat, :changed_attribute_names_to_save, '() -> Array', wrap: false
-    # RDL.type AccountStat, :new_record?, '() -> %bool', wrap: false
-    # RDL.type AccountStat, :id=, '(%any) -> %any', wrap: false
-    # RDL.type AccountStat, :reload, '() -> AccountStat', wrap: false
 
-    # RDL.type Time, 'self.now', '() -> Time', wrap: false
-    # RDL.type Time, :utc, '() -> Time', wrap: false
-    # RDL.type Time, :!=, '(Time) -> %bool', wrap: false
-    # RDL.type Time, :==, '(Time) -> %bool', wrap: false
+    RDL.type Account, "account_stat", "() -> AccountStat", wrap: false
+
+    RDL.type AccountStat, :reload, '() -> AccountStat', write: ["Account"], wrap: false
+
+    RDL.type Account, :followers_count, '() -> Integer', wrap: false
 
     RDL.type Integer, :!=, '(Integer) -> %bool', wrap: false
+
     RDL.type Integer, :==, '(Integer) -> %bool', wrap: false
-    RDL.type Integer, :to_i, '() -> Integer', wrap: false
+
+    #RDL.type Integer, :to_i, '() -> Integer', wrap: false
     #binding.pry
 
-    define :update_count!, "(Account, Symbol, Integer, status_created_at: ?Time) -> %any", [], prog_size: 50 do
+    define :update_count!, "(Account, Symbol, Integer, status_created_at: ?Time) -> %any", [:account_stat], prog_size: 50 do
+
+
+      spec "increments the count in multi-threaded environment" do
+        setup {
+          @account = Fabricate(:account)
+          increment_by = 15
+          multi_threaded_execution(increment_by) do
+            update_count!(@account, :statuses_count, 1, nil)
+          end
+        }
+        post { |result|
+          assert { @account.statuses_count == 15 }
+        }
+      end
+
+
+
       spec "increments the count" do
         setup {
           @account = Fabricate(:account)
@@ -52,6 +60,8 @@ describe "Account" do
           assert { @account.followers_count == 1 }
         }
       end
+
+
 
       # spec "updates last_status_at when discovering a new post" do
       #   setup {

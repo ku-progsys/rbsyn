@@ -263,6 +263,8 @@ class ExpandHolePass < ::AST::Processor
               s(RDL::Globals.types[:string], :str, k.to_s)
             when RDL::Globals.types[:regexp]
               s(RDL::Globals.types[:regexp], :regexp, s(RDL::Globals.types[:string], :str, k), s(nil, :regopt, :i))
+            when RDL::Globals.types[:symbol]
+              s(RDL::Globals.types[:symbol], :sym, k)
             else
               s(v, :lvar, k)
           end
@@ -351,8 +353,16 @@ class ExpandHolePass < ::AST::Processor
                 accum = s(tret, :send, TypedNode.new(trecv, :begin, s(trecv, :hole, 0, {hash_depth: @curr_hash_depth, limit_depth: true, recv: true})),
                   mth, *hole_args)
               else
-                next unless accum.ttype <= trecv
-                accum = s(tret, :send, TypedNode.new(accum.ttype, :begin, accum), mth, *hole_args)
+                begin
+                  next unless accum.ttype <= trecv
+                  accum = s(tret, :send, TypedNode.new(accum.ttype, :begin, accum), mth, *hole_args)
+                rescue Exception => e 
+                  puts e 
+                  puts accum
+                  puts accum.ttype
+                  puts trecv
+                  binding.pry
+                end
               end
               
             else
@@ -403,7 +413,8 @@ class ExpandHolePass < ::AST::Processor
 
   def finite_hash(type)
     # TODO: some hashes can have mandatory keys too
-    type.elts.each { |k, t| raise RbSynError, "expect everyt         ng to be optional in a hash" unless t.is_a? RDL::Type::OptionalType }
+    # binding.pry
+    type.elts.each { |k, t| raise RbSynError, "expect everything to be optional in a hash" unless t.is_a? RDL::Type::OptionalType }
     possible_types = (1..@ctx.max_hash_size).map { |size|
       hash_combinations(type, size)
     }.flatten
