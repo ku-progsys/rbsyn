@@ -30,7 +30,7 @@ describe "Account" do
 
     RDL.type Account, "account_stat", "() -> AccountStat", wrap: false
 
-    RDL.type AccountStat, :reload, '() -> AccountStat', write: ["Account"], wrap: false
+    RDL.type AccountStat, :reload, '() -> AccountStat', write: ["AccountStat"], wrap: false
 
     RDL.type Account, :followers_count, '() -> Integer', wrap: false
 
@@ -72,10 +72,12 @@ describe "Account" do
       end
 
 
-
       # spec "updates last_status_at when discovering a new post" do
+      # This is tests for account_stat functions not update_count funcitons
       #   setup {
       #     @account = Fabricate(:account)
+      #     @account.last_status_at = 1.day.ago.utc
+      #     @account.account_stat.reload
       #     @status_created_at = Time.now.utc
       #     @old_last_status_at = @account.last_status_at
       #     update_count!(@account, :statuses_count, 1, status_created_at: @status_created_at)
@@ -86,6 +88,7 @@ describe "Account" do
       # end
 
       # spec "does not update last_status_at when discovering an older post" do
+      # Same as above, 
       #   setup {
       #     @account = Fabricate(:account)
       #     @account_stat = Fabricate(:account_stat, account: @account, last_status_at: 1.day.ago.utc, statuses_count: 10)
@@ -99,17 +102,19 @@ describe "Account" do
       #   }
       # end
 
-      # spec "decrements the count" do
-      #   setup {
-      #     @account = Fabricate(:account)
-      #     @account.followers_count = 15
-      #     @account.save!
-      #     update_count!(@account, :followers_count, -1)
-      #   }
-      #   post { |result|
-      #     assert { @account.followers_count == 14 }
-      #   }
-      # end
+      spec "decrements the count" do
+        # This is not working so far, that is because I need to be able to get the system to sequence, IE it needs to call the account_updated funciton and then call the stat.reload function, but the spec as I have it is not doing so, discuss with Sankha. 
+        setup {
+
+          @account = Fabricate(:account)
+          @account.followers_count = 15
+          @account.save!
+          update_count!(@account, :followers_count, -1, nil)
+        }
+        post { |result|
+          assert { @account.followers_count == 14 }
+        }
+      end
 
       # spec "preserves last_status_at when decrementing statuses_count" do
       #   setup {
