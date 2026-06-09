@@ -178,7 +178,7 @@ class Account
     self
   end
 
-  require_relative '../app/models/concerns/account/counters'
+  require_relative './generated_spec/app/models/concerns/account/counters'
   include Account::Counters
 end
 
