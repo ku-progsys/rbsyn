@@ -3,6 +3,12 @@
 require 'concurrent'
 require_relative './base'
 
+class Mastodon
+  module CLI
+  end
+  
+end
+
 module Mastodon::CLI
   class EmailDomainBlocks < Base
     option :only_blocked, type: :boolean, default: false

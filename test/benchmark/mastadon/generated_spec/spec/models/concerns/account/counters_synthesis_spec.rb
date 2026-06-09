@@ -1,5 +1,5 @@
 require "test_helper"
-require_relative "../../../rails_helper"
+require_relative "./../../../../../rails_helper"
 
 describe "Account" do
   it "account#update_count!" do

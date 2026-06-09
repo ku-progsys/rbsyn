@@ -1,5 +1,7 @@
 require "test_helper"
 require_relative "../../../rails_helper"
+require_relative "../../../cli/email_domain_blocks"
+require_relative "../../../cli/email_domain_blocks_extension"
 
 describe "Mastodon::CLI::EmailDomainBlocks" do
   it "email_domain_blocks#list" do
@@ -16,7 +18,7 @@ describe "Mastodon::CLI::EmailDomainBlocks" do
     RDL.type String, :to_s, "() -> String", wrap: false
     RDL.type Mastodon::CLI::EmailDomainBlocks, :say, "(String, Symbol) -> %any", wrap: false
     RDL.type Mastodon::CLI::EmailDomainBlocks, :shell, "() -> Thor::Shell::Basic", wrap: false
-    RDL.type Thor::Shell::Basic, :indent, "() { () -> %any } -> %any", wrap: false
+    # RDL.type Thor::Shell::Basic, :indent, "() { () -> %any } -> %any", wrap: false
     RDL.type 'EmailDomainBlock', 'self.where', "(Hash) -> ActiveRecord::Relation", wrap: false
     RDL.type EmailDomainBlock, :id, "() -> Integer", wrap: false
     RDL.type Mastodon::CLI::EmailDomainBlocks, :list, "() -> %any", wrap: false

@@ -1,5 +1,8 @@
 require "test_helper"
 require_relative "../../../rails_helper"
+require_relative "../../../cli/email_domain_blocks"
+require_relative "../../../cli/email_domain_blocks_extension"
+
 
 describe "Mastodon::CLI::EmailDomainBlocks" do
   it "email_domain_blocks#remove" do
@@ -20,7 +23,7 @@ describe "Mastodon::CLI::EmailDomainBlocks" do
     RDL.type Integer, :+, "(Integer) -> Integer", wrap: false
     RDL.type Mastodon::CLI::EmailDomainBlocks, :remove, "(*String) -> %any", wrap: false
 
-    define :remove, "(Mastodon::CLI::EmailDomainBlocks, *String) -> %any", prog_size: 50 do
+    define :remove, "(Mastodon::CLI::EmailDomainBlocks, *String) -> %any", [], prog_size: 50 do
       spec "removes an existing block" do
         setup {
           @cli = Mastodon::CLI::EmailDomainBlocks.new

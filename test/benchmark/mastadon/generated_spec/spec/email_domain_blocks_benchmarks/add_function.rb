@@ -1,5 +1,7 @@
 require "test_helper"
 require_relative "../../../rails_helper"
+require_relative "../../../cli/email_domain_blocks"
+require_relative "../../../cli/email_domain_blocks_extension"
 
 describe "Mastodon::CLI::EmailDomainBlocks" do
   it "email_domain_blocks#add" do

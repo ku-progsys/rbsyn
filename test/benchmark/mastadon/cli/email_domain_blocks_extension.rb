@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative './../rails_helper'
-require 'faker' # for Fabricator
+#require 'faker' # for Fabricator
 require 'resolv'
 
 class Thor
@@ -157,12 +157,12 @@ class EmailDomainBlock
 end
 
 # Reset DB before each spec
-RSpec.configure do |config|
-  config.before(:each) do
-    $email_domain_blocks_db = {}
-    $email_domain_blocks_next_id = 1
-  end
-end
+# RSpec.configure do |config|
+#   config.before(:each) do
+#     $email_domain_blocks_db = {}
+#     $email_domain_blocks_next_id = 1
+#   end
+# end
 
 def Fabricate(name, attrs = {})
   case name
@@ -191,12 +191,12 @@ module CommandLineHelpers
   end
 end
 
-RSpec::Matchers.define_negated_matcher :not_output_results, :output_results
-RSpec::Matchers.define_negated_matcher :not_change, :change
+#RSpec::Matchers.define_negated_matcher :not_output_results, :output_results
+#RSpec::Matchers.define_negated_matcher :not_change, :change
 
-RSpec.configure do |config|
-  config.include CommandLineHelpers
-end
+# RSpec.configure do |config|
+#   config.include CommandLineHelpers
+# end
 
 module DomainHelpers
   def configure_mx(domain:, exchange:, ip_v4_addr: '2.3.4.5', ip_v6_addr: 'fd00::2')
@@ -260,16 +260,16 @@ module DomainHelpers
   end
 end
 
-RSpec.configure do |config|
-  config.include DomainHelpers
-end
+# RSpec.configure do |config|
+#   config.include DomainHelpers
+# end
 
-RSpec.shared_examples 'CLI Command' do
-  it 'configures Thor to exit on failure' do
-    expect(described_class.exit_on_failure?).to be true
-  end
+# RSpec.shared_examples 'CLI Command' do
+#   it 'configures Thor to exit on failure' do
+#     expect(described_class.exit_on_failure?).to be true
+#   end
 
-  it 'descends from the CLI base class' do
-    expect(described_class.new).to be_a(Mastodon::CLI::Base)
-  end
-end
+  # it 'descends from the CLI base class' do
+  #   expect(described_class.new).to be_a(Mastodon::CLI::Base)
+  # end
+# end
