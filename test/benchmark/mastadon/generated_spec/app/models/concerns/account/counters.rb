@@ -29,6 +29,7 @@ module Account::Counters
     update_count!(key, -1)
   end
 
+  
   # @param [Symbol] key
   # @param [Integer] value
   def update_count!(key, value, status_created_at: nil)
@@ -44,11 +45,13 @@ module Account::Counters
     end
   end
 
+
   def account_stat
     super || build_account_stat
   end
 
   private
+
 
   def updated_account_stat(key, value, status_created_at: nil)
     status_created_at = Time.now.utc if status_created_at.nil? || status_created_at > Time.now.utc
@@ -61,6 +64,7 @@ module Account::Counters
       unique_by: :account_id
     )
   end
+
 
   def initial_values(key, value, status_created_at: nil)
     { :account_id => id, key => [value, 0].max }.tap do |values|

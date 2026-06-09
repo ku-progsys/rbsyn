@@ -102,7 +102,7 @@ class AccountStat
     end
   end
 
-  def self.sanitize_sql_array(ary)
+  def self.sanitize_sql_array(ary)  
     # Simple mock
     "last_status_at = GREATEST(account_stats.last_status_at, '#{ary[1]}')"
   end
