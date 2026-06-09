@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'concurrent'
-require_relative 'base'
+require_relative './base'
 
 module Mastodon::CLI
   class EmailDomainBlocks < Base

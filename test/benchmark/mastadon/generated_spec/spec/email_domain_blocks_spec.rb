@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'support/email_domain_blocks_extension'
-require 'mastodon/cli/email_domain_blocks'
+require_relative './email_domain_blocks_extension'
+require_relative './email_domain_blocks'
 
 RSpec.describe Mastodon::CLI::EmailDomainBlocks do
   subject { cli.invoke(action, arguments, options) }
