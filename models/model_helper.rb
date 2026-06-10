@@ -79,10 +79,65 @@ ActiveRecord::Schema.define do
     t.boolean :scheduled_check
     t.integer :status
   end
+  create_table :mastodon_accounts, force: true do |t|
+    t.string :actor_type
+    t.boolean :discoverable
+    t.string :display_name
+    t.string :domain
+    t.text :fields
+    t.text :private_key
+    t.integer :protocol, default: 0
+    t.text :public_key
+    t.integer :suspension_origin, default: 0
+    t.integer :id_scheme, default: 0
+    t.string :uri
+    t.string :username
+    t.text :note
+  end
+  create_table :mastodon_account_stats, force: true do |t|
+    t.references :mastodon_account, null: false # Fixed typo
+    t.integer :statuses_count, default: 0       # Added missing column
+    t.integer :following_count, default: 0      # Added missing column
+    t.integer :followers_count, default: 0      # Added missing column
+  end
+
+  # Add this to handle the "statuses" recount logic
+  create_table :mastodon_statuses, force: true do |t|
+    t.references :mastodon_account, null: false
+    t.integer :visibility, default: 0
+    t.bigint :in_reply_to_id
+    t.bigint :reblog_of_id
+    t.bigint :quoted_status_id
+    t.text :text
+  end
+
+  # Add this to store the counts that Cache#recount updates
+  create_table :mastodon_status_stats, force: true do |t|
+    t.references :mastodon_status, null: false
+    t.integer :replies_count, default: 0
+    t.integer :reblogs_count, default: 0
+    t.integer :favourites_count, default: 0
+    t.integer :quotes_count, default: 0
+  end
+
+  create_table :follows, force: true do |t|
+    t.references :mastodon_account, null: false
+    t.references :target_account, null: false
+  end
+
+  create_table :favourites, force: true do |t|
+    t.references :mastodon_account, null: false, foreign_key: { to_table: :mastodon_accounts }
+    t.references :mastodon_status,  null: false, foreign_key: { to_table: :mastodon_statuses }
+    
+  end
 end
 
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
+
+  def self.update_index(*args, &block)
+    # no-op for testing purposes
+  end
 end
 
 require_relative "user"
@@ -95,3 +150,9 @@ require_relative "gitlab_issue"
 require_relative "gitlab_user"
 require_relative "gitlab_discussion"
 require_relative "diaspora"
+require_relative "mastodon_account"
+require_relative "mastodon_account_stat"
+require_relative "mastodon_status"
+require_relative "mastodon_status_stat"
+require_relative "follow"
+require_relative "favourite"

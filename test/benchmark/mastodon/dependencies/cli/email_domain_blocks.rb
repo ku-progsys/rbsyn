@@ -66,7 +66,7 @@ module Mastodon::CLI
       have to be manually approved for signup.
     LONG_DESC
     def add(*domains)
-      fail_with_message 'No domain(s) given' if domains.empty?
+       'No domain(s) given' if domains.empty?
 
       skipped = 0
       processed = 0

@@ -96,7 +96,7 @@ Rake::TestTask.new(:mastadon) do |t|
 
     #"test/benchmark/mastadon/generated_spec/spec/models/concerns/account/counters_synthesis_spec.rb", # needs ability to do assignment to run. 
     # "test/benchmark/mastadon/generated_spec/spec/email_domain_blocks_benchmarks/list_function.rb", # AI GENERATED NEED TO CORRECT this one needs helper functions because it is a looping program, dont use right now. 
-    "test/benchmark/mastadon/generated_spec/spec/email_domain_blocks_benchmarks/add_function.rb", # AI GENERATED NEED TO CORRECT
+    #"test/benchmark/mastadon/generated_spec/spec/email_domain_blocks_benchmarks/add_function.rb", # AI GENERATED NEED TO CORRECT again requires list operations so may not be worth it. It may be worthwhile to generate tests based soley on the internals of the loops themselves though. 
     #"test/benchmark/mastadon/generated_spec/spec/email_domain_blocks_benchmarks/remove_function.rb", # AI GENERATED NEED TO CORRECT NEED skip this one needs a helper and list operations so may not be worth it. 
   ]
 end

@@ -5,5 +5,7 @@ gemspec
 gem "minisat", :git => "https://github.com/ngsankha/ruby-minisat"
 gem "rdl", :git => "https://github.com/ngsankha/rdl", :branch => "rbsyn"
 # gem "rdl", :path => "../rdl"
-
+gem 'rspec'
 gem "warning", "~> 1.4"
+gem 'thor'
+gem 'rails'

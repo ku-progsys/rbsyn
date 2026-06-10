@@ -2,6 +2,7 @@
 #require 'rspec'
 
 require 'active_support/all'
+require 'active_record'
 
 # Mock Arel
 # module Arel
@@ -178,8 +179,30 @@ class Account
     self
   end
 
-  require_relative './generated_spec/app/models/concerns/account/counters'
+  require_relative 'models_concerns_account/counters.rb'
   include Account::Counters
+end
+
+require 
+
+class Status < ActiveRecord::Base
+
+  def status_stat
+    super || build_status_stat
+  end
+
+  def replies_count
+    status_stat&.replies_count || 0
+  end
+
+  def reblogs_count
+    status_stat&.reblogs_count || 0
+  end
+
+  def favourites_count
+    status_stat&.favourites_count || 0
+  end
+
 end
 
 # Fabricate mock
@@ -192,6 +215,11 @@ def Fabricate(name, attrs = {})
     stat.save
     attrs[:account].account_stat = stat
     stat
+  when :status_stat 
+    status
+    replies_count '123'
+    reblogs_count '456'
+    favorites_count '789'
   else
     raise "Unknown fabrication #{name}"
   end
