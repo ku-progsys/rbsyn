@@ -2,9 +2,6 @@
 
 require 'thor'
 
-
-
-
 module Mastodon
   module CLI
     # ...

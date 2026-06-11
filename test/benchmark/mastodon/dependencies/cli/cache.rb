@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require_relative 'base'
-require 'active_support/cache'
-Rails.cache = ActiveSupport::Cache::MemoryStore.new
+# require 'active_support/cache'
+# Rails.cache = ActiveSupport::Cache::MemoryStore.new
 
 module Mastodon::CLI
   class Cache < Base
