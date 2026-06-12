@@ -19,15 +19,18 @@ class ExtractASTPass < ::AST::Processor
     else
       selected = node.children[idx]
       @new_env.bump_count(selected.children[0]) if selected.type == :envref
-      if selected.ttype <= RDL::Globals.types[:regexp]
+      #TODO MOVE REGEX HANDLING TO A MORE APPROPRIATE LOCATION
+      # if selected.ttype <= RDL::Globals.types[:regexp]
 
-        regex = selected.children[0].to_s
-        string = TypedNode.new(RDL::Type::NominalType.new(:str), :str, regex)
-        opts = TypedNode.new(nil, :regopt, :i)
-        TypedNode.new(RDL::Type::NominalType.new('Regexp'), :regexp, string, opts )
-      else
-        selected
-      end
+      #   regex = selected.children[0].to_s
+      #   string = TypedNode.new(RDL::Type::NominalType.new(:str), :str, regex)
+      #   opts = TypedNode.new(nil, :regopt, :i)
+      #   TypedNode.new(RDL::Type::NominalType.new('Regexp'), :regexp, string, opts )
+      # else
+      #  selected
+      # end
+      selected
+      
     end
   end
 
