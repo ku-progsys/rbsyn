@@ -3,6 +3,7 @@ require_relative "../dependencies/cli/cache.rb"
 describe "Mastodon::CLI::Cache" do 
   it "#recount" do 
     
+
     #original definition: 
     #
     # def recount(type)
@@ -25,24 +26,27 @@ describe "Mastodon::CLI::Cache" do
     # end
     
     load_typedefs :stdlib, :active_record
+
+    RDL.nowrap "Mastadon"
+    RDL.nowrap "Mastadon::CLI"
     #DEFS from cache
     # Mastodon::CLI::Cache
     # Recount is the only method taking the receiver explicitly
     # RDL.type Mastodon::CLI::Cache, :recount, "(Mastodon::CLI::Cache, String) -> %bot", write: [MastodonAccountStat, MastodonStatusStat], read: [MastodonAccount, MastodonStatus]
 
     # Other methods are standard instance methods (no explicit receiver argument)
-    RDL.type Mastodon::CLI::Cache, :recount_mastodon_accounts, "() -> %bot", write: [MastodonAccountStat], read: [MastodonAccount]
-    RDL.type Mastodon::CLI::Cache, :recount_status_stats, "() -> %bot", write: [MastodonStatusStat], read: [MastodonStatus]
+    RDL.type :"RDL::DynamicType", :recount_mastodon_accounts, "() -> %dyn", write: ['MastodonAccountStat'], read: ['MastodonAccount']
+    RDL.type :"RDL::DynamicType", :recount_status_stats, "() -> %dyn", write: ['MastodonStatusStat'], read: ['MastodonStatus']
 
     # Mastodon::CLI::Base
-    RDL.type Mastodon::CLI::Base, :fail_with_message, "(String) -> %bot", write: []
+    RDL.type :"RDL::DynamicType", :fail_with_message, "(%dyn) -> %dyn"
 
     # Mastodon::CLI::ProgressHelper
-    RDL.type Mastodon::CLI::ProgressHelper, :parallelize_with_progress, "(Enumerable, Proc) -> %bot", read: []
+    RDL.type :"RDL::DynamicType", :parallelize_with_progress, "(%dyn, %dyn) -> %dyn", read: []
 
+    binding.pry
 
-
-    define :recount, "(Mastadon::CLI::Cache, String) -> %bot", [], consts: true  do
+    define :recount, "(Mastodon::CLI::Cache, String) -> %any", [], consts: true , moi: [:recount_mastodon_accounts, :recount_status_stats, :fail_with_message, :parallelize_with_progress] do
 
 
       spec "re-calculates mastodon_account records in the cache" do
@@ -50,7 +54,8 @@ describe "Mastodon::CLI::Cache" do
           @stat = Fabricate(:mastodon_account_stat)
           @stat.update(statuses_count: 123)
           @cli = Mastodon::CLI::Cache.new
-          recount(@cli, 'mastodon_accounts')
+          binding.pry
+          recount(@cli, 'mastodon_account_stats')
         }
         post { |result|
           assert { @stat.reload.statuses_count == 0 }

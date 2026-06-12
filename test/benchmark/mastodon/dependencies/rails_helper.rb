@@ -208,12 +208,12 @@ end
 # Fabricate mock
 def Fabricate(name, attrs = {})
   case name
-  when :account
-    Account.new
+  when :mastodon_account
+    MastodonAccount.new
   when :account_stat
-    stat = AccountStat.new(attrs.merge(account_id: attrs[:account].id))
+    stat = MastodonAccountStat.new(attrs.merge(account_id: attrs[:mastodon_account].id))
     stat.save
-    attrs[:account].account_stat = stat
+    attrs[:mastodon_account].mastodon_account_stat = stat
     stat
   when :status_stat 
     status

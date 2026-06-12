@@ -1,3 +1,5 @@
+$stdout.sync = true
+
 # frozen_string_literal: true
 
 # require_relative "../../../../models/account"
@@ -79,7 +81,8 @@ RSpec.describe Mastodon::CLI::Cache do
       it 're-calculates account records in the cache' do
         expect { subject }
           .to output_results('OK')
-
+        puts "HERE1: #{mastodon_account_stat.statuses_count}"
+        puts "HERE2: #{mastodon_account_stat.reload.statuses_count}"
         expect(mastodon_account_stat.reload.statuses_count).to be_zero
       end
     end

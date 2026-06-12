@@ -23,8 +23,15 @@ module Mastodon::CLI
       size of the database.
     LONG_DESC
     def recount(type)
+      # require pry 
+      # require pry-byebug
+      # binding.pry
+      # puts "HERE: #{type}"
+      # binding.pry
       case type
+      
       when 'mastodon_accounts'
+        #binding.pry
         processed, = parallelize_with_progress(accounts_with_stats) do |account|
           recount_account_stats(account)
         end
