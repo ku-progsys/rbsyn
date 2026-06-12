@@ -3,6 +3,7 @@ module Mastodon::CLI
   module ProgressHelper
     # Simple, non-parallel stub for tests: run inline and return [total, aggregate].
     def parallelize_with_progress(scope, *args, **kwargs)
+ 
       total = 0
       aggregate = 0
 

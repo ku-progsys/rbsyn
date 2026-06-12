@@ -22,16 +22,11 @@ module Mastodon::CLI
       It may take a very long time to finish, depending on the
       size of the database.
     LONG_DESC
+    #this method is not ideal for benchmarks as it requires procs, and rbsyn cannot construct procs. 
     def recount(type)
-      # require pry 
-      # require pry-byebug
-      # binding.pry
-      # puts "HERE: #{type}"
-      # binding.pry
       case type
-      
       when 'mastodon_accounts'
-        #binding.pry
+        binding.pry
         processed, = parallelize_with_progress(accounts_with_stats) do |account|
           recount_account_stats(account)
         end
@@ -48,7 +43,6 @@ module Mastodon::CLI
       say("OK, recounted #{processed} records", :green)
     end
 
-    private
 
     def accounts_with_stats
       MastodonAccount.local.includes(:mastodon_account_stat)
@@ -58,6 +52,8 @@ module Mastodon::CLI
       MastodonStatus.includes(:mastodon_status_stat)
     end
 
+    # this is good for testing purposes. It isn't the direct function which is being tested but is a prinicple component of it, as such might be a useful enterprise? 
+    # Yes the tap method is used and it looks like a list but no, tap just does everything in the body and returns self. 
     def recount_account_stats(account)
       account.mastodon_account_stat.tap do |account_stat|
         account_stat.following_count = account.active_relationships.count
