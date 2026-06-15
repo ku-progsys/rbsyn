@@ -127,7 +127,6 @@ class ProgWrapper
       pass1 = ExpandHolePass.new(@ctx, @env)
       
       expanded = pass1.process(@seed)
-
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
 
       x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
@@ -168,11 +167,9 @@ class ProgWrapper
       }
 
       x = x.reject(&:nil?)
-      # if ENV["FLAG"] == "TRUE"
-      #   binding.pry
-      # end      
+     
       x = remove_duplicates(x)
-      #binding.pry
+
       x
     when :effect
 
@@ -183,6 +180,7 @@ class ProgWrapper
         eff_hole = s(RDL::Globals.types[:top], :hole, 1, {effect: true})
         pass1 = ExpandHolePass.new(@ctx, @env)
         pass1.effect_methds = methds
+   
         expanded = pass1.process(eff_hole)
 
         expand_map = pass1.expand_map.map { |i| i.times.to_a }
@@ -190,6 +188,7 @@ class ProgWrapper
           raise RbSynError, "expected only one item" unless selection.size == 1
           read_eff = pass1.read_effs[selection.first]
           pass2 = ExtractASTPass.new(selection, @env)
+
           program = update_types_pass.process(pass2.process(expanded))
           new_env = pass2.env
           prog_wrap = ProgWrapper.new(@ctx, @seed, new_env, @exprs.dup)

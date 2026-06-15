@@ -43,12 +43,9 @@ class ExpandHolePass < ::AST::Processor
     expanded = []
 
     if depth == 0
-      # nil constant
-      # puts expanded; puts "\n------\n";puts node; puts "\n-----\n" ; puts node.ttype; puts "-------\n<<<<<<<<<<\n"
+
       expanded.concat lvar(node.ttype)
-      # puts "AFTER LVARS";
-      # puts expanded; puts "\n>>>>>>>>>>>\n"
-      # binding.pry
+
       if @ctx.enable_nil# && !@recv
         expanded << nil_const
       end
@@ -120,7 +117,8 @@ class ExpandHolePass < ::AST::Processor
       expanded.concat paths.map { |path| fn_call(path) }.flatten
       
 
-    elsif depth == 1 && @effect
+    elsif depth == 1 && @effect # HERE IS THE ISSUE
+
       expanded.concat effects
     else
       raise RbSynError, "unexpected"
@@ -167,9 +165,15 @@ class ExpandHolePass < ::AST::Processor
     types = Set[*(arg_types + env_types +
       @ctx.components.map { |c| RDL::Type::SingletonType.new(c) })]
     exprs = []
-
+    # count = 0
     @effect_methds.each { |klass, methd, read_eff|
+      
+      # if count == 19 
+      #   binding.pry
+      # end
+      # count += 1
       types.each { |type|
+
         case type
         when RDL::Globals.types[:bool],
              RDL::Globals.types[:true],
@@ -184,7 +188,7 @@ class ExpandHolePass < ::AST::Processor
           if recv_qual.ancestors.include? klass_qual
             trecv = type
             path = CallChain.new([trecv, methd, RDL::Globals.types[:bot]], @ctx.tenv)
-            exprs << fn_call(path)
+            exprs += fn_call(path)
             @read_effs << read_eff
           end
         when RDL::Type::NominalType
@@ -194,7 +198,7 @@ class ExpandHolePass < ::AST::Processor
             trecv = type
             # the %top type here doesn't matter
             path = CallChain.new([trecv, methd, RDL::Globals.types[:bot]], @ctx.tenv)
-            exprs << fn_call(path)
+            exprs += fn_call(path)
             @read_effs << read_eff
           end
         when RDL::Type::GenericType
@@ -204,19 +208,19 @@ class ExpandHolePass < ::AST::Processor
           if klass == Hash
             trecv = type
             path = CallChain.new([trecv, methd, RDL::Globals.types[:bot]], @ctx.tenv)
-            exprs << fn_call(path)
+            exprs += fn_call(path)
             @read_effs << read_eff
           end
         when RDL::Type::DynamicType
           path = CallChain.new([type, methd, RDL::Globals.types[:bot]], @ctx.tenv)
-          exprs << fn_call(path)
+          exprs += fn_call(path)
           @read_effs << read_eff
         else
           raise RbSynError, "unhandled type #{type}"
         end
       }
     }
-
+    #binding.pry
     exprs
   end
 

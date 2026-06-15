@@ -18,7 +18,11 @@ class ExtractASTPass < ::AST::Processor
       s(node.ttype, :envref, ref)
     else
       selected = node.children[idx]
-      @new_env.bump_count(selected.children[0]) if selected.type == :envref
+      begin
+        @new_env.bump_count(selected.children[0]) if selected.type == :envref
+      rescue Exception => e 
+        binding.pry
+      end
       #TODO MOVE REGEX HANDLING TO A MORE APPROPRIATE LOCATION
       # if selected.ttype <= RDL::Globals.types[:regexp]
 
