@@ -130,7 +130,7 @@ class ProgWrapper
       
       expanded = pass1.process(@seed)
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
-
+      
       x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
         pass2 = ExtractASTPass.new(selection, @env) 
         temp = pass2.process(expanded)
@@ -143,9 +143,9 @@ class ProgWrapper
         begin
 
           program = refiner.process(program)
-
-          if ((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT)  
-
+     
+          if (program.ttype != @target &&((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT))  
+            #binding.pry
             next
           end
         rescue NoMethodError, NameError, ComplexError  => e

@@ -61,8 +61,11 @@ module SynHelper
       counter += 1
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
-      puts "BASE: \n#{base.to_ast}\nTYPE: #{base.to_ast.ttype}"
+      puts "BASE: \n#{base.to_ast}\nTYPE: #{base.to_ast.ttype}\n------------------"
       
+      if base.to_ast.to_s == "(hole 1 {:hash_depth=>0, :method_arg=>false, :variance=>:-})"
+        binding.pry
+      end
       if basehashlist.include? base.typehash
         next
       end
@@ -72,15 +75,15 @@ module SynHelper
       generated = base.build_candidates()
       evaluable = generated.reject &:has_hole?
       tempbool = false
-      puts "GENERATED: "
-      generated.each do |i|
-        puts i.to_ast
-        puts i.ttype
-        puts i.typestring
-        puts "-----------"
-      end
-      puts "//////////////////////////////////////////"
-      binding.pry
+      # puts "GENERATED: "
+      # generated.each do |i|
+      #   puts i.to_ast
+      #   puts i.ttype
+      #   puts i.typestring
+      #   puts "-----------"
+      # end
+      # puts "//////////////////////////////////////////"
+      # binding.pry
       evaluable.each { |prog_wrap|
         res = 1
         klass = 1
