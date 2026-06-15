@@ -100,6 +100,8 @@ class ProgWrapper
       ast # this is a hack, we can populate the return expression in a type driven way
     ])
   end
+  
+  
 
   def ==(other)
     to_ast == other.to_ast
@@ -165,7 +167,7 @@ class ProgWrapper
         prog_wrap.passed_asserts = @passed_asserts
         prog_wrap
       }
-
+      #binding.pry
       x = x.reject(&:nil?)
      
       x = remove_duplicates(x)

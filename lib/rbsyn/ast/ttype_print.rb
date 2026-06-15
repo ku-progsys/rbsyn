@@ -49,6 +49,9 @@ class TTypePrint < ::AST::Processor
     node.updated(nil, node.children.map { |k|
       k.is_a?(TypedNode) ? process(k) : @stack.append(k)
     })
+    if node.children.size == 0 #Handles true and false classes
+      @stack.append(node.to_s)
+    end
     @stack.append("):#{node.ttype.to_s}")
 
   end
