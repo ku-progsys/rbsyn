@@ -16,6 +16,22 @@ class ProgWrapper
     counts.values
   end
 
+  def get_variance
+    temp = @seed
+    if temp.type == :envref
+      temp = @env.info[@seed.children[0]][:expr]
+    end
+
+    if temp.type == :hole
+      var = temp.children[1].fetch(:variance, COVARIANT)
+    else
+      var = COVARIANT
+    end
+
+    return var
+
+  end
+
   def initialize(ctx, seed, env, exprs=RDL.type_cast([], 'Array<TypedNode>', force: true))
     @ctx = ctx
     @seed = seed
@@ -28,7 +44,9 @@ class ProgWrapper
     @dynamic_components = 0
     @typehash = nil
     @typestring = nil
+    @variance_at_creation = get_variance
     # add the ranking for types here
+
   end
 
   def look_for(kind, target)
@@ -122,12 +140,11 @@ class ProgWrapper
         #even the number of errors??
         
         begin
-          # to_type = TTypePrint.new(env: new_env)
-          # puts to_type.process(program).to_s
-          # puts "\n\n\n"
+
           program = refiner.process(program)
-          if !(program.ttype <= @target) 
-            # nil is a subtype of somethings
+
+          if ((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT)  
+
             next
           end
         rescue NoMethodError, NameError, ComplexError  => e

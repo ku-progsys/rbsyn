@@ -61,17 +61,13 @@ module SynHelper
       counter += 1
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
-
-
+      puts "BASE: \n#{base.to_ast}"
 
       if basehashlist.include? base.typehash
         next
       end
       basehashlist << base.typehash
-      effect_needed = []  
-
-
-      debug(base.to_ast.to_s, /send[\s\S]*"\#\%08x"[\s\S]*wrap_to_s[\s\S]*/ ) 
+      effect_needed = [] 
 
       generated = base.build_candidates()
       evaluable = generated.reject &:has_hole?
