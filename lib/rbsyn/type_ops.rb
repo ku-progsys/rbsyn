@@ -3,9 +3,23 @@ module TypeOperations
 
   require_relative 'type_helper'
 
+  def flatten_to_n(item, target)
+    if item.class != Array 
+      raise ArgumentError.new "Nestings not deep enough for item #{item}"
+
+    elsif target == 0 
+      item.flatten
+    else
+      item.map do |i|
+        flatten_to_n(i, target -1)
+      end
+    end
+  end
+
   def compute_targs(trec, tmeth, is_moi=false, peeknext: nil)
-    # This is were you should allow it to use more than the first definition, ONLY
-    # when it is an MOI. 
+            #For dynamic types if we have been tracking, we could have multiple receiver types, multiple argument list types, and multiple return types. so each time compute targs returns it should return a list of form [[[]]] for each of the methods of trec we should match the receivers with the multiple associated signture lists (as we might have conflicting type signatures when searching for dynamic types. )
+
+    # This is were you should allow it to use more than the first definition
     # TODO: we use only the first definition, ignoring overloaded method definitions
     #puts ("from type_ops.rb compute_targs: trec #{trec}\n\n")
     #type = tmeth[0]
@@ -15,14 +29,17 @@ module TypeOperations
     #   exp_tret = [tmeth[0].ret]
     #   param_matches = [index_of_var_in_ret(tmeth[0])]
     # else
-      targs = tmeth.map {|t| t.args }
-      exp_tret = tmeth.map {|t| t.ret}
-      param_matches = tmeth.map {|t| index_of_var_in_ret(t)}
+    targs = tmeth.map {|t| t.args }
+    exp_tret = tmeth.map {|t| t.ret}
+    param_matches = tmeth.map {|t| index_of_var_in_ret(t)}
     # end
     # if targs.size > 1
     #   binding.pry
     # end
-    return targs.map {|t| t.map { |targ| RDL::Type::DynamicType.new }} if ENV.key? 'DISABLE_TYPES'
+    if ENV.key? 'DISABLE_TYPES'
+      x =  targs.map {|t| t.map { |targ| RDL::Type::DynamicType.new }} 
+      return flatten_to_n(x, 2)
+    end
 
     # handling multiple possible argument types for polymoprhism in the expected return. 
 
@@ -121,7 +138,8 @@ module TypeOperations
       }
       
     }
-    accum
+
+    flatten_to_n(accum, 2)
   end
 
   def splitter(string)

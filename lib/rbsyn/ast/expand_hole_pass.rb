@@ -316,15 +316,21 @@ class ExpandHolePass < ::AST::Processor
         info = mthds[mth]
         tmeths = info[:type]
         #BR
+
         peeknext = tokens.peek
         is_moi = @moi.include?(mth)
+
         targs_mult = compute_targs(trecv, tmeths, is_moi, peeknext: peeknext)
         tmeths = tmeths.zip(targs_mult).flat_map { |label, items| [label] * items.length }
         targs_mult = targs_mult.flatten(1)
         new_nesting = []
         targs_mult.zip(tmeths[0 .. targs_mult.size]).each do |targs, tmeth|
+          begin
+            tret = compute_tout(trecv, [tmeth], targs)
+          rescue Exception => e 
+            binding.pry
+          end
 
-          tret = compute_tout(trecv, [tmeth], targs)
           hole_args = targs.map { |targ| s(targ, :hole, 0, {hash_depth: @curr_hash_depth, method_arg: true}) }
           temp_nested_accum = copied = Marshal.load(Marshal.dump(nested_accum))
           temp_nested_accum.each do |accum|

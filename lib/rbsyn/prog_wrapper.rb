@@ -132,10 +132,12 @@ class ProgWrapper
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
       
       x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
+        # binding.pry
         pass2 = ExtractASTPass.new(selection, @env) 
         temp = pass2.process(expanded)
         program = update_types_pass.process(temp)
         new_env = pass2.env
+
         refiner = DynamicRefineTypes.new(@ctx, new_env)
         #BR, this is where you should really be counting the number of dynamic types. ???
         #even the number of errors??
@@ -144,7 +146,7 @@ class ProgWrapper
 
           program = refiner.process(program)
      
-          if (program.ttype != @target &&((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT))  
+          if program.ttype != @target && (((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT))  
             #binding.pry
             next
           end
@@ -171,13 +173,13 @@ class ProgWrapper
       x = x.reject(&:nil?)
      
       x = remove_duplicates(x)
-
+      # binding.pry
       x
     when :effect
 
       # TODO: ordering can be done better to build candidates programs with
       # method calls that can satisfy multiple effects at once
-      RDL.type_cast(@target, 'Array<String>', force: true).map { |eff|
+      x = RDL.type_cast(@target, 'Array<String>', force: true).map { |eff|
         methds = methods_with_write_effect(eff)
         eff_hole = s(RDL::Globals.types[:top], :hole, 1, {effect: true})
         pass1 = ExpandHolePass.new(@ctx, @env)
@@ -200,6 +202,7 @@ class ProgWrapper
           prog_wrap
         }
       }.flatten
+      x
     when :teffect
       pass1 = ExpandHolePass.new(@ctx, @env)
       expanded = pass1.process(@exprs.last)
@@ -251,9 +254,12 @@ class ProgWrapper
       effect_causing = []
       klass = RDL::Util.to_class(eff.split('.')[0])
       # klass = RDL::Util.singleton_class_to_class(klass) if klass.singleton_class?
-
+      #BRYAN CURRENT THIS FOLLOWING GLOBALS.INFO.INFO DOES NOT CONTAIN ACTIVERECORD::BASE FIGURE OUT WHERE IT IS LOADED AT
       RDL::Globals.info.info.each { |cls, v1|
         v1.each { |meth, v2|
+          # if meth == :save
+          #   binding.pry
+          # end
           v2.fetch(:write, ['']).each { |weff|
             cls_qual = RDL::Util.to_class(cls)
             cls_qual = RDL::Util.singleton_class_to_class(cls_qual) if cls_qual.singleton_class?
@@ -263,6 +269,7 @@ class ProgWrapper
               end
             end
             if EffectAnalysis.effect_leq(eff, weff)
+
               if klass.ancestors.include? cls_qual
                 if RDL::Util.to_class(cls).singleton_class?
                   kls = RDL::Util.add_singleton_marker(eff.split('.')[0])
@@ -277,6 +284,7 @@ class ProgWrapper
           }
         }
       }
+      #binding.pry
       return effect_causing
     else
       raise RbSynError, "don't know how to handle #{eff.inspect}"

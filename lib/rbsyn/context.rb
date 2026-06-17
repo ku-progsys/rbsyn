@@ -34,7 +34,7 @@ class Context
     else
     @constants = {
       string: [''],
-      integer: [0, 1]
+      integer: [0, 1, 2]
     }
     end
     @enable_and = false

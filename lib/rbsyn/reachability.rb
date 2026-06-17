@@ -15,9 +15,17 @@ take paths in the queue that end with the type that we need
 =end
 
 class CallChain
+
   attr_reader :path, :tenv
 
   def initialize(path, tenv)
+      # if !ENV["BREAK"].nil?
+      #   ENV["BREAK"]= (ENV["BREAK"].to_i + 1).to_s
+      #   puts ENV["BREAK"]
+      #   if ENV["BREAK"].to_i == 13
+      #     binding.pry
+      #   end
+      # end
     raise RbSynError, "expect path to be an array" unless path.is_a? Array
     raise RbSynError, "last element in a path must always be a type" unless path.last.is_a? RDL::Type::Type
     @path = path
@@ -70,6 +78,7 @@ class Reachability
 
       new_queue = []
       queue.each { |path|
+
         trecv = path.last
         mthds = methods_of(trecv)
 
@@ -82,7 +91,7 @@ class Reachability
           #   # if the receiver doesn't respond to the method just skip
           #   next
           # end
-          
+       
           tmeths = info[:type]
           is_moi = @moi.include?(mthd)
           targs_mult = compute_targs(trecv, tmeths,is_moi)
@@ -110,10 +119,11 @@ class Reachability
           end
           next if tout == []
 
-          tout.each do |t|
+          tout.flatten.each do |t|
             t = trecv if t.is_a?(RDL::Type::VarType) && t.name == :self
             new_tenv = make_new_tenv(t, path.tenv)
             new_queue << CallChain.new(path.path + [mthd, t], new_tenv)
+            # binding.pry
           end
         }
         

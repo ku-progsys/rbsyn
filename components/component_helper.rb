@@ -31,12 +31,12 @@ def load_typedefs(*categories)
         extend RDL::Annotate
 
         # type 'self.create', "(``DBTypes.schema_type(trec)``) -> self", wrap: false, write: ['self']
-        #type 'self.where', "(``DBTypes.schema_type(trec)``) -> ``DBTypes.array_schema(trec)``", wrap: false
+        type 'self.where', "(``DBTypes.schema_type(trec)``) -> ``DBTypes.array_schema(trec)``", wrap: false
         type 'self.exists?', "(%dyn) -> %dyn", wrap: false
-        #type 'self.joins', "(``DBTypes.joins_input_type(trec)``) -> ``DBTypes.joins_output_type(trec, targs)``", wrap: false
+        type 'self.joins', "(``DBTypes.joins_input_type(trec)``) -> ``DBTypes.joins_output_type(trec, targs)``", wrap: false
 
-        #type :where, "(``DBTypes.schema_type(trec)``) -> ``DBTypes.array_schema(trec)``", wrap: false
-        #type :save, '() -> %bool', wrap: false, write: ['*']
+        type :where, "(``DBTypes.schema_type(trec)``) -> ``DBTypes.array_schema(trec)``", wrap: false
+        type :save, '() -> %bool', wrap: false, write: ['*']
       end
 
       # ActiveRecord::Querying.class_eval do

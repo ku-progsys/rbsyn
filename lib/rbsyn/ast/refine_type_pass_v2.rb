@@ -1,4 +1,5 @@
 class DynamicRefineTypes < ::AST::Processor
+  # I BELIEVE THIS IS MEANING TO REMOVE THE DYNAMIC TYPE FROM FUNCTIONS THAT HAVE A DYNAMIC TYPE TARGET, THIS IS MEANT TO PREVENT EVERYTHING FROM BECOMING DYNAMIC IF WE KNOW THE TYPE OF THE EXPRESSION. IT REALLY SHOULD BE DONE ELSEWHRE THOUGH. 
   include TypeOperations
 
   def initialize(ctx, env)
@@ -8,21 +9,25 @@ class DynamicRefineTypes < ::AST::Processor
   end
 
   def on_envref(node)
-
+    # binding.pry
     ref = node.children[0]
     info = @env.get_expr(ref)
     processed = process(info[:expr])
     if processed.ttype.is_a? RDL::Type::DynamicType
       @env.update_expr(ref, info[:expr].update_ttype(processed.ttype))
       info = @env.get_expr(ref)
-    end
-    if info[:expr].ttype.is_a?(RDL::Type::MethodType)
-      ttype = info[:expr].ttype.ret
+
+      if info[:expr].ttype.is_a?(RDL::Type::MethodType)
+        ttype = info[:expr].ttype.ret
+      else
+        ttype = info[:expr].ttype
+      end
+      node.update_ttype(ttype)
     else
-      ttype = info[:expr].ttype
+      node
     end
-    x = node.update_ttype(ttype)
-    x
+    
+    
   end
 
   def on_send(node)
