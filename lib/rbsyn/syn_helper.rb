@@ -38,11 +38,21 @@ def discard_impossible_types(generated, type)
   }
 end
 
+def read_asts(astlist)
+  puts "LIST SIZE: #{astlist.size}"
+  astlist.each do |i|
+    puts "----------------\n"
+    puts i.to_ast
+    puts "TYPE: #{i.ttype}"
+    puts "----------------\n"
+  end
+end
 
 module SynHelper
   include TypeOperations
   
   def generate(seed_hole, preconds, postconds, return_all=false, add_dyn: false, type_search_depth: 120 )
+
     if add_dyn 
       ENV['ADD_DYN'] = "TRUE"
     else
@@ -59,36 +69,56 @@ module SynHelper
         raise NameError, "done checking for types at count: #{counter}"
       end
       counter += 1
+      # ENV["COUNT"] = (ENV["COUNT"].to_i + 1).to_s
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
-      puts "BASE: \n#{base.to_ast}\nTYPE: #{base.to_ast.ttype}\n------------------"
-      
-      if base.to_ast.to_s == "(hole 1 {:hash_depth=>0, :method_arg=>false, :variance=>:-})"
-        binding.pry
-      end
+      # if counter == 1
+      #   puts "BASE: \n#{base.to_ast}\nTYPE: #{base.to_ast.ttype}\n------------------"
+      #   binding.pry
+      # end
+
       if basehashlist.include? base.typehash
         next
       end
       basehashlist << base.typehash
       effect_needed = [] 
 
+      # if ENV["INSPECT"]=="T" && (ENV["COND"].nil? || base.to_ast.to_s == ENV["COND"])
+      #   puts "COUNT: #{counter}\n"
+      #   puts "BASE:\n#{base.to_ast}"
+      #   # binding.pry
+      # end
       generated = base.build_candidates()
       evaluable = generated.reject &:has_hole?
       tempbool = false
-      # puts "GENERATED: "
-      # generated.each do |i|
-      #   puts i.to_ast
-      #   puts i.ttype
-      #   puts i.typestring
-      #   puts "-----------"
+
+      # if ENV["INSPECT"]=="T" && (ENV["COND"].nil? || base.to_ast.to_s == ENV["COND"])
+      #   ENV["COUNT"] = (ENV["COUNT"].to_i + 1).to_s
+      #   File.open("test_output.txt", "a") do |f|
+      #     f.write "\n----------------\n"
+      #     f.write "TTYPES\n"
+      #     generated.each do |i| f.write "#{i.to_ast.ttype}\n" end
+      #     f.write "\nPROGS\n\n"
+      #     f.write "LOCAL_COUNT: #{counter}\n"
+      #     f.write "GLOBAL_COUNT: #{ENV["COUNT"]}\n\n"
+      #     f.write "BASE_AFTER:\n#{base.to_ast}\n"
+      #     f.write "BASETYPE: #{base.to_ast.ttype}\n"
+      #     f.write "SIZE WORK_LIST: #{work_list.size}\n"
+      #     f.write "SIZE generated: #{generated.size}\n"
+      #     f.write "EVALUABLE#: #{evaluable.size}\n"
+      #     f.write "\n-------------------------\n"
+      #     if ENV["COUNT"] == "41"
+      #       binding.pry
+      #     end
+          
+      #   end
       # end
-      # puts "//////////////////////////////////////////"
-      # binding.pry
+
       evaluable.each { |prog_wrap|
         res = 1
         klass = 1
         passes = 1
-
+        # puts "TESTING: \n#{prog_wrap.to_ast} \nof TTYPE: #{prog_wrap.to_ast.ttype}"
         #puts Unparser.unparse(prog_wrap.to_ast)
         tempbool = false
 

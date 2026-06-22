@@ -60,7 +60,7 @@ class Synthesizer
     progconds = @ctx.preconds.zip(@ctx.postconds, @ctx.desc).map { |precond, postcond, desc|
       @ctx.logger.debug("Finding sln for subspec: #{desc}")
       #binding.pry
-      prog = prog_cache.find_prog(precond, postcond)
+      prog = prog_cache.find_prog([precond], [postcond])
       
       if prog.nil?
 

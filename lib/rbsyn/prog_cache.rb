@@ -12,6 +12,7 @@ class ProgCache
   end
 
   def find_prog(precond, postcond)
+    # binding.pry
     @cache.each { |prog|
       # require 'pry'
       # require 'pry-byebug'

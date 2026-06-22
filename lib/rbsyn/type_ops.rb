@@ -218,12 +218,14 @@ module TypeOperations
 
     # TODO: we use only the first definition, ignoring overloaded method definitions
     # BR: Note: this might be where our problem of duplicates is happening. 
-    # BR Here is where you need to give the overloaded method definitions. 
+    # BR: Updated to include overloaded method definitions.  
     
     tmethod.each do |t|
 
       begin
-        if targs.zip(t.args).any? {|actual, prescribed| (!(str_to_type(actual) <= prescribed) && !prescribed.is_a?(RDL::Type::VarType)) }
+        #BR: TODO force this next statement to respect variance. 
+        #BR: This is making sure that if the actual argument provided is NOT a subtype of the prescribed type as defined in the signature, and the prescribed type is not a Variable Type, that the system will ignore. But this may be redundant. 
+        if targs.zip(t.args).any? {|actual, prescribed| !(str_to_type(actual) <= prescribed) && !(prescribed.is_a?(RDL::Type::VarType) || prescribed.is_a?(RDL::Type::ComputedType)) }
           next
         end
       rescue Exception => e
@@ -326,6 +328,7 @@ module TypeOperations
 
       ParentsHelper.getParents()
     else
+      binding.pry
       raise RbSynError, "unhandled type #{trecv.inspect}"
 
     end

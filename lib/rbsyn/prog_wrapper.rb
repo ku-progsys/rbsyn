@@ -127,7 +127,7 @@ class ProgWrapper
       
       # puts ENV["GLOBAL_COUNT"]
       pass1 = ExpandHolePass.new(@ctx, @env)
-      
+      # binding.pry
       expanded = pass1.process(@seed)
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
       
