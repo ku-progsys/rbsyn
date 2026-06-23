@@ -65,17 +65,18 @@ module SynHelper
     counter = 0
 
     until work_list.empty?
+      # ENV["COUNT"] = (ENV["COUNT"].to_i + 1).to_s
+      # if ENV["COUNT"]=="351"
+      #   binding.pry
+      # end
       if counter >= type_search_depth && add_dyn
         raise NameError, "done checking for types at count: #{counter}"
       end
       counter += 1
-      # ENV["COUNT"] = (ENV["COUNT"].to_i + 1).to_s
+    
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
-      # if counter == 1
-      #   puts "BASE: \n#{base.to_ast}\nTYPE: #{base.to_ast.ttype}\n------------------"
-      #   binding.pry
-      # end
+
 
       if basehashlist.include? base.typehash
         next
@@ -88,32 +89,32 @@ module SynHelper
       #   puts "BASE:\n#{base.to_ast}"
       #   # binding.pry
       # end
+      # if ENV["COUNT"] == "350"
+      #   binding.pry
+      # end
       generated = base.build_candidates()
       evaluable = generated.reject &:has_hole?
       tempbool = false
 
-      # if ENV["INSPECT"]=="T" && (ENV["COND"].nil? || base.to_ast.to_s == ENV["COND"])
-      #   ENV["COUNT"] = (ENV["COUNT"].to_i + 1).to_s
-      #   File.open("test_output.txt", "a") do |f|
-      #     f.write "\n----------------\n"
-      #     f.write "TTYPES\n"
-      #     generated.each do |i| f.write "#{i.to_ast.ttype}\n" end
-      #     f.write "\nPROGS\n\n"
-      #     f.write "LOCAL_COUNT: #{counter}\n"
-      #     f.write "GLOBAL_COUNT: #{ENV["COUNT"]}\n\n"
-      #     f.write "BASE_AFTER:\n#{base.to_ast}\n"
-      #     f.write "BASETYPE: #{base.to_ast.ttype}\n"
-      #     f.write "SIZE WORK_LIST: #{work_list.size}\n"
-      #     f.write "SIZE generated: #{generated.size}\n"
-      #     f.write "EVALUABLE#: #{evaluable.size}\n"
-      #     f.write "\n-------------------------\n"
-      #     if ENV["COUNT"] == "41"
-      #       binding.pry
-      #     end
+      if ENV["INSPECT"]=="T" && (ENV["COND"].nil? || base.to_ast.to_s == ENV["COND"])
+        ENV["COUNT"] = (ENV["COUNT"].to_i + 1).to_s
+        File.open("test_output.txt", "a") do |f|
+          f.write "\n----------------\n"
+          f.write "TTYPES\n"
+          generated.each do |i| f.write "#{i.to_ast.ttype}\n" end
+          f.write "\nPROGS\n\n"
+          f.write "LOCAL_COUNT: #{counter}\n"
+          f.write "GLOBAL_COUNT: #{ENV["COUNT"]}\n\n"
+          f.write "BASE_AFTER:\n#{base.to_ast}\n"
+          f.write "BASETYPE: #{base.to_ast.ttype}\n"
+          f.write "SIZE WORK_LIST: #{work_list.size}\n"
+          f.write "SIZE generated: #{generated.size}\n"
+          f.write "EVALUABLE#: #{evaluable.size}\n"
+          f.write "\n-------------------------\n"
           
-      #   end
-      # end
-
+        end
+      end
+      # binding.pry
       evaluable.each { |prog_wrap|
         res = 1
         klass = 1

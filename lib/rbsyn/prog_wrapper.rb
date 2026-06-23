@@ -125,14 +125,18 @@ class ProgWrapper
     case @looking_for
     when :type
       
-      # puts ENV["GLOBAL_COUNT"]
+      #puts ENV["GLOBAL_COUNT"]
       pass1 = ExpandHolePass.new(@ctx, @env)
       # binding.pry
       expanded = pass1.process(@seed)
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
-      
+      # binding.pry
+      # count = 0 
       x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
         # binding.pry
+        # puts "selection: #{selection.to_s}"
+        # count += 1
+
         pass2 = ExtractASTPass.new(selection, @env) 
         temp = pass2.process(expanded)
         program = update_types_pass.process(temp)
@@ -143,7 +147,11 @@ class ProgWrapper
         #even the number of errors??
         
         begin
-
+          # if count > 10 
+           
+          #   puts "program: \n#{new_env.info[program.to_ast.children[0]][:expr].to_ast}"
+          #   binding.pry
+          # end
           program = refiner.process(program)
      
           if program.ttype != @target && (((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT))  
@@ -160,7 +168,7 @@ class ProgWrapper
          
           #refiner = DynamicRefineTypes.new(@ctx, new_env)
           binding.pry
-          #p = refiner.process(program)
+          p = refiner.process(program)
           next
         end 
 
@@ -169,7 +177,7 @@ class ProgWrapper
         prog_wrap.passed_asserts = @passed_asserts
         prog_wrap
       }
-      #binding.pry
+      # binding.pry
       x = x.reject(&:nil?)
      
       x = remove_duplicates(x)
