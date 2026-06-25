@@ -283,7 +283,7 @@ module TypeOperations
           end
         end
 
-        return RDL::Type::GenericType.new(tret.base, *merged_params)
+      #   return RDL::Type::GenericType.new(tret.base, *merged_params)
       else
         return tret
       end
