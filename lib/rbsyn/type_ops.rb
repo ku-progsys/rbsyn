@@ -124,10 +124,21 @@ module TypeOperations
             end
           end
         when RDL::Type::ComputedType
-          bind = Class.new.class_eval { binding }
-          bind.local_variable_set(:trec, trec)
-          accum[-1].each do |i|
-            i << targ.compute(bind)
+          if trec.is_a?(RDL::Type::DynamicType) && targ.code.to_s.include?("trec")
+
+            i << RDL::Type::DynamicType.new()
+          else
+            bind = Class.new.class_eval { binding }
+            bind.local_variable_set(:trec, trec)
+            accum[-1].each do |i|
+              begin
+                i << targ.compute(bind)
+              rescue Exception => e 
+ 
+                targ.compute(bind) 
+              end
+
+            end 
           end
 
         else 
@@ -239,13 +250,17 @@ module TypeOperations
       
       case tret
       when RDL::Type::ComputedType
+        if trec.is_a?(RDL::Type::DynamicType) && tret.code.to_s.include?("trec")
+          # binding.pry
+          return RDL::Type::DynamicType.new()
+        end
         bind = Class.new.class_eval { binding }
         bind.local_variable_set(:trec, trec)
         bind.local_variable_set(:targs, targs)
         return tret.compute(bind)
       
       when RDL::Type::DynamicType
-        
+        # BR TODO: THIS IS WHERE THE DYNAMIC TYPES SHOULD BE REASSIGNED IF THE TYPE IS KNOWN TO EXIST, THIS MIGHT BE A BETTER WAY TO OPTIMIZE
         return RDL::Type::DynamicType.new()
 
       when RDL::Type::VarType
@@ -258,30 +273,34 @@ module TypeOperations
           raise RbSynError, "unexpected" if idx.nil?
           return trec.params[idx]
         end
-      when RDL::Type::GenericType
-        #binding.pry
-        # fill in to get generics fully up and running. 
-        indices = index_of_var_in_ret(t)
-        
-        merged_params = []
-        indices.zip(targs).each do |ind, tipe|
-          if ind.nil?
-            next
-          else
-            merged_params[ind] = tipe
-          end
-        end
+      # when RDL::Type::GenericType
+      #   # THIS IS ADDED TO LINK THE PARAMETERIZED ARGUMENTS IN THE GENERIC RETURN TO THE PARAMETERS IN THE FORMAL ARGUMENTS 
+      #   
+      #   #
+      #   #binding.pry
+      #   # fill in to get generics fully up and running. 
+      #   if t.is_a(RDL::Type.GenericType)
+      #   indices = index_of_var_in_ret(t)
+      #   binding.pry
+      #   merged_params = []
+      #   indices.zip(targs).each do |ind, tipe|
+      #     if ind.nil?
+      #       next
+      #     else
+      #       merged_params[ind] = tipe
+      #     end
+      #   end
 
-        if trec.is_a?(RDL::Type::GenericType) && trec.base == tret.base
-          merged_params = merged_params.zip(trec.params).map do |pre, post|
-            if post <= pre
-              pre
+      #   if trec.is_a?(RDL::Type::GenericType) && trec.base == tret.base
+      #     merged_params = merged_params.zip(trec.params).map do |pre, post|
+      #       if post <= pre
+      #         pre
             
-            elsif !(pre <= post)
-              RDL::Type::UnionType.new(pre, post)
-            end
-          end
-        end
+      #       elsif !(pre <= post)
+      #         RDL::Type::UnionType.new(pre, post)
+      #       end
+      #     end
+      #   end
 
       #   return RDL::Type::GenericType.new(tret.base, *merged_params)
       else
@@ -311,6 +330,8 @@ module TypeOperations
       trecv.types.map { |type| parents_of type }.flatten
     when RDL::Type::GenericType
       if trecv.base.name == 'ActiveRecord_Relation'
+        # puts trecv
+        # binding.pry
         parents_of(trecv.base) + parents_of(trecv.params[0])
       else
         parents_of trecv.base

@@ -55,7 +55,7 @@ class Synthesizer
 
     @ctx.logger.debug("MOI: #{@ctx.moi}")
 
-
+    inference_iterations = 20
     update_types_pass = RefineTypesPass.new
     progconds = @ctx.preconds.zip(@ctx.postconds, @ctx.desc).map { |precond, postcond, desc|
       @ctx.logger.debug("Finding sln for subspec: #{desc}")
@@ -72,16 +72,15 @@ class Synthesizer
 
         if @ctx.moi != []
           begin
-
-            prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: (@ctx.moi.size)*50 ) 
+             
+            @ctx.logger.debug("Inferring Types with #{inference_iterations*(@ctx.moi.size)} iterations")
+            prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: (@ctx.moi.size)*inference_iterations) 
           rescue NameError => e 
-            puts "GOT HERE"
-
+            @ctx.logger.debug("Inference Complete")
             env = LocalEnvironment.new
             prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
             seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)
             seed.look_for(:type, @ctx.functype.ret)
-      
             prog = generate(seed, [precond], [postcond], false, add_dyn: false) 
           end
 
@@ -98,14 +97,32 @@ class Synthesizer
       end
       
       
+      
       env = LocalEnvironment.new
       branch_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))
       seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, branch_ref), env)
       bool_or_any = RDL::Type::UnionType.new(RDL::Globals.types[:bool], RDL::Globals.types[:any])
-
       seed.look_for(:type, bool_or_any)
       @ctx.logger.debug("Searching for branch")
-      branches = generate(seed, [precond], [TRUE_POSTCOND], true) 
+      if @ctx.moi != []
+        begin
+          @ctx.logger.debug("Inferring Types for branch search with #{inference_iterations*(@ctx.moi.size)} iterations")
+          # binding.pry
+          branches = generate(seed, [precond], [TRUE_POSTCOND], true, add_dyn: true, type_search_depth: (@ctx.moi.size)*inference_iterations) 
+        rescue NameError =>e 
+          @ctx.logger.debug("Inference Complete, resuming branch search")
+            env = LocalEnvironment.new
+            branch_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))
+            seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, branch_ref), env)
+            bool_or_any = RDL::Type::UnionType.new(RDL::Globals.types[:bool], RDL::Globals.types[:any])
+            seed.look_for(:type, bool_or_any)
+            branches = generate(seed, [precond], [TRUE_POSTCOND], true)
+        end
+      else
+        @ctx.logger.debug("Searching for branch with no type inference.")
+        branches = generate(seed, [precond], [TRUE_POSTCOND], true) 
+      end
+      
       cond = BoolCond.new
       branches.each { |b| cond << update_types_pass.process(b.to_ast) }
 

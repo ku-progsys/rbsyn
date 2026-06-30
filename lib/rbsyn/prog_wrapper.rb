@@ -264,6 +264,11 @@ class ProgWrapper
       # klass = RDL::Util.singleton_class_to_class(klass) if klass.singleton_class?
       #BRYAN CURRENT THIS FOLLOWING GLOBALS.INFO.INFO DOES NOT CONTAIN ACTIVERECORD::BASE FIGURE OUT WHERE IT IS LOADED AT
       RDL::Globals.info.info.each { |cls, v1|
+        if cls == "DynamicType"
+          #BR Experimental: Since a dynamic type can work as any type we shouldn't base the effect off of dynamic itself but based upon 
+          # every possible permutation of types. This should already be enumerated in prior type inference passes, though. 
+          next
+        end
         v1.each { |meth, v2|
           # if meth == :save
           #   binding.pry
