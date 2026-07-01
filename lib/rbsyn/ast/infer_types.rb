@@ -78,6 +78,9 @@ class InferTypes
       # if type_to_s(trace).to_s.include?("Hamster::Hash_1 :default")
       #   binding.pry
       # end
+      # if meth == :save
+      #   binding.pry
+      # end
       result = recvr.send(meth, *args)
 
       result.inspect # this forces an inspection on an object 
@@ -315,10 +318,31 @@ class InferTypes
 
   end
 
+  def expanded_type_to_s(tipe)
+    str = ""
+    case tipe
+    when RDL::Type::SingletonType
+      str += "SINGLETON:"
+      str += " NOM: "
+      str += tipe.nominal.to_s
+      str += ", VAL: "
+      str += tipe.val.to_s
+    when RDL::Type::NominalType
+      str += "NOMINAL: "
+      str += tipe.to_s
+    else
+      #TODO FURTHER EXPAND UPON THESE TYPES, ELSE YOU WILL RUN INTO MORE PROBLEMS WHERE THE TO_STRING FUNCTION HAS COLLISIONS
+      str += "OTHER: "
+      str += tipe.to_s
+    end
+    str
+  end
 
   def type_to_s(type)
-  
-    t = type[:recvr].to_s 
+
+    # binding.pry
+    
+    t = expanded_type_to_s(type[:recvr])
     
     if !type[:method].nil?
       t = "#{t} :#{type[:method]}"
@@ -329,12 +353,12 @@ class InferTypes
     
     else 
       type[:args].each {|i|
-      t = "#{t} => #{i.to_s}"
+      t = "#{t} => #{expanded_type_to_s(i)}"
       }
     end
 
     if !type[:result].nil?
-      t = "#{t} => #{type[:result].to_s}"
+      t = "#{t} => #{expanded_type_to_s(type[:result])}"
     end
 
 

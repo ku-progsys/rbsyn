@@ -73,7 +73,7 @@ module SynHelper
         raise NameError, "done checking for types at count: #{counter}"
       end
       counter += 1
-    
+      # puts counter
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift
 
@@ -90,6 +90,19 @@ module SynHelper
       #   # binding.pry
       # end
       # if ENV["COUNT"] == "350"
+      #   binding.pry
+      # end
+      # binding.pry
+      # if counter == 1
+      #   binding.pry
+      # end
+      # if ENV["MAN"]=="T"
+      #   puts "555555555"
+      #   puts base.to_ast 
+      #   puts "**********"
+      #   puts base.ttype
+      #   puts "%%%%%%%%%%%%"
+      #   work_list.each {|i| puts i.to_ast; puts "\n----#{i.to_ast.ttype}-----\n";};
       #   binding.pry
       # end
       generated = base.build_candidates()
@@ -114,7 +127,7 @@ module SynHelper
           
         end
       end
-      # binding.pry
+      
       evaluable.each { |prog_wrap|
         res = 1
         klass = 1
@@ -129,7 +142,7 @@ module SynHelper
             #puts Unparser.unparse(prog_wrap.to_ast)
 
             #debug(Unparser.unparse(prog_wrap.to_ast()), "arg0 << arg1.drop")
-
+            # binding.pry
             res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
           rescue RbSynError => err
             raise err
