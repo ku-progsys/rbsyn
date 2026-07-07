@@ -42,13 +42,13 @@ class Synthesizer
   end
 
   def print_inferred_types 
-    log = "Type Sucesses"
+    log = "\nTYPE SUCCESSES\n|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n"
     @ctx.type_info.type_successes.each {|i, j| 
       j.each { |k|
         log = log + "\n--- #{@ctx.type_info.type_to_s(k)}"
       }
     }
-    log2 = "Type Failures"
+    log2 = "\nTYPE FAILURES\n|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n"
 
     @ctx.type_info.type_errs.each do |i, j|
       j.each { |k|
@@ -74,7 +74,11 @@ class Synthesizer
 
     @ctx.logger.debug("MOI: #{@ctx.moi}")
 
+    if !ENV["ITERS"].nil?
+      inference_iterations = ENV["ITERS"].to_i
+    else
     inference_iterations = 19
+    end
     update_types_pass = RefineTypesPass.new
     progconds = @ctx.preconds.zip(@ctx.postconds, @ctx.desc).map { |precond, postcond, desc|
       @ctx.logger.debug("Finding sln for subspec: #{desc}")

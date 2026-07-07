@@ -179,7 +179,6 @@ module SynHelper
             if orig_prog.looking_for == :teffect && !(orig_prog.target.size == 1 || orig_prog.target[0] == '')
               orig_prog.passed_asserts = e.passed_count
               orig_prog.look_for(:teffect, orig_prog.target)
-              puts "HERE OMG"
               effect_needed << orig_prog
             end
 
