@@ -41,6 +41,25 @@ class Synthesizer
     #@type_info = InferTypes.new(@ctx.moi) # type finding class
   end
 
+  def print_inferred_types 
+    log = "Type Sucesses"
+    @ctx.type_info.type_successes.each {|i, j| 
+      j.each { |k|
+        log = log + "\n--- #{@ctx.type_info.type_to_s(k)}"
+      }
+    }
+    log2 = "Type Failures"
+
+    @ctx.type_info.type_errs.each do |i, j|
+      j.each { |k|
+        log2 = log2 + "\n--- #{@ctx.type_info.type_to_s(k)}"
+      }
+    end
+      
+    @ctx.logger.debug(log)
+    @ctx.logger.debug(log2 + "\n")
+  end
+
   def run
 
     if ENV.key? 'EFFECT_PREC'
@@ -55,7 +74,7 @@ class Synthesizer
 
     @ctx.logger.debug("MOI: #{@ctx.moi}")
 
-    inference_iterations = 20
+    inference_iterations = 19
     update_types_pass = RefineTypesPass.new
     progconds = @ctx.preconds.zip(@ctx.postconds, @ctx.desc).map { |precond, postcond, desc|
       @ctx.logger.debug("Finding sln for subspec: #{desc}")
@@ -77,6 +96,7 @@ class Synthesizer
             prog = generate(seed, [precond], [postcond], false, add_dyn: true, type_search_depth: (@ctx.moi.size)*inference_iterations) 
           rescue NameError => e 
             @ctx.logger.debug("Inference Complete")
+            print_inferred_types()
             env = LocalEnvironment.new
             prog_ref_one = env.add_expr(s(@ctx.functype.ret, :hole, 0, {variance: CONTRAVARIANT}))
             seed = ProgWrapper.new(@ctx, s(@ctx.functype.ret, :envref, prog_ref_one), env)

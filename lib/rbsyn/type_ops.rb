@@ -233,15 +233,15 @@ module TypeOperations
     
     tmethod.each do |t|
 
-      begin
-        #BR: TODO force this next statement to respect variance. 
-        #BR: This is making sure that if the actual argument provided is NOT a subtype of the prescribed type as defined in the signature, and the prescribed type is not a Variable Type, that the system will ignore. But this may be redundant. 
-        if targs.zip(t.args).any? {|actual, prescribed| !(str_to_type(actual) <= prescribed) && !(prescribed.is_a?(RDL::Type::VarType) || prescribed.is_a?(RDL::Type::ComputedType)) }
-          next
-        end
-      rescue Exception => e
-        binding.pry
-      end 
+      # begin
+      #   #BR: TODO force this next statement to respect variance. 
+      #   #BR: This is making sure that if the actual argument provided is NOT a subtype of the prescribed type as defined in the signature, and the prescribed type is not a Variable Type, that the system will ignore. But this may be redundant. 
+      #   if targs.zip(t.args).any? {|actual, prescribed| !(str_to_type(actual) <= prescribed) && !(prescribed.is_a?(RDL::Type::VarType) || prescribed.is_a?(RDL::Type::ComputedType)) }
+      #     next
+      #   end
+      # rescue Exception => e
+      #   binding.pry
+      # end 
 
       #type = tmeth[0]
       return RDL::Type::DynamicType.new if ENV.key? 'DISABLE_TYPES'
@@ -421,13 +421,19 @@ module TypeOperations
     
   
     parents.reduce({}) {|acc, klass| 
+      # get rid of duplicates since dynamic types might introduce such duplicates. 
       methods = Marshal.load(Marshal.dump(RDL::Globals.info.info[klass]))
       if methods == nil
         acc
       else
         j = methods.reduce(acc) {|ac, (key, val)|
           if ac.has_key?(key)
+            begin
+              merged = merge_methods(ac[key], val)
+            rescue Exception => e 
+              binding.pry
             merged = merge_methods(ac[key], val)
+            end
             ac[key] =  merged
           else
             ac[key] = val

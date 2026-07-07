@@ -73,6 +73,7 @@ module SynHelper
         raise NameError, "done checking for types at count: #{counter}"
       end
       counter += 1
+      # puts "counter: #{counter}"
       # puts counter
       work_list = work_list.sort { |a, b| comparator(a, b) }
       base = work_list.shift

@@ -264,17 +264,34 @@ class ProgWrapper
       # klass = RDL::Util.singleton_class_to_class(klass) if klass.singleton_class?
       #BRYAN CURRENT THIS FOLLOWING GLOBALS.INFO.INFO DOES NOT CONTAIN ACTIVERECORD::BASE FIGURE OUT WHERE IT IS LOADED AT
       RDL::Globals.info.info.each { |cls, v1|
-        if cls == "DynamicType"
-          #BR Experimental: Since a dynamic type can work as any type we shouldn't base the effect off of dynamic itself but based upon 
-          # every possible permutation of types. This should already be enumerated in prior type inference passes, though. 
-          next
-        end
+        # if cls.include?("DynamicType")
+        #   binding.pry
+        #   cls = "BasicObject"
+        #   #BR Experimental: Since a dynamic type can work as any type we shouldn't base the effect off of dynamic itself but based upon 
+        #   # every possible permutation of types. This should already be enumerated in prior type inference passes, though. 
+        #   next
+        # end
+        # puts cls
+        # binding.pry
         v1.each { |meth, v2|
           # if meth == :save
           #   binding.pry
           # end
+          flag = false
           v2.fetch(:write, ['']).each { |weff|
+            if cls.include?("DynamicType")
+              save_cls = cls
+              cls = "BasicObject"
+              flag = true
+              # binding.pry
+            end
+            begin
             cls_qual = RDL::Util.to_class(cls)
+            rescue Exception => e 
+              binding.pry 
+              RDL::Util.to_class
+            end
+
             cls_qual = RDL::Util.singleton_class_to_class(cls_qual) if cls_qual.singleton_class?
             if weff.include? 'self'
               if (klass.ancestors.include?(cls_qual) || (cls_qual == ActiveRecord_Relation && klass.ancestors.include?(ActiveRecord::Base)))
@@ -291,13 +308,17 @@ class ProgWrapper
                 end
                 effect_causing << [kls, meth, v2.fetch(:read, [''])]
               else
+                if flag 
+                  effect_causing << [save_cls,  meth, v2.fetch(:read, [''])]
+              else
                 effect_causing << [cls, meth, v2.fetch(:read, [''])]
+                end 
               end
             end
           }
         }
       }
-      #binding.pry
+      # binding.pry
       return effect_causing
     else
       raise RbSynError, "don't know how to handle #{eff.inspect}"

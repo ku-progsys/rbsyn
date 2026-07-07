@@ -4,10 +4,23 @@ describe "Diaspora" do
   it "user#confirm_email" do
     load_typedefs :stdlib, :active_record
 
-    RDL.type String, :blank?, '() -> %bool', wrap: false
-    RDL.type String, :!=, '(String) -> %bool', wrap: false
+    # RDL.type String, :blank?, '() -> %bool', wrap: false
+    # RDL.type String, :!=, '(String) -> %bool', wrap: false
+    # RDL.type 'self.exists?', "(``DBTypes.schema_type(trec)``) -> %bool", wrap: false
+    
+    RDL.type :DynamicType, :blank?, '() -> %dyn', wrap: false
+    RDL.type :DynamicType, :!=, '(%dyn) -> %dyn', wrap: false
+    RDL.type :DynamicType, 'self.exists?', "(%dyn) -> %dyn", wrap: false
 
-    define :confirm_email, "(DiasporaUser, String) -> %bool", [DiasporaUser], enable_nil: true, prog_size: 30 do
+
+    RDL.type :DynamicType, :unconfirmed_email= , '(%dyn) -> %dyn', wrap: false, write: ['self']
+    RDL.type :DynamicType, :email=, "(%dyn) -> %dyn", wrap: false, write: ['self']
+    RDL.type :DynamicType, :confirm_email_token=, "(%dyn) -> %dyn", wrap:false, write: ['self']
+    RDL.type :DynamicType, :unconfirmed_email, "() -> %dyn", wrap: false, read: ['self']
+
+
+
+    define :confirm_email, "(DiasporaUser, String) -> %bool", [DiasporaUser], enable_nil: true, prog_size: 30, moi: [:blank?, :!=, :"self.exists", :unconfirmed_email=, :unconfirmed_email, :confirm_email_token=, :email=] do
       spec 'confirms email and set the unconfirmed_email to email on valid token' do
         setup {
           @user = Fabricate(:diaspora_user_with_token)

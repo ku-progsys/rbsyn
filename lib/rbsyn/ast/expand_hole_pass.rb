@@ -188,8 +188,9 @@ class ExpandHolePass < ::AST::Processor
           if recv_qual.ancestors.include? klass_qual
             trecv = type
             path = CallChain.new([trecv, methd, RDL::Globals.types[:bot]], @ctx.tenv)
-            exprs += fn_call(path)
-            @read_effs << read_eff
+            expr = fn_call(path) # MUST DO THIS WAY AS FN_CALL IS UPDATED WITH MULTIPLE FUNCTION CALLS BECAUSE OF DYNAMIC TYPES
+            exprs += expr 
+            expr.each do |i| @read_effs << read_eff end
           end
         when RDL::Type::NominalType
           klass_qual = RDL::Util.to_class(klass)
@@ -198,8 +199,9 @@ class ExpandHolePass < ::AST::Processor
             trecv = type
             # the %top type here doesn't matter
             path = CallChain.new([trecv, methd, RDL::Globals.types[:bot]], @ctx.tenv)
-            exprs += fn_call(path)
-            @read_effs << read_eff
+            expr = fn_call(path) # MUST DO THIS WAY AS FN_CALL IS UPDATED WITH MULTIPLE FUNCTION CALLS BECAUSE OF DYNAMIC TYPES
+            exprs += expr 
+            expr.each do |i| @read_effs << read_eff end
           end
         when RDL::Type::GenericType
           # 
@@ -208,13 +210,15 @@ class ExpandHolePass < ::AST::Processor
           if klass == Hash
             trecv = type
             path = CallChain.new([trecv, methd, RDL::Globals.types[:bot]], @ctx.tenv)
-            exprs += fn_call(path)
-            @read_effs << read_eff
+            expr = fn_call(path) # MUST DO THIS WAY AS FN_CALL IS UPDATED WITH MULTIPLE FUNCTION CALLS BECAUSE OF DYNAMIC TYPES
+            exprs += expr 
+            expr.each do |i| @read_effs << read_eff end
           end
         when RDL::Type::DynamicType
           path = CallChain.new([type, methd, RDL::Globals.types[:bot]], @ctx.tenv)
-          exprs += fn_call(path)
-          @read_effs << read_eff
+            expr = fn_call(path) # MUST DO THIS WAY AS FN_CALL IS UPDATED WITH MULTIPLE FUNCTION CALLS BECAUSE OF DYNAMIC TYPES
+            exprs += expr 
+            expr.each do |i| @read_effs << read_eff end
         else
           raise RbSynError, "unhandled type #{type}"
         end
