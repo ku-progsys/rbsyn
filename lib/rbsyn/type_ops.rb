@@ -407,7 +407,7 @@ module TypeOperations
   end
 
   def methods_of(trecv)
-    
+
     parents = parents_of(trecv)
 
       if ENV["ADD_DYN"] == "TRUE"
@@ -428,12 +428,7 @@ module TypeOperations
       else
         j = methods.reduce(acc) {|ac, (key, val)|
           if ac.has_key?(key)
-            begin
-              merged = merge_methods(ac[key], val)
-            rescue Exception => e 
-              binding.pry
             merged = merge_methods(ac[key], val)
-            end
             ac[key] =  merged
           else
             ac[key] = val

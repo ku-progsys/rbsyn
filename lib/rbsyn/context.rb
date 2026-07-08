@@ -3,7 +3,7 @@ require 'logger'
 class Context
   attr_accessor :max_prog_size, :components, :preconds, :postconds, :mth_name,
     :reset_func, :functype, :tenv, :max_hash_size, :max_arg_length, :max_hash_depth,
-    :curr_binding, :constants, :enable_and, :enable_constants, :enable_nil, :moi, :type_info, :exclude
+    :curr_binding, :constants, :enable_and, :enable_constants, :enable_nil, :moi, :type_info, :exclude, :dynamic_hashes
 
   attr_reader :logger, :desc
 
@@ -26,6 +26,7 @@ class Context
     @ref_map = {}
     @curr_binding = nil
     @desc = []
+    @dynamic_hashes = nil
     if ENV["EXCONSTS"] == "TRUE"
       @constants = {
         string: ['', " ", "(", ")", "-"],
@@ -59,13 +60,24 @@ class Context
     @desc.append(desc)
   end
 
+  def make_dynamic_hash(hashkeys)
+    hash = {}
+    hashkeys.each { |key|
+      hash[key] = RDL::Type::OptionalType.new(RDL::Type::DynamicType.new)
+    }
+    RDL::Type::FiniteHashType.new(hash, nil)
+  end
+
   def load_tenv!
     @functype.args.each_with_index { |type, i|
       @tenv["arg#{i}".to_sym] = type
     }
     @components.each { |component|
 
-      if ["Symbol", "Integer", "String", "Regexp"].include? component.class.to_s
+      if component.is_a?(Hash) 
+        @dynamic_hashes = make_dynamic_hash(component[:hashkeys])
+        
+      elsif ["Symbol", "Integer", "String", "Regexp"].include? component.class.to_s
         @tenv[component] = RDL::Globals.types[component.class.to_s.downcase.to_sym]
       else
         @tenv[component] = RDL::Type::SingletonType.new(component)

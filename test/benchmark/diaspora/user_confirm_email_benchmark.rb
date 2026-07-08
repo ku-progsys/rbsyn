@@ -7,7 +7,7 @@ describe "Diaspora" do
     # RDL.type String, :blank?, '() -> %bool', wrap: false
     # RDL.type String, :!=, '(String) -> %bool', wrap: false
     # RDL.type 'self.exists?', "(``DBTypes.schema_type(trec)``) -> %bool", wrap: false
-    
+    ParentsHelper.init_list()
     RDL.type :DynamicType, :blank?, '() -> %dyn', wrap: false
     RDL.type :DynamicType, :!=, '(%dyn) -> %dyn', wrap: false
     RDL.type :DynamicType, 'self.exists?', "(%dyn) -> %dyn", wrap: false
@@ -17,10 +17,10 @@ describe "Diaspora" do
     RDL.type :DynamicType, :email=, "(%dyn) -> %dyn", wrap: false, write: ['self']
     RDL.type :DynamicType, :confirm_email_token=, "(%dyn) -> %dyn", wrap:false, write: ['self']
     RDL.type :DynamicType, :unconfirmed_email, "() -> %dyn", wrap: false, read: ['self']
+    ParentsHelper.init_list()
 
 
-
-    define :confirm_email, "(DiasporaUser, String) -> %bool", [DiasporaUser], enable_nil: true, prog_size: 30, moi: [:blank?, :!=, :"self.exists", :unconfirmed_email=, :unconfirmed_email, :confirm_email_token=, :email=] do
+    define :confirm_email, "(DiasporaUser, String) -> %bool", [DiasporaUser, {hashkeys: [:id, :username, :invited_by_id, :confirm_email_token, :email, :unconfirmed_email]} ], enable_nil: true, prog_size: 30, moi: [:blank?, :!=, :"self.exists", :unconfirmed_email=, :unconfirmed_email, :confirm_email_token=, :email=] do
       spec 'confirms email and set the unconfirmed_email to email on valid token' do
         setup {
           @user = Fabricate(:diaspora_user_with_token)

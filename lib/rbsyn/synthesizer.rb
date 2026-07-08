@@ -77,7 +77,7 @@ class Synthesizer
     if !ENV["ITERS"].nil?
       inference_iterations = ENV["ITERS"].to_i
     else
-    inference_iterations = 19
+      inference_iterations = 19
     end
     update_types_pass = RefineTypesPass.new
     progconds = @ctx.preconds.zip(@ctx.postconds, @ctx.desc).map { |precond, postcond, desc|

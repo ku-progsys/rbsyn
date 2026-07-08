@@ -305,6 +305,42 @@ class ExpandHolePass < ::AST::Processor
 
   end
 
+  def permutation_mask(args, matchfunc)
+    # 1. Create the base boolean mask based on matchfunc
+    base_mask = args.map { |arg| matchfunc.call(arg) }
+    
+    # 2. Count how many elements actually matched true
+    true_count = base_mask.count(true)
+    
+    # 3. Generate all combinations of true/false for that count
+    # Hint: [true, false].repeated_permutation(true_count) will give you the raw variations
+    permutations = [true, false].repeated_permutation(true_count).to_a
+    
+    # 4. Filter out the permutation where all values are false
+    valid_perms = permutations.reject { |perm| perm.all?(false) }
+    
+    # 5. Map the permutations back into the shape of the original args array
+    # reconstruct the full mask for each valid permutation
+    valid_perms.map do |perm|
+      perm_iterator = perm.each
+      base_mask.map { |matched| matched ? perm_iterator.next : false }
+    end
+  end
+
+  def permute_dyn_hashes(targs)
+    if targs.any? {|t| t.is_a?(RDL::Type::DynamicType)}
+      container = []
+      x = permutation_mask(targs, ->(t) { t.is_a?(RDL::Type::DynamicType) })
+      x.each do |mask| 
+        new_targs = targs.zip(mask).map { |t, m| m ? @ctx.dynamic_hashes : t }
+        container << new_targs
+      end
+      container
+    else
+      nil
+    end
+  end
+
   def fn_call(path)
 
     #binding.pry
@@ -325,8 +361,26 @@ class ExpandHolePass < ::AST::Processor
         is_moi = @moi.include?(mth)
 
         targs_mult = compute_targs(trecv, tmeths, is_moi, peeknext: peeknext)
+        #[for each possible type of receiver[for each possible method[]]]
         tmeths = tmeths.zip(targs_mult).flat_map { |label, items| [label] * items.length }
         targs_mult = targs_mult.flatten(1)
+        hash_args = []
+        hash_meths = []
+
+        # binding.pry
+        if !@ctx.dynamic_hashes.nil? && @ctx.moi.include?(mth)
+          targs_mult.zip(tmeths[0 .. targs_mult.size]).each do |targs, tmeth|
+            temp1 = permute_dyn_hashes(targs)
+            if !temp1.nil?
+              hash_args += temp1
+              [0 .. hash_args.size].each {hash_meths << tmeth}
+            end
+            
+          end
+        end
+        targs_mult += hash_args
+        tmeths += hash_meths
+
         new_nesting = []
         targs_mult.zip(tmeths[0 .. targs_mult.size]).each do |targs, tmeth|
           begin

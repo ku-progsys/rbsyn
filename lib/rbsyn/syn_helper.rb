@@ -241,7 +241,7 @@ module SynHelper
       end
 
       remainder_holes.map {|prog_wrap|
-        prog_wrap.inferred_errors, prog_wrap.dynamic_components = @ctx.type_info.check_errors(prog_wrap)
+          prog_wrap.inferred_errors, prog_wrap.dynamic_components = @ctx.type_info.check_errors(prog_wrap)
       }
  
       remainder_holes.push(*effect_needed)

@@ -199,7 +199,7 @@ class Reachability
       # puts type
       # puts "\n\n\n"
       if type.is_a?(RDL::Type::DynamicType)
-        # if we are looking for something dynamic then all bets are off. 
+        # if we are looking for something dynamic then all bets are off keep it as is. 
         chain
       elsif last.is_a?(RDL::Type::DynamicType) && !type.is_a?(RDL::Type::DynamicType)
         chain.path[-1] = type
