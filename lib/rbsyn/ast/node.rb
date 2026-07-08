@@ -8,12 +8,19 @@ class TypedNode < Parser::AST::Node
   end
 
   # This is monkey patched. See original source in ast gem
+  # Use object identity (equal?) for children comparison instead of ==
+  # to avoid ignoring ttype differences in structurally equal child nodes.
   def updated(type=nil, children=nil, properties=nil)
     new_type       = type       || @type
     new_children   = children   || @children
 
+    if type.nil? && children.nil? && properties.nil?
+      return self
+    end
+
     if @type == new_type &&
-        @children == new_children &&
+        @children.length == new_children.length &&
+        @children.each_with_index.all? { |item, i| item.equal?(new_children[i]) } &&
         properties.nil?
       self
     else

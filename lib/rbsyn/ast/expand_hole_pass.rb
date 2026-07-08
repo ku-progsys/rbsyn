@@ -22,8 +22,17 @@ class ExpandHolePass < ::AST::Processor
     node
   end
 
+  def unwrap_type(t)
+    return nil if t.nil?
+    while t.is_a?(RDL::Type::AnnotatedArgType) || t.is_a?(RDL::Type::BoundArgType) || t.is_a?(RDL::Type::DependentArgType)
+      t = t.type
+    end
+    t
+  end
+
   def on_hole(node)
     depth = node.children[0]
+    type = unwrap_type(node.ttype)
     @params = node.children[1]
     @no_bool_consts = !@params.fetch(:bool_consts, true)
     @curr_hash_depth = @params.fetch(:hash_depth, 0)
@@ -33,6 +42,14 @@ class ExpandHolePass < ::AST::Processor
     @variance = @params.fetch(:variance, COVARIANT)
     @recv = @params.fetch(:recv, false)
     @ltenv = @params.fetch(:ltenv, {})
+    $stderr.puts "  [expand] on_hole: type=#{type} (#{type.class}) depth=#{depth}" if ENV['DEBUG']
+    $stderr.puts "  [expand]   ltenv=#{@ltenv.inspect}" if ENV['DEBUG']
+    $stderr.puts "  [expand]   lvar candidates: #{@ltenv.select { |k, v| v <= type }.inspect}" if ENV['DEBUG']
+    if ENV['DEBUG']
+      $stderr.puts "  [expand]   type <= bool: #{type <= RDL::Globals.types[:bool]}"
+      $stderr.puts "  [expand]   type <= integer: #{type <= RDL::Globals.types[:integer]}"
+      $stderr.puts "  [expand]   type <= string: #{type <= RDL::Globals.types[:string]}"
+    end
     expanded = []
 
     if depth == 0
@@ -42,65 +59,60 @@ class ExpandHolePass < ::AST::Processor
       end
 
       # real program variables in the environment
-      expanded.concat lvar(node.ttype)
+      expanded.concat lvar(type)
 
 
       # boolean constants
-      if node.ttype <= RDL::Globals.types[:bool] && !@no_bool_consts
+      if type <= RDL::Globals.types[:bool] && !@no_bool_consts
         expanded.concat bool_const
       end
 
       # and of 2 boolean expressions
-      if node.ttype <= RDL::Globals.types[:bool] && @no_bool_consts && @ctx.enable_and
+      if type <= RDL::Globals.types[:bool] && @no_bool_consts && @ctx.enable_and
         expanded << s(RDL::Globals.types[:bool], :and,
           s(RDL::Globals.types[:bool], :hole, 0, { bool_consts: false }),
           s(RDL::Globals.types[:bool], :hole, 0, { bool_consts: false }))
       end
 
       # integer constants
-      if node.ttype <= RDL::Globals.types[:integer] && @ctx.enable_constants
+      if type <= RDL::Globals.types[:integer] && @ctx.enable_constants
         expanded.concat int_const
       end
 
       # string constants
-      if node.ttype <= RDL::Globals.types[:string] && @ctx.enable_constants
+      if type <= RDL::Globals.types[:string] && @ctx.enable_constants
         expanded.concat string_const
       end
 
       # symbols
-      if node.ttype.is_a?(RDL::Type::SingletonType) && node.ttype.val.is_a?(Symbol)
-        expanded.concat symbols([node.ttype])
+      if type.is_a?(RDL::Type::SingletonType) && type.val.is_a?(Symbol)
+        expanded.concat symbols([type])
       end
 
       # union of symbols
-      if node.ttype.is_a?(RDL::Type::UnionType) &&
-        node.ttype.types.all? { |t| t.is_a?(RDL::Type::SingletonType) && t.val.is_a?(Symbol) }
-        expanded.concat symbols(node.ttype.types)
+      if type.is_a?(RDL::Type::UnionType) &&
+        type.types.all? { |t| t.is_a?(RDL::Type::SingletonType) && t.val.is_a?(Symbol) }
+        expanded.concat symbols(type.types)
       end
 
       # hashes
       # receivers are not hashes for now
-      if node.ttype.is_a?(RDL::Type::FiniteHashType) && @curr_hash_depth < @ctx.max_hash_depth && !@recv
-        expanded.concat finite_hash(node.ttype)
+      if type.is_a?(RDL::Type::FiniteHashType) && @curr_hash_depth < @ctx.max_hash_depth && !@recv
+        expanded.concat finite_hash(type)
       end
 
       # possibly reusable subexpressions
-      expanded.concat envref(node.ttype)
+      expanded.concat envref(type)
     elsif depth > 0 && !@effect
       # synthesize function calls
       r = Reachability.new(@ctx.tenv)
-      paths = r.paths_to_type(node.ttype, depth, @variance)
+      paths = r.paths_to_type(type, depth, @variance)
       expanded.concat paths.map { |path| fn_call(path) }
     elsif depth == 1 && @effect
       expanded.concat effects
     else
       raise RbSynError, "unexpected"
     end
-
-    # synthesize a hole with higher depth
-    # TODO: we don't do this if we are synthesizing for effects, will do after
-    # effect reachability graph is implemented
-    expanded << s(node.ttype, :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth)
 
     @expand_map << expanded.size
     s(node.ttype, :filled_hole, *expanded, {method_arg: @method_arg})
@@ -208,7 +220,7 @@ class ExpandHolePass < ::AST::Processor
   end
 
   def lvar(type)
-    unless !@ctx.sketch_mode
+    unless @ltenv.empty?
       @ltenv.select { |k, v| v <= type }
         .map { |k, v| s(v, :lvar, k) }
     else

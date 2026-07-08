@@ -23,7 +23,7 @@ class Context
     @ref_map = {}
     @curr_binding = nil
     @constants = {
-      string: [''],
+      string: ['!', ' ', ''],
       integer: [0, 1, 3]
     }
     @enable_and = false

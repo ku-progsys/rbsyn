@@ -28,10 +28,10 @@ module AST
     end
     klass.instance_eval(Unparser.unparse(func))
 
-    unless ctx.sketch_mode
-      result = klass.instance_eval(Unparser.unparse(branch_ast))
-    else
+    if @ctx.seed_expr
       result = klass.instance_eval(&precond) unless precond.nil?
+    else
+      result = klass.instance_eval(Unparser.unparse(branch_ast))
     end
     [result, klass]
   end

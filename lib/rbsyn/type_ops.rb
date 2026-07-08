@@ -1,16 +1,32 @@
 module TypeOperations
+  def binding_for_type(trec)
+    case trec
+    when RDL::Type::SingletonType
+      trec.val
+    when RDL::Type::NominalType
+      RDL::Util.to_class(trec.name)
+    when RDL::Type::GenericType
+      RDL::Util.to_class(trec.base.name)
+    else
+      Object
+    end
+  end
+
   def compute_targs(trec, tmeth)
     # TODO: we use only the first definition, ignoring overloaded method definitions
     type = tmeth[0]
     targs = type.args
     return targs.map { |targ| RDL::Type::DynamicType.new } if ENV.key? 'DISABLE_TYPES'
 
+    klass = binding_for_type(trec)
     targs.map { |targ|
       case targ
       when RDL::Type::ComputedType
-        bind = Class.new.class_eval { binding }
+        bind = klass.class_eval { binding }
         bind.local_variable_set(:trec, trec)
         targ.compute(bind)
+      when RDL::Type::AnnotatedArgType, RDL::Type::BoundArgType, RDL::Type::DependentArgType
+        targ.type
       else
         targ
       end
@@ -25,7 +41,8 @@ module TypeOperations
     tret = type.ret
     case tret
     when RDL::Type::ComputedType
-      bind = Class.new.class_eval { binding }
+      klass = binding_for_type(trec)
+      bind = klass.class_eval { binding }
       bind.local_variable_set(:trec, trec)
       bind.local_variable_set(:targs, targs)
       tret.compute(bind)

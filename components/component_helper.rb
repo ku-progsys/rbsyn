@@ -29,6 +29,9 @@ def load_typedefs(*categories)
       RDL.type :Integer, :+, '(Integer) -> Integer'
       RDL.type :Integer, :*, '(Integer) -> Integer'
 
+      RDL.nowrap :String
+      RDL.type :String, :+, '(String) -> String'
+
     when :active_record
 
       ActiveRecord::Base.class_eval do

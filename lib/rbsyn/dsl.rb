@@ -1,3 +1,6 @@
+require 'tempfile'
+require 'securerandom'
+
 class SpecProxy
   attr_reader :pre_blk, :post_blk
 
@@ -63,7 +66,6 @@ class SynthesizerProxy
       max_args = @ctx.functype.args.size
       args = max_args.times.map { |t| "arg#{t}".to_sym }
       prog = syn.run
-      # TODO: these types can be made more precise
       if @ctx.seed_expr
         fn = prog.to_ast
       else
@@ -81,6 +83,8 @@ class SynthesizerProxy
 end
 
 module SpecDSL
+  include AST
+
   def define(mth_name, type, components, prog_size: 5, max_hash_size: 1, consts: false, enable_nil: false, &blk)
     syn_proxy = SynthesizerProxy.new(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, nil)
     syn_proxy.instance_eval(&blk)
@@ -89,19 +93,73 @@ module SpecDSL
   def sketch(src, mth_name, type, components, prog_size: 5, max_hash_size: 1, consts: false, enable_nil: false, &blk)
     sk_src = File.read(src)
     ast = Parser::CurrentRuby.parse(sk_src)
-    sketch_to_var = SketchToVariablePass.new
+
+    main_type = RDL::Globals.parser.scan_str(type)
+
+    inferred = infer_sketch_source(sk_src)
+
+    sketch_to_var = SketchToVariablePass.new(mth_name, main_type, inferred)
     new_ast = sketch_to_var.process(ast)
 
-    print(new_ast)
-
-    gtenv_pass = GlobalTEnv.new
+    gtenv_pass = GlobalTEnv.new(mth_name, main_type, inferred)
     gtenv_pass.process(new_ast)
     gtenv = gtenv_pass.tenv
 
-    ltenv_pass = LocalTEnv.new(gtenv)
+    ltenv_pass = LocalTEnv.new(gtenv, mth_name, main_type, inferred)
     new_ast = ltenv_pass.process(new_ast)
 
     syn_proxy = SynthesizerProxy.new(mth_name, type, components, prog_size, max_hash_size, consts, enable_nil, new_ast)
     syn_proxy.instance_eval(&blk)
+  end
+
+  private
+
+  def infer_sketch_source(sk_src)
+    ast = Parser::CurrentRuby.parse(sk_src)
+    counter = 0
+    hole_methods = []
+
+    transform = lambda do |node|
+      if node.is_a?(Parser::AST::Node) && node.type == :send && node.children[0].nil? && node.children[1] == :_?
+        var_name = "rbsyn_hole_#{counter}".to_sym
+        counter += 1
+        hole_methods << var_name
+        Parser::AST::Node.new(:send, [nil, var_name])
+      elsif node.is_a?(Parser::AST::Node)
+        node.updated(nil, node.children.map { |c|
+          c.is_a?(Parser::AST::Node) ? transform.call(c) : c
+        })
+      else
+        node
+      end
+    end
+
+    transformed = transform.call(ast)
+
+    stubs = hole_methods.map { |name|
+      Parser::AST::Node.new(:def, [name, Parser::AST::Node.new(:args, []), nil])
+    }
+    body = Parser::AST::Node.new(:begin, [*stubs, transformed])
+
+    temp_path = "/tmp/sketch_infer_#{SecureRandom.hex(8)}.rb"
+    begin
+      src = Unparser.unparse(body)
+      File.write(temp_path, src)
+
+      result = VarInfer.infer_sketch(temp_path)
+      if ENV.key? 'SHOW_INFER'
+        unless result.empty?
+          $stderr.puts "  [infer] hole types: #{result[:hole_types].map { |k,v| "#{k}=#{v}" }.join(', ')}" if result[:hole_types]
+          result[:method_types]&.each { |k,v| $stderr.puts "  [infer]   #{k}: #{v}" }
+        end
+      end
+    rescue => e
+      $stderr.puts "  [warn] Sketch inference failed: #{e.message}"
+      result = {}
+    ensure
+      File.unlink(temp_path) if File.exist?(temp_path)
+    end
+
+    result
   end
 end
