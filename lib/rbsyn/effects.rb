@@ -99,6 +99,8 @@ class EffectAnalysis
         end
       }
       effect_union(*([klass_eff, my_eff, args].flatten))
+    when :block
+      effect_of(ast.children[2], env, kind) # block body
     when :ivar, :lvar, :str, :true, :false, :const, :sym, :nil, :int
       []
     when :begin
