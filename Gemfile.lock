@@ -6,15 +6,8 @@ GIT
 
 GIT
   remote: https://github.com/phsadhankar/rdl
-  revision: 44cc5db2bc16cd3d28440f289e41a7b4bfec1402
-  branch: rbsyn
-  specs:
-    rdl (2.1.0)
-      parser (~> 2.3, >= 2.3.1.4)
-      sql-parser (~> 0.0.2)
-
-PATH
-  remote: ../rdl
+  revision: fd7db4daa075416b0f55c9aad8e39ad828edb4a1
+  branch: infer
   specs:
     qdl (2.2.0)
       colorize (~> 0.8, >= 0.8.1)
@@ -22,6 +15,15 @@ PATH
       parlour (~> 2.1.0, >= 2.1.0)
       parser (~> 2.3, >= 2.3.1.4)
       rake (~> 13.0, >= 13.0.1)
+      sql-parser (~> 0.0.2)
+
+GIT
+  remote: https://github.com/phsadhankar/rdl
+  revision: 44cc5db2bc16cd3d28440f289e41a7b4bfec1402
+  branch: rbsyn
+  specs:
+    rdl (2.1.0)
+      parser (~> 2.3, >= 2.3.1.4)
       sql-parser (~> 0.0.2)
 
 PATH
@@ -133,7 +135,7 @@ GEM
     rouge (4.7.0)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
-    sorbet-runtime (0.6.13249)
+    sorbet-runtime (0.6.13328)
     sql-parser (0.0.2)
       racc
     sqlite3 (2.9.4-x86_64-linux-gnu)
