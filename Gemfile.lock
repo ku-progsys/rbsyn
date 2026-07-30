@@ -109,8 +109,8 @@ GEM
     securerandom (0.4.1)
     sql-parser (0.0.2)
       racc
-    sqlite3 (2.2.0-arm64-darwin)
-    sqlite3 (2.2.0-x86_64-linux-gnu)
+    sqlite3 (2.9.5-arm64-darwin)
+    sqlite3 (2.9.5-x86_64-linux-gnu)
     thread_safe (0.3.6)
     timeout (0.4.3)
     tzinfo (2.0.6)
