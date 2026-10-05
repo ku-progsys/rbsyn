@@ -58,6 +58,7 @@ class Synthesizer
       
     @ctx.logger.debug(log)
     @ctx.logger.debug(log2 + "\n")
+    @ctx.logger.debug("|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||\n")
   end
 
   def run

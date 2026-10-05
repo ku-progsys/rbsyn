@@ -302,7 +302,7 @@ end
         thaw(type.base),
         type.params.map { |p| thaw(p) }
       )
-
+      
     when RDL::Type::MethodType
       RDL::Type::MethodType.new(
         type.args.map { |a| thaw(a) },

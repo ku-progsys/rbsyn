@@ -2,22 +2,36 @@ class TTypePrint < ::AST::Processor
   include TypeOperations
   require_relative "../ast"
 
-  def expanded_ttype_to_s(node)
+  def expanded_ttype_to_s(tipe)
     str = ""
-    ttype = node.ttype
-    case ttype
+    # tipe = node.ttype
+
+    case tipe  
+    when RDL::Type::OptionalType
+      str += "OPT: "
+      str += expanded_ttype_to_s(tipe.type)
     when RDL::Type::SingletonType
-      str += "SINGLETON: NOM: "
-      str += ttype.nominal.to_s
+      str += "SINGLETON:"
+      str += expanded_ttype_to_s(tipe.nominal)
       str += ", VAL: "
-      str += ttype.val.to_s
+      str += tipe.val.to_s
+    when RDL::Type::FiniteHashType 
+      str += "FHASH: "
+      str += "Elements: "
+      tipe.elts.each {|k, t| str += k.to_s; str += "=>"; str += expanded_ttype_to_s(t); str == "\n" }
     when RDL::Type::NominalType
+
       str += "NOMINAL: "
-      str += ttype.to_s
+      str += tipe.to_s
+    when RDL::Type::GenericType
+      str += "GENERIC: "
+      str += "BASE: "
+      str += expanded_ttype_to_s(tipe.base)
+      tipe.params.each {|i| str += expanded_ttype_to_s(i)}
     else
       #TODO FURTHER EXPAND UPON THESE TYPES, ELSE YOU WILL RUN INTO MORE PROBLEMS WHERE THE TO_STRING FUNCTION HAS COLLISIONS
       str += "OTHER: "
-      str += ttype.to_s
+      str += tipe.to_s
     end
     str
   end
@@ -34,14 +48,14 @@ class TTypePrint < ::AST::Processor
 
   def on_envref(node)
     if @env == []
-      @stack.append(expanded_ttype_to_s(node))
+      @stack.append(expanded_ttype_to_s(node.ttype))
     else
       ref = node.children[0]
       info = @env.get_expr(ref)
       temp = @stack.clone
       @stack = []
       processed = process(info[:expr])
-      processed = "(ENV: #{@stack.join(' ')})#{expanded_ttype_to_s(node)}"
+      processed = "(ENV: #{@stack.join(' ')})#{expanded_ttype_to_s(node.ttype)}"
       @stack = temp
       @stack.append(processed)
     end
@@ -54,13 +68,13 @@ class TTypePrint < ::AST::Processor
         k.is_a?(TypedNode) ? process(k) : @stack.append(k)
         })
 
-    @stack.append("):#{expanded_ttype_to_s(node)}")
+    @stack.append("):#{expanded_ttype_to_s(node.ttype)}")
     
   end
 
   def on_hole(node)
 
-    @stack.append("(hole#{node.children[0]}: #{expanded_ttype_to_s(node)})")
+    @stack.append("(hole#{node.children[0]}: #{expanded_ttype_to_s(node.ttype)})")
   end
 
   def handler_missing(node)
@@ -72,7 +86,7 @@ class TTypePrint < ::AST::Processor
     if node.children.size == 0 #Handles true and false classes
       @stack.append(node.to_s)
     end
-    @stack.append("):#{expanded_ttype_to_s(node)}")
+    @stack.append("):#{expanded_ttype_to_s(node.ttype)}")
 
   end
 end

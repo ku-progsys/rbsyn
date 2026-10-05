@@ -204,7 +204,7 @@ class Reachability
       elsif last.is_a?(RDL::Type::DynamicType) && !type.is_a?(RDL::Type::DynamicType)
         chain.path[-1] = type
         chain
-      elsif last.is_a?(RDL::Type::GenericType)
+      elsif last.is_a?(RDL::Type::GenericType) && type.is_a?(RDL::Type::GenericType)
         begin
           newparams = last.params.zip(type.params).map {|l, t|  
             if l.is_a?(RDL::Type::DynamicType) && !t.is_a?(RDL::Type::DynamicType)

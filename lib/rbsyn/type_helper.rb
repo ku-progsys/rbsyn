@@ -57,11 +57,14 @@ class ParentsHelper
 
 
   def self.addTypeManually(typeSigStr)
-    RDL.nowrap typeSigStr unless @@parents.include?(typeSigStr)
-    @@parents.append(typeSigStr) unless @@parents.include?(typeSigStr)
-     
+    if !(typeSigStr == "nil")
+      RDL.nowrap typeSigStr unless @@parents.include?(typeSigStr)
+      @@parents.append(typeSigStr) unless @@parents.include?(typeSigStr)
+    end
     return
   end
+
+
 
 
   def self.getParents()

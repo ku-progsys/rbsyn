@@ -9,18 +9,15 @@ describe "Diaspora" do
     # RDL.type 'self.exists?', "(``DBTypes.schema_type(trec)``) -> %bool", wrap: false
     ParentsHelper.init_list()
     RDL.type :DynamicType, :blank?, '() -> %dyn', wrap: false
-    RDL.type :DynamicType, :!=, '(%dyn) -> %dyn', wrap: false
-    RDL.type :DynamicType, 'self.exists?', "(%dyn) -> %dyn", wrap: false
-
-
+    RDL.type :DynamicType, :"!=", '(%dyn) -> %dyn', wrap: false
+    RDL.type :DynamicType, :'self.exists?', "(%dyn) -> %dyn", wrap: false #FOR SOME REASON THIS ISN'T BEING FOUND IN TYPE INFERENCE, I WILL NEED TO FIND OUT WHY
     RDL.type :DynamicType, :unconfirmed_email= , '(%dyn) -> %dyn', wrap: false, write: ['self']
     RDL.type :DynamicType, :email=, "(%dyn) -> %dyn", wrap: false, write: ['self']
     RDL.type :DynamicType, :confirm_email_token=, "(%dyn) -> %dyn", wrap:false, write: ['self']
     RDL.type :DynamicType, :unconfirmed_email, "() -> %dyn", wrap: false, read: ['self']
-    ParentsHelper.init_list()
+    ParentsHelper.subtract()
 
-
-    define :confirm_email, "(DiasporaUser, String) -> %bool", [DiasporaUser, {hashkeys: [:id, :username, :invited_by_id, :confirm_email_token, :email, :unconfirmed_email]} ], enable_nil: true, prog_size: 30, moi: [:blank?, :!=, :"self.exists", :unconfirmed_email=, :unconfirmed_email, :confirm_email_token=, :email=] do
+    define :confirm_email, "(DiasporaUser, String) -> %bool", [DiasporaUser, {hashkeys: [:id, :username, :invited_by_id, :confirm_email_token, :email, :unconfirmed_email]} ], enable_nil: true, prog_size: 30, moi: [:blank?, :"!=", :"exists?", :"self.exists?",:unconfirmed_email=, :unconfirmed_email, :confirm_email_token=, :email=] do
       spec 'confirms email and set the unconfirmed_email to email on valid token' do
         setup {
           @user = Fabricate(:diaspora_user_with_token)
@@ -28,6 +25,7 @@ describe "Diaspora" do
           confirm_email(@user, @user.confirm_email_token)
         }
         post { |result|
+
           assert { result == true }
           assert { @user.email == "alice@newmail.com" }
           assert { @user.unconfirmed_email == nil }

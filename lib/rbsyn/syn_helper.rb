@@ -74,8 +74,11 @@ module SynHelper
       end
       counter += 1
       # puts "counter: #{counter}"
-      # puts counter
+      #puts counter
+      # binding.pry
+      # binding.pry
       work_list = work_list.sort { |a, b| comparator(a, b) }
+   
       base = work_list.shift
 
 
@@ -85,29 +88,24 @@ module SynHelper
       basehashlist << base.typehash
       effect_needed = [] 
 
-      # if ENV["INSPECT"]=="T" && (ENV["COND"].nil? || base.to_ast.to_s == ENV["COND"])
-      #   puts "COUNT: #{counter}\n"
-      #   puts "BASE:\n#{base.to_ast}"
-      #   # binding.pry
-      # end
-      # if ENV["COUNT"] == "350"
-      #   binding.pry
-      # end
+      # puts "BASE: \n#{base.to_ast}"
+      # puts "SIZE OF WORKLIST: #{work_list.size}" 
+      # work_list.each_with_index do |i, index| puts "Size: #{i.prog_size} #Passed Asserts: #{i.passed_asserts} #Dynamic Components: #{i.dynamic_components} Has Hole: #{i.has_hole?}, Contains hole1 #{i.to_ast.to_s.include?("hole 1")}" end
       # binding.pry
-      # if counter == 1
-      #   binding.pry
-      # end
-      # if ENV["MAN"]=="T"
-      #   puts "555555555"
-      #   puts base.to_ast 
-      #   puts "**********"
-      #   puts base.ttype
-      #   puts "%%%%%%%%%%%%"
-      #   work_list.each {|i| puts i.to_ast; puts "\n----#{i.to_ast.ttype}-----\n";};
-      #   binding.pry
-      # end
       generated = base.build_candidates()
+
+      # puts "\n----------------\n"
       evaluable = generated.reject &:has_hole?
+
+      # >>> INSTRUMENTATION E2 (remove) >>>
+      if ENV["DBG_DYN"]
+        evaluable.each do |pw|
+          s = pw.to_ast.to_s.gsub(/\s+/, ' ')
+          next unless s.include?(":exists?") && s.match?(/\(hash\b/)
+          warn "[E2] counter=#{counter} RECV=#{s[/\(send \((.{0,40})/, 1].inspect} ARGS=#{s[/:exists\? (.*)/, 1].inspect}"
+        end
+      end
+      # <<< INSTRUMENTATION E2 <<<
       tempbool = false
 
       if ENV["INSPECT"]=="T" && (ENV["COND"].nil? || base.to_ast.to_s == ENV["COND"])
@@ -139,18 +137,34 @@ module SynHelper
 
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
-            #arg0 << arg1.take(arg2) << arg1.drop(arg2)
-            #puts Unparser.unparse(prog_wrap.to_ast)
 
-            #debug(Unparser.unparse(prog_wrap.to_ast()), "arg0 << arg1.drop")
-            # binding.pry
-            res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
+            # res, klass = eval_ast_second(@ctx, prog_wrap.to_ast, precond)
+            # 
+            #
+            res, klass = if add_dyn
+               eval_ast_second(@ctx, prog_wrap.to_ast, precond)
+             else
+               eval_ast(@ctx, prog_wrap.to_ast, precond)
+             end
+
+            
           rescue RbSynError => err
             raise err
           rescue TypeError => err
             tempbool = true
             break
           rescue StandardError => err
+            # >>> INSTRUMENTATION R (remove) >>>
+            if ENV["DBG_DYN"]
+              ast_s = prog_wrap.to_ast.to_s.gsub(/\s+/, ' ')
+              if ast_s.match?(/\(send \(lvar DiasporaUser\(.*?\) :exists\? \(hash \(pair \(sym :email\)/)
+                warn "[R] #{err.class}: #{err.message[0, 80]}"
+                warn "[R] at: #{err.backtrace.first(8).join("\n      ")}"
+                warn "[R] prog: #{ast_s[0, 200]}"
+                binding.pry
+              end
+            end
+            # <<< INSTRUMENTATION R <<<
             tempbool = true
             next
           rescue ComplexError => err
@@ -166,8 +180,15 @@ module SynHelper
             klass.instance_eval {
               @params = postcond.parameters.map &:last
             }
+            # begin
             passes = klass.instance_exec res, &postcond
-           
+            # rescue Exception => e 
+            #   if ENV["FLAGFLAG"] == "T" 
+            #     puts "prog_wrap: #{prog_wrap.to_ast}"
+            #     binding.pry
+            #   end
+            #   raise e 
+            # end 
             passes
 
           rescue AssertionError => e
@@ -282,15 +303,16 @@ module SynHelper
       1
     elsif a.inferred_errors == b.inferred_errors
 
+      if a.prog_size < b.prog_size
+        -1
+      elsif a.prog_size == b.prog_size
 
-      if a.passed_asserts < b.passed_asserts
-        1
-      elsif a.passed_asserts == b.passed_asserts
+        if a.passed_asserts < b.passed_asserts
+          1
+        elsif a.passed_asserts == b.passed_asserts
 
 
-        if a.prog_size < b.prog_size
-          -1
-        elsif a.prog_size == b.prog_size
+
           if a.dynamic_components < b.dynamic_components
             1
           elsif a.dynamic_components > b.dynamic_components
@@ -310,7 +332,7 @@ module SynHelper
 
 
       else
-        -1
+        1
       end
 
 

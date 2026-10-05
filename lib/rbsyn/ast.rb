@@ -99,11 +99,21 @@ module AST
     ctx.curr_binding = bind 
     DBUtils.reset
     ctx.reset_func.call unless ctx.reset_func.nil?
+    if ast.to_s.include?("hash")
+      #binding.pry
+    end
     rewriter = TrackerRewrite.new(ctx.moi, ctx.tenv)
-
-    ast = rewriter.process(ast)
+    
+    begin
+      ast = rewriter.process(ast)
+    rescue Exception => e 
+      puts "EXCEPTION"
+      puts ast
+      binding.pry
+    end
     tracelist = rewriter.tracelist
 
+    
     func = s(ctx.functype, :def, ctx.mth_name,
     s(RDL::Globals.types[:top], :args, *args.map { |arg|
       s(RDL::Globals.types[:top], :arg, arg)
@@ -114,15 +124,29 @@ module AST
     # end
     begin
       x = Unparser.unparse(func)
+      # if x == "def confirm_email(arg0, arg1)\n  (@dummyclass.w_instrument(arg0, :email=, (@dummyclass.w_instrument(nil, :!=, arg0))))\n  true\nend"
+      #   ENV["FLAGFLAG"] = "T"
+      #   puts "INCLUDES NIL:? #{ RDL::Globals.info.info.keys.include?("nil")}"
+      #   binding.pry
+      # end
       klass.instance_eval x 
       klass.instance_variable_set(:@dummyclass, ctx.type_info)
       ctx.type_info.reset_instrumentation(tracelist)
       result = klass.instance_eval(&precond) unless precond.nil?
+      if ENV["MANFLAG"]== "T"
+        binding.pry
+      end
     rescue Exception => e
+      if ENV["MANFLAG"]== "T"
+        binding.pry
+      end
       if e.is_a?(SyntaxError)
         binding.pry
       end
       raise e
+    end
+    if RDL::Globals.info.info.keys.include?("nil")
+      binding.pry
     end
     
     [result, klass]

@@ -327,18 +327,23 @@ class ExpandHolePass < ::AST::Processor
     end
   end
 
+  # def permute_dyn_hashes(targs)
+  #   if targs.any? {|t| t.is_a?(RDL::Type::DynamicType)}
+  #     container = []
+  #     x = permutation_mask(targs, ->(t) { t.is_a?(RDL::Type::DynamicType) })
+  #     x.each do |mask| 
+  #       new_targs = targs.zip(mask).map { |t, m| m ? @ctx.dynamic_hashes : t }
+  #       container << new_targs
+  #     end
+  #     container
+  #   else
+  #     nil
+  #   end
+  # end
+  
   def permute_dyn_hashes(targs)
-    if targs.any? {|t| t.is_a?(RDL::Type::DynamicType)}
-      container = []
-      x = permutation_mask(targs, ->(t) { t.is_a?(RDL::Type::DynamicType) })
-      x.each do |mask| 
-        new_targs = targs.zip(mask).map { |t, m| m ? @ctx.dynamic_hashes : t }
-        container << new_targs
-      end
-      container
-    else
-      nil
-    end
+    return nil unless targs.last.is_a?(RDL::Type::DynamicType)
+    [targs[0...-1] + [@ctx.dynamic_hashes]]
   end
 
   def fn_call(path)

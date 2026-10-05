@@ -45,13 +45,72 @@ class InferTypes
     @tracelist = tracelist
   end
 
+  def hashargtypes(hash, lnum_child)
+    # AI version, skip hash arg types.  
+    truefalse = RDL::Type::OptionalType.new(RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true)))
+    local_hash = {}
+    locals_list = (@tracelist[@counter - 1 + lnum_child] || []).dup
+    hash.each do |key, val|
+      x = locals_list.shift
+      next if val.nil?   # exclude nil-valued keys
+      if !x.nil?
+        local_hash[key] = RDL::Type::OptionalType.new(x)
+      elsif val.is_a?(TrueClass) || val.is_a?(FalseClass)
+        local_hash[key] = truefalse
+      else
+        local_hash[key] = RDL::Type::OptionalType.new(RDL::Type::NominalType.new(val.class.to_s))
+      end
+    end
+    local_hash
+end
+
+  # def hashargtypes(hash, lnum_child)
+  #   #AI version
+  #   truefalse = RDL::Type::OptionalType.new(RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true)))
+  #   local_hash = {}
+  #   locals_list = (@tracelist[@counter - 1 + lnum_child] || []).dup
+  #   hash.each do |key, val|
+  #     x = locals_list.shift
+  #     if !x.nil?
+  #       local_hash[key] = RDL::Type::OptionalType.new(x)
+  #     elsif val.is_a?(TrueClass) || val.is_a?(FalseClass)
+  #       local_hash[key] = truefalse
+  #     else
+  #       local_hash[key] = RDL::Type::OptionalType.new(RDL::Type::NominalType.new(val.class.to_s))
+  #     end
+  #   end
+  #   local_hash
+  # end
+
+  # def hashargtypes(hash, lnum_child)
+  #   truefalse = RDL::Type::OptionalType.new(RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true)))
+  #   local_hash = {}
+  #   locals_list = @tracelist[@counter + lnum_child]
+  #   hash.each do |key, val|
+      
+  #     x = locals_list.shift
+  #     if !x.nil?
+        
+  #       #BR might not want this to be an optional type 
+  #       local_hash[key] = RDL::OptionalType.new(x)
+  #     elsif i.is_a?(TrueClass) || i.is_a?(FalseClass) 
+  #       local_hash[key] = truefalse 
+  #     else 
+  #       local_hash[key] = RDL::Type::OptionalType.new(RDL::Type::NominalType.new(i.class.to_s))
+  #     end
+  #     local_hash
+  #   end
+  # end
+
   def w_instrument(recvr, meth, *args)
 
+    # since formal parameter may have a more generic value than the acutal argument we use argtypes to default to the more general formal param 
     argtypes = @tracelist[@counter] # so that we can elevate types when they are arguments. There is nuance to this that I am missing rn. 
     @counter += 1
     truefalse = RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true))
     # trace form: {method, reciever, args, result, exception}
     recarg = argtypes.shift
+    lnum_child = 0
     trace = {
       :method => meth,
       :recvr => 
@@ -62,24 +121,32 @@ class InferTypes
         else
           RDL::Type::NominalType.new(recvr.class.to_s)
         end,
-      :args => args.map {|i| x = argtypes.shift
-                          if !x.nil?
-                            x
-                          elsif i.is_a?(TrueClass) || i.is_a?(FalseClass) 
-                            truefalse 
-                          else 
-                            RDL::Type::NominalType.new(i.class.to_s) 
-                          end},
+
+      :args =>
+        args.map {|i| x = argtypes.shift
+          lnum_child += 0.1
+          if !x.nil?
+            x
+          elsif i.is_a?(TrueClass) || i.is_a?(FalseClass) 
+            truefalse 
+          elsif i.is_a?(Hash)
+            RDL::Type::FiniteHashType.new(hashargtypes(i, lnum_child), nil)
+            # binding.pry
+            # hashargtypes(i, lnum_child)< AI erase
+            # RDL::Type::FiniteHashType.new(i, nil) < AI erase
+          else 
+            RDL::Type::NominalType.new(i.class.to_s)
+          end},
       :result => nil, 
       :except => nil} # why is this nominal type this might need to change because of generics 
 
 
     begin
-      # if type_to_s(trace).to_s.include?("Hamster::Hash_1 :default")
-      #   binding.pry
-      # end
-      # if meth == :save
-      #   binding.pry
+
+      # if meth == :"self.exists?" || meth == :"exists?"
+      #   puts "METH: #{meth}"
+      #   puts "ARGS: #{args}"
+      #   # binding.pry
       # end
       result = recvr.send(meth, *args)
 
@@ -147,13 +214,19 @@ class InferTypes
     if result.is_a?(TrueClass) || result.is_a?(FalseClass) 
       trace[:result] = truefalse 
     else 
+      #BR this shouldn't be to_s it gets rid of the type information esp with singleton types. Instead you should use the class itself.
       trace[:result] = RDL::Type::NominalType.new(result.class.to_s)
     end
     
     # if type_to_s(trace).to_s == "Hamster::Hash_1 :alloc => Hamster::Trie => nil => :except"
     #   binding.pry
     # end
-    update_success(trace)
+    empty_hash_arg = trace[:args].is_a?(Array) &&
+      # AI generated
+      trace[:args].any? { |a| a.is_a?(RDL::Type::FiniteHashType) && a.elts.empty? }
+
+    update_success(trace) unless empty_hash_arg
+    # update_success(trace)
     result
 
   end
@@ -188,7 +261,7 @@ class InferTypes
 
   def update_success(trace)
 
-    if !match_exclusion?(trace)
+    if !match_exclusion?(trace) && !(trace[:recvr].to_s == "nil")
 
       ParentsHelper.addTypeManually(trace[:recvr].to_s)
       ParentsHelper.addTypeManually(trace[:result].to_s)
@@ -247,11 +320,30 @@ class InferTypes
 
   def consolidate_type_successes(trace)
 
+    if trace[:recvr].to_s == "nil"
+      puts "caught nil"
+      return @type_successes
+    end
+    # # >>> INSTRUMENTATION H (remove) >>>
+    # if ENV["DBG_DYN"] && trace[:method] == :exists?
+    #   (@type_successes[trace[:method]] || []).each do |sig|
+    #     next unless sig[:recvr] == trace[:recvr]
+    #     a, b = sig[:args].first, trace[:args].first
+    #     next unless a.is_a?(RDL::Type::FiniteHashType) && b.is_a?(RDL::Type::FiniteHashType)
+    #     r = begin
+    #       [a <= b, b <= a]
+    #     rescue Exception => e
+    #       "RAISED #{e.class}: #{e.message[0, 60]}"
+    #     end
+    #     warn "[H] old=#{a.elts.keys} new=#{b.elts.keys} (old<=new, new<=old)=#{r.inspect}"
+    #   end
+    # end
+    # # <<< INSTRUMENTATION H <<<
     meth = trace[:method]
     begin
 
       @type_successes[meth].each_with_index do |sig, ind|
-        if sig[:recvr] != trace[:recvr]
+        if sig[:recvr] != trace[:recvr] 
           next
         end 
         # puts "here"
@@ -277,13 +369,26 @@ class InferTypes
             @newsuccess = true
             @new_types << update
 
-            RDL::Globals.info.info[update[:recvr].to_s][meth][:type].each_with_index do |tipe, index|
-              # now destroy any entries that are more precise than this one. 
-              if tipe.args.zip(update[:args]).all? {|left, right| left <= right} && tipe.ret <= update[:result] 
-                # any that is more specific we can destroy
-                RDL::Globals.info.info[update[:recvr].to_s][meth][:type].pop(index)
-                RDL::Globals.info.info[update[:recvr].to_s][meth][:effect].pop(index)
-              end  
+            # RDL::Globals.info.info[update[:recvr].to_s][meth][:type].each_with_index do |tipe, index|
+            #   # now destroy any entries that are more precise than this one. 
+            #   if tipe.args.zip(update[:args]).all? {|left, right| left <= right} && tipe.ret <= update[:result] 
+            #     # any that is more specific we can destroy
+            #     RDL::Globals.info.info[update[:recvr].to_s][meth][:type].pop(index)
+            #     RDL::Globals.info.info[update[:recvr].to_s][meth][:effect].pop(index)
+            #   end  
+            # end
+            
+            info = RDL::Globals.info.info[update[:recvr].to_s][meth]
+            #AI version something about 
+            doomed = []
+            info[:type].each_with_index do |tipe, index|
+              if tipe.args.zip(update[:args]).all? { |left, right| left <= right } && tipe.ret <= update[:result]
+                doomed << index
+              end
+            end
+            doomed.reverse_each do |index|
+              info[:type].delete_at(index)
+              info[:effect].delete_at(index)
             end
 
             # build the new, more general type into RDL
@@ -321,15 +426,29 @@ class InferTypes
   def expanded_type_to_s(tipe)
     str = ""
     case tipe
+      
+    when RDL::Type::OptionalType
+      str += "OPT: "
+      str += expanded_type_to_s(tipe.type)
     when RDL::Type::SingletonType
       str += "SINGLETON:"
-      str += " NOM: "
-      str += tipe.nominal.to_s
+      str += expanded_type_to_s(tipe.nominal)
       str += ", VAL: "
       str += tipe.val.to_s
+    when RDL::Type::FiniteHashType 
+      str += "FHASH: "
+      str += "Elements: "
+      tipe.elts.each {|k, t| str += k.to_s; str += "=>"; str += expanded_type_to_s(t); str == "\n" }
     when RDL::Type::NominalType
       str += "NOMINAL: "
       str += tipe.to_s
+    when RDL::Type::GenericType
+      str += "GENERIC: "
+      str += "BASE: "
+      str += expanded_type_to_s(tipe.base)
+      tipe.params.each {|i| str += expanded_type_to_s(i)}
+    
+
     else
       #TODO FURTHER EXPAND UPON THESE TYPES, ELSE YOU WILL RUN INTO MORE PROBLEMS WHERE THE TO_STRING FUNCTION HAS COLLISIONS
       str += "OTHER: "
