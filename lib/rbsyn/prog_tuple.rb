@@ -194,7 +194,15 @@ class ProgTuple
       seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, b1_ref), env)
       seed.look_for(:type, RDL::Globals.types[:bool])
       #binding.pry
-      bsyn1 = generate(seed, [*first.preconds, *second.preconds], output1, true)
+      # bsyn1 = generate(seed, [*first.preconds, *second.preconds], output1, true)  # AI altered: typed first, inference fallback
+      bool_seed = lambda { # AI generated: fresh seed per attempt, same construction as above
+        e = LocalEnvironment.new
+        ref = e.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))
+        sd = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, ref), e)
+        sd.look_for(:type, RDL::Globals.types[:bool])
+        sd
+      }
+      bsyn1 = generate_typed_then_inference(bool_seed, [*first.preconds, *second.preconds], output1, true, "Merge condition 1") # AI generated
 
      
       output2 = (Array.new(first.preconds.size, false) + Array.new(second.preconds.size, true)).map { |item|
@@ -208,7 +216,8 @@ class ProgTuple
         b2_ref = env.add_expr(s(RDL::Globals.types[:bool], :hole, 0, {bool_consts: false}))
         seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, b2_ref), env)
         seed.look_for(:type, RDL::Globals.types[:bool])
-        bsyn2 = generate(seed, [*first.preconds, *second.preconds], output2, true)
+        # bsyn2 = generate(seed, [*first.preconds, *second.preconds], output2, true)  # AI altered: typed first, inference fallback
+        bsyn2 = generate_typed_then_inference(bool_seed, [*first.preconds, *second.preconds], output2, true, "Merge condition 2") # AI generated
 
       end
 

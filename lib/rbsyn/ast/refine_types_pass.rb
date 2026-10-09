@@ -10,6 +10,10 @@ class RefineTypesPass < ::AST::Processor
     mth = node.children[1]
     mthds = methods_of(trecv)
     info = mthds[mth]
+    # AI generated: with library types blocked, a call can have no signature for this receiver
+    # (e.g. nil != arg1 when != was only learned on DiasporaUser/String); keep the node's type as is,
+    # matching the rescue below that ignores compute_tout failures
+    return node if info.nil? || info[:type].nil? # AI generated
     tmeth = info[:type]
     targs = node.children[2..].map &:ttype
     

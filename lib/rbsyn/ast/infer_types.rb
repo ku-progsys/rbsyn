@@ -25,8 +25,10 @@ class InferTypes
     @updated = false
     @set_exception = false
     @new_types = []
-    @new_success = false
-    @new_error = false
+    # @new_success = false  # AI altered: name did not match attr_reader :newsuccess
+    # @new_error = false    # AI altered: name did not match attr_reader :newerror
+    @newsuccess = false # AI generated
+    @newerror = false   # AI generated
     @counter = 0
   end
 
@@ -110,6 +112,15 @@ end
     truefalse = RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true))
     # trace form: {method, reciever, args, result, exception}
     recarg = argtypes.shift
+    # >>> INSTRUMENTATION IM (AI generated, remove) >>>
+    if ENV["DBG_DYN"] && !recarg.nil?
+      __actual = recvr.is_a?(Class) ? RDL::Type::SingletonType.new(recvr) : RDL::Type::NominalType.new(recvr.class.to_s)
+      unless (__actual <= recarg rescue true)
+        $__im_n = ($__im_n || 0) + 1
+        warn "[IM] counter=#{@counter - 1} meth=#{meth} tracelist_recv=#{recarg} actual_recv=#{__actual} args=#{args.map { |a| a.class }.inspect} tracelist=#{@tracelist.inspect[0, 200]}" if $__im_n <= 15
+      end
+    end
+    # <<< INSTRUMENTATION IM <<<
     lnum_child = 0
     trace = {
       :method => meth,
@@ -252,8 +263,10 @@ end
 
   def get_reset_newtypes()
     temp = @new_types.dup
-    @new_success = false
-    @new_error = false
+    # @new_success = false  # AI altered: reset never reached @newsuccess, so it stayed true forever
+    # @new_error = false    # AI altered: reset never reached @newerror
+    @newsuccess = false # AI generated
+    @newerror = false   # AI generated
     @new_types = []
     temp
   end
@@ -378,7 +391,8 @@ end
             #   end  
             # end
             
-            info = RDL::Globals.info.info[update[:recvr].to_s][meth]
+            # info = RDL::Globals.info.info[update[:recvr].to_s][meth]  # AI altered: class receivers live under the "[s]" key
+            info = RDL::Globals.info.info[rdl_info_key(update[:recvr])][meth] # AI generated
             #AI version something about 
             doomed = []
             info[:type].each_with_index do |tipe, index|
@@ -392,7 +406,10 @@ end
             end
 
             # build the new, more general type into RDL
-            RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
+            # RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"  # AI altered: registered class methods as instance methods
+            # RDL.type update[:recvr].to_s, rdl_meth_name(update[:recvr], meth), "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"  # AI altered: did not carry the declared read/write effects over
+            carried = carried_effects(update[:recvr], meth) # AI generated
+            RDL.type update[:recvr].to_s, rdl_meth_name(update[:recvr], meth), "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}", read: carried[:read], write: carried[:write] # AI generated
             return @type_successes
           end
         end
@@ -403,7 +420,10 @@ end
       update = @type_successes[meth][-1]
       @newsuccess = true
       @new_types << update
-      RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"
+      # RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"  # AI altered: registered class methods as instance methods
+      # RDL.type update[:recvr].to_s, rdl_meth_name(update[:recvr], meth), "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"  # AI altered: did not carry the declared read/write effects over
+      carried = carried_effects(update[:recvr], meth) # AI generated
+      RDL.type update[:recvr].to_s, rdl_meth_name(update[:recvr], meth), "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}", read: carried[:read], write: carried[:write] # AI generated
       return @type_successes
 
     rescue Exception => e
@@ -412,6 +432,33 @@ end
     end
   end
 
+
+  # AI generated: a receiver that is a class (SingletonType of a Class) means the observed
+  # call was a class method, so it must be registered as "self.meth" / looked up under "[s]Klass".
+  def class_receiver?(recvr) # AI generated
+    recvr.is_a?(RDL::Type::SingletonType) && recvr.val.is_a?(Class)
+  end
+
+  def rdl_meth_name(recvr, meth) # AI generated
+    class_receiver?(recvr) ? "self.#{meth}" : meth
+  end
+
+  def rdl_info_key(recvr) # AI generated
+    class_receiver?(recvr) ? RDL::Util.add_singleton_marker(recvr.to_s) : recvr.to_s
+  end
+
+  # AI generated: the read/write effects declared for a moi method on the %dyn placeholder
+  # (DynamicType, or [s]DynamicType for class methods) that the concrete class does not have yet.
+  # Carried onto the learned signature when it is registered, so the effect system still sees them.
+  def carried_effects(recvr, meth) # AI generated
+    placeholder = class_receiver?(recvr) ? RDL::Util.add_singleton_marker("DynamicType") : "DynamicType"
+    declared = (RDL::Globals.info.info[placeholder] || {})[meth.to_sym] || {}
+    existing = (RDL::Globals.info.info[rdl_info_key(recvr)] || {})[meth.to_sym] || {}
+    {
+      read: (declared[:read] || []) - (existing[:read] || []),
+      write: (declared[:write] || []) - (existing[:write] || [])
+    }
+  end
 
   def check_errors(ast)
     @checker.update_reset(@type_errs, @type_successes) # resetting the checker

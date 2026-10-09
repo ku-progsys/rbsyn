@@ -1,7 +1,8 @@
 class ProgWrapper
   include AST
   require_relative "ast/check_error_pass"
-  require_relative "ast/refine_type_pass_v2"
+  # require_relative "ast/refine_type_pass_v2"  # AI altered: DynamicRefineTypes merged into RefineTypesV2
+  require_relative "ast/refine_types_v2" # AI generated
   require_relative "ast/ttype_print"
   require_relative "./complex_error"
 
@@ -12,6 +13,10 @@ class ProgWrapper
     counts = {}
     list.each do |item| 
       counts[item.typehash] = item
+      # AI note: tried structure_hash here (2026-10-09) and reverted. Siblings from one expansion often share code but
+      # differ in node types (one per signature, hash-key variants last); keeping only the last one steered later
+      # expansions down the hash-variant path (28 setter signatures learned, getters never reached). The structure
+      # key is used only for the work-list check in SynHelper#dedupe_key.
     end
     counts.values
   end
@@ -83,6 +88,33 @@ class ProgWrapper
     @typehash
   end
 
+  # AI generated: deduplication key. Concrete code is compared as code (no node types); holes are compared with
+  # their depth, parameters and type, so two candidates differing only in hole types stay separate. typehash /
+  # to_typestring above are kept unchanged for verbose checks (DEDUPE_TYPEHASH=1 switches deduplication back).
+  def structure_string # AI generated
+    @structure_string ||= structure_of(to_ast)
+  end
+
+  def structure_hash # AI generated
+    @structure_hash ||= structure_string.hash
+  end
+
+  # AI generated: write learned types into a hole-free candidate (see LearnedTypeWriteBack); no-op otherwise
+  def write_back_learned_types!(type_info) # AI generated
+    @hole_free = !has_hole? if @hole_free.nil?
+    return false unless @hole_free
+    pass = LearnedTypeWriteBack.new(type_info)
+    new_seed = pass.process(@seed)
+    new_exprs = @exprs.map { |e| pass.process(e) }
+    new_info = @env.info.transform_values { |entry| entry.merge(expr: pass.process(entry[:expr])) }
+    return false unless pass.changed
+    @seed = new_seed
+    @exprs = new_exprs
+    @env.info = new_info
+    @typehash = @typestring = @structure_string = @structure_hash = nil
+    true
+  end
+
   def to_ast
     pass = FlattenProgramPass.new(@ctx, @env)
     
@@ -116,20 +148,29 @@ class ProgWrapper
   end
 
   def add_side_effect_expr(expr)
+    @prog_size_cache = nil # AI generated: program changed, invalidate cached size
+    @structure_string = @structure_hash = @hole_free = nil # AI generated: program changed, invalidate cached keys
     @exprs << expr
   end
 
   def build_candidates()
     
-    update_types_pass = RefineTypesPass.new
+    # update_types_pass = RefineTypesPass.new  # AI altered: replaced by RefineTypesV2 (same behaviour without dynamic:)
+    update_types_pass = RefineTypesV2.new # AI generated
     case @looking_for
     when :type
       
       #puts ENV["GLOBAL_COUNT"]
       pass1 = ExpandHolePass.new(@ctx, @env)
+      __q0 = Process.clock_gettime(Process::CLOCK_MONOTONIC) if ENV["DBG_DYN"] # INSTRUMENTATION Q (AI generated, remove)
       # binding.pry
       expanded = pass1.process(@seed)
       expand_map = pass1.expand_map.map { |i| i.times.to_a }
+      if ENV["DBG_DYN"] # INSTRUMENTATION Q (AI generated, remove)
+        __q1 = Process.clock_gettime(Process::CLOCK_MONOTONIC) # INSTRUMENTATION Q
+        __qn = expand_map.map(&:size).reduce(1, :*) # INSTRUMENTATION Q
+        warn "[Q] expand=#{(__q1 - __q0).round(2)}s selections=#{__qn} map=#{pass1.expand_map.inspect[0, 80]} methods_of calls=#{$__mo_calls} secs=#{($__mo_secs || 0).round(1)}" if (__q1 - __q0) > 0.5 || __qn > 300 # INSTRUMENTATION Q
+      end # INSTRUMENTATION Q
       # binding.pry
       # count = 0 
       x = expand_map[0].product(*expand_map[1..expand_map.size]).map { |selection|
@@ -137,12 +178,33 @@ class ProgWrapper
         # puts "selection: #{selection.to_s}"
         # count += 1
 
-        pass2 = ExtractASTPass.new(selection, @env) 
+        __q3 = ($__q3 ||= Hash.new(0.0)) if ENV["DBG_DYN"] # INSTRUMENTATION Q3 (AI generated, remove): per-stage time in this loop
+        __q3t = Process.clock_gettime(Process::CLOCK_MONOTONIC) if ENV["DBG_DYN"] # INSTRUMENTATION Q3
+        __xc_selection = selection.dup if ENV["XC_CHECK"] # INSTRUMENTATION XC (AI generated, remove): ExtractASTPass consumes its selection
+        pass2 = ExtractASTPass.new(selection, @env)
         temp = pass2.process(expanded)
-        program = update_types_pass.process(temp)
+        # >>> INSTRUMENTATION XC (AI generated, remove): compare the new shallow environment copy with the old deep copy
+        if ENV["XC_CHECK"]
+          old_pass = ExtractASTPass.new(__xc_selection, @env, deep_copy: true)
+          old_temp = old_pass.process(expanded)
+          ser = lambda { |n| n.is_a?(TypedNode) ? "(#{n.type}:#{n.ttype} #{n.children.map { |c| ser.(c) }.join(' ')})" : n.inspect }
+          env_ser = lambda { |e| e.info.keys.sort.map { |k| "#{k}=>#{e.info[k][:count]}:#{ser.(e.info[k][:expr])}" }.join(';') }
+          $__xc = ($__xc || Hash.new(0))
+          if ser.(old_temp) == ser.(temp) && env_ser.(old_pass.env) == env_ser.(pass2.env)
+            $__xc[:same] += 1
+          else
+            $__xc[:different] += 1
+            warn "[XC] MISMATCH prog_same=#{ser.(old_temp) == ser.(temp)} env_keys old=#{old_pass.env.info.keys.sort.inspect} new=#{pass2.env.info.keys.sort.inspect}" if $__xc[:different] <= 5
+          end
+          warn "[XC] checked #{$__xc[:same] + $__xc[:different]}: same=#{$__xc[:same]} different=#{$__xc[:different]}" if (($__xc[:same] + $__xc[:different]) % 200).zero?
+        end
+        # <<< INSTRUMENTATION XC <<<
+        if ENV["DBG_DYN"] then __n = Process.clock_gettime(Process::CLOCK_MONOTONIC); __q3[:extract] += __n - __q3t; __q3t = __n; __q3[:selections] += 1 end # INSTRUMENTATION Q3
+        # program = update_types_pass.process(temp)  # AI altered: merged into the single refiner.process below
         new_env = pass2.env
 
-        refiner = DynamicRefineTypes.new(@ctx, new_env)
+        # refiner = DynamicRefineTypes.new(@ctx, new_env)  # AI altered: RefineTypesPass + DynamicRefineTypes in one pass
+        refiner = RefineTypesV2.new(ctx: @ctx, env: new_env, dynamic: true) # AI generated
         #BR, this is where you should really be counting the number of dynamic types. ???
         #even the number of errors??
         
@@ -152,19 +214,28 @@ class ProgWrapper
           #   puts "program: \n#{new_env.info[program.to_ast.children[0]][:expr].to_ast}"
           #   binding.pry
           # end
-          program = refiner.process(program)
+          # program = refiner.process(program)  # AI altered: input is now the unrefined candidate (temp),
+          #                                     # since RefineTypesPass no longer runs before this
+          program = refiner.process(temp) # AI generated
+          if ENV["DBG_DYN"] then __n = Process.clock_gettime(Process::CLOCK_MONOTONIC); __q3[:refine] += __n - __q3t; __q3t = __n end # INSTRUMENTATION Q3
      
-          if program.ttype != @target && (((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT))  
+          # if program.ttype != @target && (((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT))  
+          # AI altered: %dyn ("not known yet") is <= every type in RDL, so the line above rejected every
+          # candidate built from %dyn-typed methods; exempt %dyn so unknown-type programs can be observed
+          if !program.ttype.is_a?(RDL::Type::DynamicType) && program.ttype != @target && (((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT)) # AI generated
             #binding.pry
+            ($__rej ||= Hash.new(0))["variance-skip ttype=#{program.ttype} target=#{@target} var=#{@variance_at_creation}"] += 1 if ENV["DBG_DYN"] # INSTRUMENTATION Q2 (AI generated, remove)
             next
           end
         rescue NoMethodError, NameError, ComplexError  => e
+          ($__rej ||= Hash.new(0))["#{e.class}: #{e.message.to_s[0, 90]}"] += 1 if ENV["DBG_DYN"] # INSTRUMENTATION Q2 (AI generated, remove)
           # we created an ill typed program that went undiscovered when it is still using dynamic types
           # what I am assuming is that we discovered a type, then we attempted to use it after we have corrected its 
           # type errors. 
           # so skip
           next
         rescue Exception => e
+          ($__rej ||= Hash.new(0))["#{e.class}: #{e.message.to_s[0, 90]}"] += 1 if ENV["DBG_DYN"] # INSTRUMENTATION Q2 (AI generated, remove)
          
           #refiner = DynamicRefineTypes.new(@ctx, new_env)
           # binding.pry
@@ -172,6 +243,7 @@ class ProgWrapper
           next
         end 
 
+        if ENV["DBG_DYN"] then __n = Process.clock_gettime(Process::CLOCK_MONOTONIC); __q3[:variance] += __n - __q3t; __q3t = __n end # INSTRUMENTATION Q3
         prog_wrap = ProgWrapper.new(@ctx, program, new_env)
         prog_wrap.look_for(:type, @target)
         prog_wrap.passed_asserts = @passed_asserts
@@ -179,6 +251,15 @@ class ProgWrapper
       }
       # binding.pry
       x = x.reject(&:nil?)
+      if ENV["DBG_DYN"] && $__q3 && (Process.clock_gettime(Process::CLOCK_MONOTONIC) - __q1) > 2.0 # INSTRUMENTATION Q3 (AI generated, remove)
+        warn "[Q3] env_bytes=#{(Marshal.dump(@env).bytesize rescue -1)} slow selection loop: #{$__q3.map { |k, v| "#{k}=#{v.is_a?(Float) ? v.round(2) : v}" }.join(' ')} kept=#{x.size} rejected=#{($__rej || {}).sort_by { |_, v| -v }.first(3).map { |k, v| "#{v}x #{k[0, 70]}" }.join(' | ')}" # INSTRUMENTATION Q3
+      end # INSTRUMENTATION Q3
+      $__q3 = nil if ENV["DBG_DYN"] # INSTRUMENTATION Q3
+      if ENV["DBG_DYN"] && $__rej && !$__rej.empty? && (($__rej_n = ($__rej_n || 0) + 1) <= 12) # INSTRUMENTATION Q2 (AI generated, remove)
+        warn "[Q2] seed=#{@seed.to_s.gsub(/\s+/, ' ')[0, 80]} kept=#{x.size} rejected: #{$__rej.sort_by { |_, v| -v }.first(6).map { |k, v| "#{v}x #{k}" }.join(' | ')}" # INSTRUMENTATION Q2
+      end # INSTRUMENTATION Q2
+      $__rej = Hash.new(0) if ENV["DBG_DYN"] # INSTRUMENTATION Q2
+      warn "[Q] selection loop=#{(Process.clock_gettime(Process::CLOCK_MONOTONIC) - __q1).round(2)}s kept=#{x.size} methods_of calls=#{$__mo_calls} secs=#{($__mo_secs || 0).round(1)}" if ENV["DBG_DYN"] && (Process.clock_gettime(Process::CLOCK_MONOTONIC) - __q1) > 0.5 # INSTRUMENTATION Q (AI generated, remove)
      
       x = remove_duplicates(x)
       # binding.pry
@@ -329,11 +410,33 @@ class ProgWrapper
     [@seed, *@exprs].any? { |prog| NoHolePass.has_hole? prog, @env }
   end
 
-  def prog_size
-    [@seed, *@exprs].map { |prog| ProgSizePass.prog_size prog, @env }.sum
+  # def prog_size
+  #   [@seed, *@exprs].map { |prog| ProgSizePass.prog_size prog, @env }.sum
+  # end
+  # AI altered: prog_size is called on every comparison while sorting the work list; the
+  # program only changes through add_side_effect_expr, so cache it there
+  def prog_size # AI generated
+    @prog_size_cache ||= [@seed, *@exprs].map { |prog| ProgSizePass.prog_size prog, @env }.sum
   end
 
   def ttype
     @seed.ttype
   end
+
+  # AI generated: printer for structure_string
+  def structure_of(node) # AI generated
+    case node
+    when TypedNode
+      if node.type == :hole
+        "(hole #{node.children[0]} #{node.children[1].inspect} : #{node.ttype})"
+      else
+        "(#{node.type} #{node.children.map { |c| structure_of(c) }.join(' ')})"
+      end
+    when Parser::AST::Node
+      "(#{node.type} #{node.children.map { |c| structure_of(c) }.join(' ')})"
+    else
+      node.inspect
+    end
+  end
+
 end

@@ -1,7 +1,22 @@
 class ExtractASTPass < ::AST::Processor
-  def initialize(selection, old_env)
+  # def initialize(selection, old_env)
+  #   @selection = selection
+  #   @new_env = Marshal.load(Marshal.dump(old_env))
+  # end
+  # AI altered: the deep copy above copied the whole environment for every combination, including every alternative
+  # that hole expansion had written into it (12 MB for hash-key variants, ~0.5 s per combination). The pass only
+  # modifies the environment's entry hashes (replacing an entry's :expr, bumping :count, adding entries); tree nodes
+  # are never modified in place (changes always build new nodes). So copying the table and each entry hash, and
+  # sharing the nodes, is enough. EXTRACT_DEEP_COPY=1 (or deep_copy: true) restores the original deep copy.
+  def initialize(selection, old_env, deep_copy: ENV.key?("EXTRACT_DEEP_COPY")) # AI generated
     @selection = selection
-    @new_env = Marshal.load(Marshal.dump(old_env))
+    @new_env = deep_copy ? Marshal.load(Marshal.dump(old_env)) : ExtractASTPass.shallow_env_copy(old_env)
+  end
+
+  def self.shallow_env_copy(env) # AI generated
+    copy = LocalEnvironment.new
+    copy.info = env.info.transform_values(&:dup)
+    copy
   end
 
   def on_envref(node)

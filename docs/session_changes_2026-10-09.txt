@@ -1,0 +1,81 @@
+Session changes, 2026-10-05 .. 2026-10-09 (AI-assisted, Claude Code)
+=====================================================================
+
+Goal: make diaspora/user_confirm_email_benchmark.rb synthesize in this dev branch, where the synthesizer is
+type-agnostic: it may only use what is declared between ParentsHelper.init_list and ParentsHelper.subtract()
+(%dyn placeholders on DynamicType, with read/write effects) plus types learned by inference during the run.
+
+Result
+------
+- diaspora/user_confirm_email passes using only declared %dyn placeholders + learned types (60.5s alone; vanilla
+  4.8s). Of the 3 benchmarks converted to %dyn (all diaspora), 1 passes; invitation_code_use fails ("No
+  candidates found"); pod_schedule_check_if_needed hit a recursion bug (fixed at the end, not rerun).
+- Of the 21 benchmarks shared with vanilla, 15 pass in dev, 3 are skipped by the specs, 3 error (the two above,
+  and discourse/check_site_contact_username timing out under parallel load). 18 of the 21 shared benchmarks are
+  not yet converted to %dyn and run as ordinary typed searches through the dev code. Vanilla passes 18 of its 23
+  (2 time out, 3 skipped).
+
+Every change follows the convention: old lines commented out with "# AI altered", new code marked
+"# AI generated". Debug traces are marked "INSTRUMENTATION <tag> (AI generated, remove)" and only run with
+DBG_DYN=1.
+
+Detailed notes
+--------------
+- docs/ai_fixes_to_review.md            every bug fix and design change, one line each, with file and reason
+- docs/instrumentation_known_issues.md  where instrumented calls can behave differently from normal calls
+- docs/backburner_ideas.md              per-moi temperature weighting; inference-budget decay rate
+
+Main changes (see ai_fixes_to_review.md for the full list)
+-----------------------------------------------------------
+Blocking outside types
+- type_helper.rb: ParentsHelper.init_list snapshots RDL; subtract() moves every pre-existing RDL entry
+  (schema, ActiveRecord typedefs, stdlib) into ParentsHelper.blocked.
+
+Inference
+- infer_types.rb: newsuccess/newerror flags reset correctly; learned class methods registered as self.m;
+  declared DynamicType read/write effects carried onto learned signatures.
+- track_rewrite.rb: nested moi calls are now instrumented (processed children were discarded, misaligning the
+  tracelist and recording wrong types).
+- instrumented_assertions.rb (new): inference runs also observe moi calls inside the spec's assertions
+  (guarded; falls back to the original assert when instrumenting could change meaning).
+- type_ops.rb: class receivers also search [s]DynamicType (class-method placeholders such as self.exists?);
+  methods_of copies cheaply instead of Marshal deep copies.
+- dyn_arg_exhaustion.rb (new): %dyn argument holes are concretized to learned signatures once their
+  (receiver, method, position, depth) is exhausted (watermark = smallest program size in the work list).
+- learned_type_writeback.rb (new): learned types are written back into hole-free candidates on re-scoring.
+
+Search
+- syn_helper.rb: separate orderings for inference on (errors, size, passed asserts) and off (errors, passed
+  asserts, size); passed_asserts sign fix; precedence fix in the correct-program check; deduplication of
+  finished programs by source and of the work list by a structure key (ProgWrapper#structure_hash);
+  generate(switch_after:) and generate_typed_then_inference; optional SWEEP_DYN=1 single-pass mode
+  (experimental, not developed further).
+- prog_wrapper.rb: prog_size cached; %dyn exempt from the variance filter; structure key; write-back.
+- check_error_pass.rb: a begin around a call counts as %dyn only if the call is still unknown.
+- refine_types_v2.rb (new): RefineTypesPass + DynamicRefineTypes in one pass; callers switched.
+- extract_ast_pass.rb: shallow environment copy per combination (was a full deep copy; 12 MB for hash-key
+  variants). Verified identical on 7,200+ combinations; EXTRACT_DEEP_COPY=1 restores the old copy.
+
+Synthesizer
+- spec_type_guard.rb (new) + synthesizer.rb: specs after the first run typed-only unless their argument or
+  assertion types are new; typed-only searches fall back to an inference pass if they run out of candidates.
+  INFERENCE_EVERY_PASS=1 restores inference before every search.
+- prog_tuple.rb: merge-step condition searches are typed first, switching to an inference pass after the
+  inference budget of iterations without a solution.
+
+Benchmark spec
+- test/benchmark/diaspora/user_confirm_email_benchmark.rb: %dyn getter declarations for email and
+  confirm_email_token, both added to moi.
+
+Environment switches added
+--------------------------
+DEDUPE_TYPEHASH=1, EXTRACT_DEEP_COPY=1, INFERENCE_EVERY_PASS=1, SWEEP_DYN=1, DBG_DYN=1 (traces), XC_CHECK=1
+(compares shallow vs deep environment copies).
+
+Next (user's plan)
+------------------
+1. Convert all benchmarks shared with vanilla to %dyn (minimal function set = methods in vanilla's solution plus
+   methods the assertions call; hashkeys = all model columns; object-level 'self' effects).
+2. Compare with vanilla; rerun failures with a longer TIMEOUT to see if it is only time.
+3. Generate a full %dyn library from ParentsHelper.blocked and rerun.
+4. Ablations: remove signatures / provide types.

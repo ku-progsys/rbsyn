@@ -129,6 +129,21 @@ class CheckErrorPass < ::AST::Processor
 
   def handler_missing(node)
 
+    # AI generated: a begin wrapping a single call (as fn_call wraps moi calls) keeps the static type it was built
+    # with, which is %dyn for calls built from a %dyn placeholder signature, even after the call's real type has
+    # been learned. Count it as dynamic only if the call itself still resolves to %dyn, and pass the resolved type
+    # up. If the call resolves to an error, fall through to the original behaviour below.
+    if node.is_a?(TypedNode) && node.type == :begin && node.children.size == 1 && node.children[0].is_a?(TypedNode) # AI generated
+      resolved = process(node.children[0]) # AI generated
+      if resolved.is_a?(RDL::Type::Type) # AI generated
+        @dynamic_components += 1 if resolved.is_a?(RDL::Type::DynamicType) # AI generated
+        return resolved # AI generated
+      end # AI generated
+      # resolved is "error": count the static type as before (the child has already been processed) # AI generated
+      @dynamic_components += 1 if node.ttype.is_a?(RDL::Type::DynamicType) # AI generated
+      return node.ttype # AI generated
+    end # AI generated
+
     if node.is_a?(TypedNode) && node.ttype.is_a?(RDL::Type::DynamicType)
       @dynamic_components += 1
     end

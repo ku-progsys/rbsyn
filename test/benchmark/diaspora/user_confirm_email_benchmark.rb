@@ -15,9 +15,16 @@ describe "Diaspora" do
     RDL.type :DynamicType, :email=, "(%dyn) -> %dyn", wrap: false, write: ['self']
     RDL.type :DynamicType, :confirm_email_token=, "(%dyn) -> %dyn", wrap:false, write: ['self']
     RDL.type :DynamicType, :unconfirmed_email, "() -> %dyn", wrap: false, read: ['self']
+    # AI generated: the post-conditions read @user.email and @user.confirm_email_token; declare the getters'
+    # form and read effect here (type unknown, %dyn) so the effect analysis of failed assertions has them
+    RDL.type :DynamicType, :email, "() -> %dyn", wrap: false, read: ['self'] # AI generated
+    RDL.type :DynamicType, :confirm_email_token, "() -> %dyn", wrap: false, read: ['self'] # AI generated
     ParentsHelper.subtract()
 
-    define :confirm_email, "(DiasporaUser, String) -> %bool", [DiasporaUser, {hashkeys: [:id, :username, :invited_by_id, :confirm_email_token, :email, :unconfirmed_email]} ], enable_nil: true, prog_size: 30, moi: [:blank?, :"!=", :"exists?", :"self.exists?",:unconfirmed_email=, :unconfirmed_email, :confirm_email_token=, :email=] do
+    # define :confirm_email, "(DiasporaUser, String) -> %bool", [DiasporaUser, {hashkeys: [:id, :username, :invited_by_id, :confirm_email_token, :email, :unconfirmed_email]} ], enable_nil: true, prog_size: 30, moi: [:blank?, :"!=", :"exists?", :"self.exists?",:unconfirmed_email=, :unconfirmed_email, :confirm_email_token=, :email=] do
+    # AI altered: added :email and :confirm_email_token to moi so inference observes the getters declared above
+    # and carries their read effect onto the learned DiasporaUser signatures
+    define :confirm_email, "(DiasporaUser, String) -> %bool", [DiasporaUser, {hashkeys: [:id, :username, :invited_by_id, :confirm_email_token, :email, :unconfirmed_email]} ], enable_nil: true, prog_size: 30, moi: [:blank?, :"!=", :"exists?", :"self.exists?",:unconfirmed_email=, :unconfirmed_email, :confirm_email_token=, :email=, :email, :confirm_email_token] do # AI generated
       spec 'confirms email and set the unconfirmed_email to email on valid token' do
         setup {
           @user = Fabricate(:diaspora_user_with_token)

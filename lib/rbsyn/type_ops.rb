@@ -396,7 +396,8 @@ module TypeOperations
 
   def merge_methods(left, right)
 
-    merged = Marshal.load(Marshal.dump(left))
+    # merged = Marshal.load(Marshal.dump(left))  # AI altered: full deep copy per merge; only the lists appended to below need copying
+    merged = copy_method_entry(left) # AI generated
     right[:type].zip(right[:effect]).map {|type, effect| 
       if !(merged[:type].any? {|t| t.args == type.args})
         merged[:type].append(type)
@@ -406,12 +407,52 @@ module TypeOperations
     merged
   end
 
+  # AI generated: cheaper replacement for Marshal deep copies of RDL method tables in methods_of/merge_methods.
+  # The copies exist so merge_methods' appends never reach RDL's own lists. Copy each method entry's hash and
+  # its :type/:effect/:read/:write lists, but share the signature objects, which callers only read. Exception:
+  # a signature whose return type is generic is still deep-copied, because Reachability#chains_with_type
+  # assigns into chain.last.params, and compute_tout returns the signature's own return type object.
+  def copy_class_methods(class_methods) # AI generated
+    return nil if class_methods.nil?
+    class_methods.each_with_object({}) { |(meth, entry), out| out[meth] = copy_method_entry(entry) }
+  end
+
+  def copy_method_entry(entry) # AI generated
+    copy = entry.dup
+    copy[:type] = entry[:type].map { |sig| signature_needs_deep_copy?(sig) ? Marshal.load(Marshal.dump(sig)) : sig } if entry[:type].is_a?(Array)
+    [:effect, :read, :write].each { |kind| copy[kind] = entry[kind].dup if entry[kind].is_a?(Array) }
+    copy
+  end
+
+  def signature_needs_deep_copy?(sig) # AI generated
+    sig.is_a?(RDL::Type::MethodType) && sig.ret.is_a?(RDL::Type::GenericType)
+  end
+
   def methods_of(trecv)
+    # >>> INSTRUMENTATION M (AI generated, remove) >>>
+    if ENV["DBG_DYN"]
+      __m0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      __r = methods_of_uninstrumented(trecv)
+      $__mo_calls = ($__mo_calls || 0) + 1
+      $__mo_secs = ($__mo_secs || 0.0) + (Process.clock_gettime(Process::CLOCK_MONOTONIC) - __m0)
+      return __r
+    end
+    methods_of_uninstrumented(trecv)
+  end
+
+  def methods_of_uninstrumented(trecv)
+    # <<< INSTRUMENTATION M <<<
 
     parents = parents_of(trecv)
 
       if ENV["ADD_DYN"] == "TRUE"
         parents.append("DynamicType") unless parents.include?("DynamicType")
+        # AI generated: a class receiver (the class object itself) can also take class methods, and class-method
+        # placeholders declared as 'self.m' on DynamicType are stored under "[s]DynamicType", which was never searched
+        # (so e.g. DiasporaUser.exists? was never offered). Instance receivers keep only "DynamicType".
+        if trecv.is_a?(RDL::Type::SingletonType) && trecv.val.is_a?(Class) # AI generated
+          parents.append("[s]DynamicType") unless parents.include?("[s]DynamicType") # AI generated
+        end # AI generated
       end
     # x = Hash[*parents.map { |klass|
         
@@ -422,7 +463,9 @@ module TypeOperations
   
     parents.reduce({}) {|acc, klass| 
       # get rid of duplicates since dynamic types might introduce such duplicates. 
-      methods = Marshal.load(Marshal.dump(RDL::Globals.info.info[klass]))
+      # methods = Marshal.load(Marshal.dump(RDL::Globals.info.info[klass]))  # AI altered: deep-copied every method of every
+      #                                                                     # ancestor on each call; see copy_class_methods
+      methods = copy_class_methods(RDL::Globals.info.info[klass]) # AI generated
       if methods == nil
         acc
       else

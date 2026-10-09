@@ -93,7 +93,8 @@ module AST
       @count = 0
       @passed_count = 0
       @ctx = ctx
-      extend Assertions
+      # extend Assertions  # AI altered: inference runs also observe moi calls inside the spec's assertions
+      extend InstrumentedAssertions # AI generated
     }
     bind = klass.instance_eval { binding }
     ctx.curr_binding = bind 

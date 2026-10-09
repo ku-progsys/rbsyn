@@ -14,16 +14,20 @@ require "rbsyn/type_ops"
 require "rbsyn/exceptions"
 require "rbsyn/effects"
 require "rbsyn/assertions"
+require "rbsyn/instrumented_assertions" # AI generated: assert for inference runs (see the file header)
 require "rbsyn/ast"
 require "rbsyn/ast/node"
 require "rbsyn/ast/no_hole_pass"
 require "rbsyn/ast/prog_size_pass"
 require "rbsyn/ast/expand_hole_pass"
 require "rbsyn/ast/extract_ast_pass"
-require "rbsyn/ast/refine_types_pass"
+# require "rbsyn/ast/refine_types_pass"  # AI altered: RefineTypesPass merged into RefineTypesV2
+require "rbsyn/ast/refine_types_v2" # AI generated
 require "rbsyn/ast/flatten_prog_pass"
 require "rbsyn/context"
 require "rbsyn/bool_cond"
+require "rbsyn/dyn_arg_exhaustion" # AI generated: %dyn argument exhaustion used by SynHelper#generate
+require "rbsyn/learned_type_writeback" # AI generated: learned types written into hole-free candidates (ProgWrapper)
 require "rbsyn/syn_helper"
 require "rbsyn/dsl"
 require "rbsyn/prune/prune_strategy"
@@ -34,6 +38,7 @@ require "rbsyn/prog_wrapper"
 require "rbsyn/prog_cache"
 require "rbsyn/dbutils"
 require "rbsyn/reachability"
+require "rbsyn/spec_type_guard" # AI generated: per-spec decision whether to run an inference pass
 require "rbsyn/synthesizer"
 require "rbsyn/active_record/adapter"
 require "rbsyn/active_record/utils"

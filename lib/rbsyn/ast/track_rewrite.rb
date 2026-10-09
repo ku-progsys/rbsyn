@@ -72,9 +72,15 @@ class TrackerRewrite < ::AST::Processor
       lflag = @flag
       lnum_child = @num_child 
       knowntypes = []
-      newnode = node.updated(nil, ([TypedNode.new(:ivar, :ivar, :@dummyclass)] + [:w_instrument] + [node.children[0]] + [TypedNode.new(:sym, :sym, node.children[1])] + node.children[2 .. ]).map { |k|
-        @num_child = lnum_child + 0.1; k.is_a?(TypedNode) ? process(k) : k; @flag = lflag; k 
-      })
+      # newnode = node.updated(nil, ([TypedNode.new(:ivar, :ivar, :@dummyclass)] + [:w_instrument] + [node.children[0]] + [TypedNode.new(:sym, :sym, node.children[1])] + node.children[2 .. ]).map { |k|
+      #   @num_child = lnum_child + 0.1; k.is_a?(TypedNode) ? process(k) : k; @flag = lflag; k 
+      # })
+      # AI altered: the block above returned the original child k, discarding process(k), so a moi call nested
+      # inside another moi call was never wrapped in w_instrument even though it had taken a tracelist slot;
+      # at runtime every later instrumented call then read the wrong slot (wrong receiver/argument types)
+      newnode = node.updated(nil, ([TypedNode.new(:ivar, :ivar, :@dummyclass)] + [:w_instrument] + [node.children[0]] + [TypedNode.new(:sym, :sym, node.children[1])] + node.children[2 .. ]).map { |k| # AI generated
+        @num_child = lnum_child + 0.1; processed = k.is_a?(TypedNode) ? process(k) : k; @flag = lflag; processed # AI generated
+      }) # AI generated
 
       [newnode.children[2], *newnode.children[4..]].each do |chld|
         if chld.is_a?(TypedNode)
