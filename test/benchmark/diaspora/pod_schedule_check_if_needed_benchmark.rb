@@ -17,10 +17,21 @@ describe "Diaspora" do
 
     #MANUALLY ADDED vv
     RDL.type :DynamicType, :update!, "(%dyn) -> %dyn", wrap: false, write: ['self']
-    RDL.type :DynamicType, :status, '() -> %dyn', wrap: false
+    # RDL.type :DynamicType, :status, '() -> %dyn', wrap: false  # AI altered: getter needs its read effect
+    RDL.type :DynamicType, :status, '() -> %dyn', wrap: false, read: ['self'] # AI generated
+    RDL.type :DynamicType, :[], '(%dyn) -> %dyn', wrap: false # AI generated: vanilla's solution uses DiasporaPod.status_codes.[](:unchecked)
+    # AI generated: methods the assertions call (!!@pod.reload.scheduled_check == ...)
+    RDL.type :DynamicType, :reload, '() -> %dyn', wrap: false, read: ['self'] # AI generated
+    RDL.type :DynamicType, :scheduled_check, '() -> %dyn', wrap: false, read: ['self'] # AI generated
+    RDL.type :DynamicType, :!, '() -> %dyn', wrap: false # AI generated
     ParentsHelper.subtract()
 
-    define :schedule_check_if_needed, "(DiasporaPod) -> %bool", [DiasporaPod], prog_size: 50, moi: [:!=, :==, :update!, :"self.status_codes", :status] do
+    # define :schedule_check_if_needed, "(DiasporaPod) -> %bool", [DiasporaPod], prog_size: 50, moi: [:!=, :==, :update!, :"self.status_codes", :status] do
+    # AI altered: calls are written DiasporaPod.status_codes, so the moi name is :status_codes (:"self.status_codes" never matches
+    # a call); added :[]; added hashkeys (all DiasporaPod columns) so update!(scheduled_check: true) can be built
+    # define :schedule_check_if_needed, "(DiasporaPod) -> %bool", [DiasporaPod, {hashkeys: [:id, :updated_at, :scheduled_check, :status]}], prog_size: 50, moi: [:!=, :==, :update!, :status_codes, :status, :[], :reload, :scheduled_check, :!] do # AI generated
+    # AI altered: symbols the solution needs as bare arguments are given as constant components (depth-0 fills)
+    define :schedule_check_if_needed, "(DiasporaPod) -> %bool", [DiasporaPod, :unchecked, :no_errors, {hashkeys: [:id, :updated_at, :scheduled_check, :status]}], prog_size: 50, moi: [:!=, :==, :update!, :status_codes, :status, :[], :reload, :scheduled_check, :!] do # AI generated
       spec "schedules the pod for the next check if it is offline" do
         setup {
           @pod = Fabricate(:pod, status: :net_failed)

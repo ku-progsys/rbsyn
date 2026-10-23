@@ -16,6 +16,13 @@
 class DynArgExhaustion # AI generated
   attr_reader :concretized, :dropped
 
+  # AI generated: rebuild a node when any child is a different object. TypedNode#updated compares children with ==,
+  # which ignores types, so a change that only touches types would otherwise be discarded.
+  def self.rebuild_if_changed(node, new_children) # AI generated
+    changed = new_children.each_with_index.any? { |c, i| !c.equal?(node.children[i]) }
+    changed ? TypedNode.new(node.ttype, node.type, *new_children) : node
+  end
+
   def initialize(type_info)
     @type_info = type_info
     @first_size = {}
@@ -47,6 +54,15 @@ class DynArgExhaustion # AI generated
   MAX_CONCRETIZE_DEPTH = 8 # AI generated
 
   def concretize(prog_wrap, watermark, depth = 0) # AI generated
+    # >>> INSTRUMENTATION DD2 (AI generated, remove): how often the depth limit stops the recursion, with a sample site
+    if ENV["DBG_DYN"] && depth >= MAX_CONCRETIZE_DEPTH
+      $__dd2_depth = ($__dd2_depth || 0) + 1
+      if $__dd2_depth <= 3
+        s = sites(prog_wrap).find { |x| x[:keys].all? { |key| exhausted?(key, watermark) } }
+        warn "[DD2] depth limit hit (#{$__dd2_depth}): site=#{s && s[:keys].inspect} call=#{s && s[:node].to_s.gsub(/\s+/, ' ')[0, 160]} hole_types=#{s && s[:node].children[2..].map { |a| a.is_a?(TypedNode) ? "#{a.type}:#{a.ttype}" : a.inspect }.inspect} sigs=#{s && learned_signatures(s).map { |g| g[:args].map(&:to_s) }.inspect[0, 200]}"
+      end
+    end
+    # <<< INSTRUMENTATION DD2 <<<
     return nil if depth >= MAX_CONCRETIZE_DEPTH
     site = sites(prog_wrap).find { |s| s[:keys].all? { |key| exhausted?(key, watermark) } }
     return nil if site.nil?
@@ -97,11 +113,18 @@ class DynArgExhaustion # AI generated
       next false unless receiver_matches?(site[:recv_type], sig[:recvr])
       # arguments that are already filled must fit the signature
       args.each_with_index.all? { |arg, i|
-        # next true if arg.is_a?(TypedNode) && arg.type == :hole  # AI altered: see below
-        if arg.is_a?(TypedNode) && arg.type == :hole # AI generated
-          # a %dyn hole must become concrete; a signature that is %dyn there would leave it unchanged # AI generated
-          next !(arg.ttype.is_a?(RDL::Type::DynamicType) && sig[:args][i].is_a?(RDL::Type::DynamicType)) # AI generated
-        end # AI generated
+        next true if arg.is_a?(TypedNode) && arg.type == :hole # AI note: original line restored (2026-10-12)
+        # AI altered: the filter below was added on the wrong diagnosis that learned signatures contained %dyn; they
+        # don't (traced: it never fired). The real cause of the recursion was RetypeCall's node.updated discarding
+        # type-only changes (fixed in rebuild_if_changed). Kept here commented out.
+        # if arg.is_a?(TypedNode) && arg.type == :hole # AI generated
+        #   # a %dyn hole must become concrete; a signature that is %dyn there would leave it unchanged # AI generated
+        #   if ENV["DBG_DYN"] && arg.ttype.is_a?(RDL::Type::DynamicType) && sig[:args][i].is_a?(RDL::Type::DynamicType) # INSTRUMENTATION DD2 (AI generated, remove)
+        #     $__dd2_filter = ($__dd2_filter || 0) + 1 # INSTRUMENTATION DD2
+        #     warn "[DD2] filter skipped a %dyn signature (#{$__dd2_filter}): #{site[:meth]} recvr=#{sig[:recvr]} args=#{sig[:args].map(&:to_s).inspect} result=#{sig[:result]}" if $__dd2_filter <= 5 # INSTRUMENTATION DD2
+        #   end # INSTRUMENTATION DD2
+        #   next !(arg.ttype.is_a?(RDL::Type::DynamicType) && sig[:args][i].is_a?(RDL::Type::DynamicType)) # AI generated
+        # end # AI generated
         arg.is_a?(TypedNode) && subtype?(arg.ttype, sig[:args][i])
       }
     }
@@ -150,7 +173,9 @@ class DynArgExhaustion # AI generated
         return TypedNode.new(call.ttype, :begin, call)
       end
       return retyped_call if node.equal?(@target)
-      node.updated(nil, node.children.map { |k| k.is_a?(TypedNode) ? process(k) : k })
+      # node.updated(nil, node.children.map { |k| k.is_a?(TypedNode) ? process(k) : k })  # AI altered: TypedNode#updated
+      # returns the old node when children are == (node equality ignores types), dropping the retyped call
+      DynArgExhaustion.rebuild_if_changed(node, node.children.map { |k| k.is_a?(TypedNode) ? process(k) : k }) # AI generated
     end
 
     private

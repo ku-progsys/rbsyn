@@ -164,14 +164,26 @@ class Synthesizer
       #   @ctx.logger.debug("Searching for branch with no type inference.")
       #   branches = generate(seed, [precond], [TRUE_POSTCOND], true) 
       # end
+      # AI generated: with a single spec there is nothing to merge (the program is returned directly below, before any
+      # merging), so the branch condition is never used; skip the search. With all outside types blocked it can find
+      # nothing to build a condition from and used to end the test with "No candidates found" (synthetic/false, lvar).
+      single_spec = @ctx.preconds.size == 1 # AI generated
+      if single_spec # AI generated
+        @ctx.logger.debug("Single spec: skipping the branch search (the branch is only used when merging)") # AI generated
+        branches = [] # AI generated
+      else # AI generated
       @ctx.logger.debug("Searching for branch") # AI generated (kept from the block above)
-      branches = branch_search(precond, inference_iterations, use_inference) # AI generated
-      
+      # branches = branch_search(precond, inference_iterations, use_inference) # AI altered: `!` visible during the branch search only
+      branches = with_condition_terms { branch_search(precond, inference_iterations, use_inference) } # AI generated
+      end # AI generated
+
       cond = BoolCond.new
       branches.each { |b| warn "[BR] branch=#{b.to_ast.to_s.gsub(/\s+/, ' ')[0, 250]} ttype=#{b.to_ast.ttype}" } if ENV["DBG_DYN"] # INSTRUMENTATION BR (AI generated, remove)
       branches.each { |b| cond << update_types_pass.process(b.to_ast) }
 
-      @ctx.logger.debug("Synthesized branch: #{format_ast(cond.to_ast)}")
+      # @ctx.logger.debug("Synthesized branch: #{format_ast(cond.to_ast)}")
+      # AI altered: BoolCond#to_ast assumes at least one condition, so an empty one (single spec) is not formatted
+      @ctx.logger.debug("Synthesized branch: #{format_ast(cond.to_ast)}") unless single_spec # AI generated
       @ctx.logger.debug("\n\\\\\\\\\\\\\\\\\\\\\\\\\n\n")
       k = ProgTuple.new(@ctx, prog, cond, [precond], [postcond])
       k

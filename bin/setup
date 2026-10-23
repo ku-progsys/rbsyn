@@ -3,6 +3,59 @@ set -euo pipefail
 IFS=$'\n\t'
 set -vx
 
-bundle install
+# bundle install # AI altered (2026-10-21): replaced by the full host setup below
 
-# Do any other automated setup that you need to do here
+# AI generated (2026-10-21): builds the project on a fresh Ubuntu host (24.04 or newer). Safe to rerun; every step
+# skips what is already done.
+#   bin/setup                      dev checkout only (this repository)
+#   bin/setup --vanilla ~/rbsyn    also the fully-typed baseline: cloned at commit b9426b1 if the folder is missing
+# Ruby and Bundler versions come from .ruby-version and Gemfile.lock, so the right ones are used on any host.
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" # AI generated
+VANILLA="" # AI generated
+VANILLA_COMMIT="b9426b1" # AI generated: the fully-typed version used for all comparisons so far
+VANILLA_REPO="https://github.com/ku-progsys/rbsyn.git" # AI generated
+if [ "${1:-}" = "--vanilla" ]; then VANILLA="${2:?usage: bin/setup --vanilla <folder>}"; fi # AI generated
+
+# 1. system packages (Ruby is compiled from source; several gems compile native code)
+PKGS=(git curl build-essential autoconf patch libssl-dev libyaml-dev libreadline-dev zlib1g-dev libgmp-dev # AI generated
+      libncurses-dev libffi-dev libgdbm-dev libdb-dev uuid-dev) # AI generated
+MISSING=() # AI generated
+for p in "${PKGS[@]}"; do dpkg -s "$p" >/dev/null 2>&1 || MISSING+=("$p"); done # AI generated
+if [ "${#MISSING[@]}" -gt 0 ]; then sudo apt-get update && sudo apt-get install -y "${MISSING[@]}"; fi # AI generated
+
+# 2. rbenv and ruby-build (ruby-build is updated so it knows every Ruby release)
+[ -d "$HOME/.rbenv" ] || git clone https://github.com/rbenv/rbenv.git "$HOME/.rbenv" # AI generated
+if [ -d "$HOME/.rbenv/plugins/ruby-build" ]; then git -C "$HOME/.rbenv/plugins/ruby-build" pull --ff-only; # AI generated
+else git clone https://github.com/rbenv/ruby-build.git "$HOME/.rbenv/plugins/ruby-build"; fi # AI generated
+grep -q 'rbenv init' "$HOME/.bashrc" 2>/dev/null || echo 'eval "$(~/.rbenv/bin/rbenv init - bash)"' >> "$HOME/.bashrc" # AI generated
+export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH" # AI generated
+set +u; eval "$(rbenv init - bash)"; set -u # AI generated: rbenv's init script reads unset variables
+
+# 3. the exact Ruby; newer compilers reject parts of older Ruby sources, so retry with the older C standard
+setup_ruby() { # AI generated
+  local dir="$1" # AI generated
+  cd "$dir" # AI generated
+  local ver; ver="$(cat .ruby-version)" # AI generated
+  rbenv install -s "$ver" || CFLAGS="-std=gnu17" rbenv install -s "$ver" # AI generated
+  [ "$(rbenv version-name)" = "$ver" ] || { echo "rbenv picks $(rbenv version-name), expected $ver in $dir"; exit 1; } # AI generated
+  ruby -v | grep -q "ruby $ver" || { echo "ruby on PATH is $(ruby -v), expected $ver"; exit 1; } # AI generated
+  # 4. the Bundler that wrote Gemfile.lock, then the gems (rdl and minisat come from GitHub)
+  local bver; bver="$(awk '/BUNDLED WITH/{getline; gsub(/ /, ""); print}' Gemfile.lock)" # AI generated
+  gem list -i bundler -v "$bver" >/dev/null || gem install bundler -v "$bver" # AI generated
+  bundle "_${bver}_" install # AI generated
+  # 5. quick check: one fast benchmark must pass
+  bundle "_${bver}_" exec rake TEST=test/benchmark/synthetic/false_benchmark.rb 2>&1 | grep -v "warning:" | tail -n 3 # AI generated
+} # AI generated
+
+setup_ruby "$ROOT" # AI generated
+
+if [ -n "$VANILLA" ]; then # AI generated
+  VANILLA="$(eval echo "$VANILLA")" # AI generated: expand a quoted ~
+  if [ -d "$VANILLA/.git" ]; then # AI generated: an existing checkout is left as it is
+    [ "$(git -C "$VANILLA" rev-parse --short HEAD)" = "$VANILLA_COMMIT" ] || echo "note: $VANILLA is not at $VANILLA_COMMIT" # AI generated
+  else # AI generated
+    git clone "$VANILLA_REPO" "$VANILLA" && git -C "$VANILLA" checkout "$VANILLA_COMMIT" # AI generated
+  fi # AI generated
+  setup_ruby "$VANILLA" # AI generated
+fi # AI generated

@@ -40,6 +40,7 @@ class ExpandHolePass < ::AST::Processor
     @limit_depth = @params.fetch(:limit_depth, false)
     @variance = @params.fetch(:variance, COVARIANT)
     @recv = @params.fetch(:recv, false)
+    @ctx.type_info.note_hole_expansion(node.ttype) if ENV["ADD_DYN"] == "TRUE" && !@effect && !@limit_depth # AI generated: speculative hole score (InferTypes#hole_p)
     expanded = []
 
     if depth == 0
@@ -128,7 +129,13 @@ class ExpandHolePass < ::AST::Processor
     # synthesize a hole with higher depth
     # TODO: we don't do this if we are synthesizing for effects, will do after
     # effect reachability graph is implemented
-    expanded << s(node.ttype, :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth)
+    # expanded << s(node.ttype, :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth) # AI altered (2026-10-19): depth cap during inference
+    # AI generated: during inference, holes deeper than INFO_MAX_HOLE_DEPTH (default 3) are not created. With %dyn
+    # every declared method is reachable from every receiver, so a depth-4 hole expands to ~200k alternatives and
+    # overflows the stack in the s(..., *expanded) splat below (SystemStackError in discussion_build).
+    max_hole_depth = (ENV["INFO_MAX_HOLE_DEPTH"] || "3").to_i # AI generated
+    capped = ENV["ADD_DYN"] == "TRUE" && depth + 1 > max_hole_depth # AI generated
+    expanded << s(node.ttype, :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth || capped) # AI generated
     #binding.pry
     # if !node.ttype.is_a?(RDL::Type::DynamicType)
     #   expanded << s(RDL::Type::DynamicType.new(), :hole, depth + 1, {hash_depth: @curr_hash_depth, method_arg: @method_arg, variance: @variance}) unless (@effect || @limit_depth)
@@ -183,6 +190,7 @@ class ExpandHolePass < ::AST::Processor
           next
         when RDL::Type::SingletonType
           next if RDL::Util.has_singleton_marker(klass).nil?
+          next unless type.val.is_a?(Class) # AI generated: class-method effects need a class receiver; components can also be symbols (constants) or the hashkeys hash, which to_class cannot resolve
           klass_qual = RDL::Util.to_class(RDL::Util.remove_singleton_marker(klass))
           recv_qual = RDL::Util.to_class(type.val)
           if recv_qual.ancestors.include? klass_qual
@@ -391,11 +399,15 @@ class ExpandHolePass < ::AST::Processor
           begin
             tret = compute_tout(trecv, [tmeth], targs)
           rescue Exception => e 
+            raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
             binding.pry
           end
 
           hole_args = targs.map { |targ| s(targ, :hole, 0, {hash_depth: @curr_hash_depth, method_arg: true}) }
-          temp_nested_accum = copied = Marshal.load(Marshal.dump(nested_accum))
+          # temp_nested_accum = copied = Marshal.load(Marshal.dump(nested_accum)) # AI altered (2026-10-20): the deep copy
+          # also copied every RDL type in the nodes, with RDL's ubounds/lbounds lists; for the argument hash type of
+          # overview_example that was 0.25-1.1 GB per call (out of memory). Nodes are copied, types are shared.
+          temp_nested_accum = copied = copy_nodes_share_types(nested_accum) # AI generated
           temp_nested_accum.each do |accum|
 
             if @moi.include?(mth)
@@ -430,6 +442,7 @@ class ExpandHolePass < ::AST::Processor
                   next unless accum.ttype <= trecv
                   accum = s(tret, :send, TypedNode.new(accum.ttype, :begin, accum), mth, *hole_args)
                 rescue Exception => e 
+                  raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
                   puts e 
                   puts accum
                   puts accum.ttype
@@ -482,6 +495,18 @@ class ExpandHolePass < ::AST::Processor
     # end
     # puts "END--------------\n"
     nested_accum
+  end
+
+  # AI generated (2026-10-20): copy of an AST (or array of ASTs) that rebuilds the nodes, arrays and hole parameter
+  # hashes but shares RDL type objects (replaces Marshal deep copy in fn_call)
+  def copy_nodes_share_types(obj) # AI generated
+    case obj
+    when TypedNode then TypedNode.new(obj.ttype, obj.type, *obj.children.map { |c| copy_nodes_share_types(c) })
+    when Parser::AST::Node then obj.updated(nil, obj.children.map { |c| copy_nodes_share_types(c) })
+    when Array then obj.map { |c| copy_nodes_share_types(c) }
+    when Hash then obj.transform_values { |v| copy_nodes_share_types(v) }
+    else obj
+    end
   end
 
   def finite_hash(type)

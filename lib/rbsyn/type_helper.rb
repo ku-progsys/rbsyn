@@ -46,6 +46,7 @@ class ParentsHelper
   @@blocked = {}     # AI generated: pre-window RDL entries removed by subtract, kept here (unused by the synthesizer)
 
   def self.init_list()
+    TypeOperations.bump_methods_gen if defined?(TypeOperations) && TypeOperations.respond_to?(:bump_methods_gen) # AI generated (2026-10-19): methods_of cache
     @@parents = RDL::Globals.info.info.keys()
     @@preexisting = snapshot_rdl_info() # AI generated
   end
@@ -65,6 +66,7 @@ class ParentsHelper
   # Array-valued kinds (:type, :effect, :read, :write) are cut back to the entries added in the window;
   # a method the window did not add anything to is removed entirely.
   def self.block_preexisting_types() # AI generated
+    TypeOperations.bump_methods_gen if defined?(TypeOperations) && TypeOperations.respond_to?(:bump_methods_gen) # AI generated (2026-10-19): methods_of cache
     info = RDL::Globals.info.info
     @@blocked = {}
     @@preexisting.each { |klass, meths|
@@ -90,6 +92,7 @@ class ParentsHelper
   end
 
   def self.subtract()
+    TypeOperations.bump_methods_gen if defined?(TypeOperations) && TypeOperations.respond_to?(:bump_methods_gen) # AI generated (2026-10-19): methods_of cache
     @@parents = RDL::Globals.info.info.keys() - @@parents
     @@parents.append("Object") unless @@parents.include?("Object")
     @@parents.append("BasicObject") unless @@parents.include?("BasicObject")
@@ -106,6 +109,7 @@ class ParentsHelper
 
 
   def self.addTypeManually(typeSigStr)
+    TypeOperations.bump_methods_gen if defined?(TypeOperations) && TypeOperations.respond_to?(:bump_methods_gen) # AI generated (2026-10-19): methods_of cache
     if !(typeSigStr == "nil")
       RDL.nowrap typeSigStr unless @@parents.include?(typeSigStr)
       @@parents.append(typeSigStr) unless @@parents.include?(typeSigStr)
@@ -125,6 +129,7 @@ class ParentsHelper
   end
 
   def self.setFlag()
+    TypeOperations.bump_methods_gen if defined?(TypeOperations) && TypeOperations.respond_to?(:bump_methods_gen) # AI generated (2026-10-19): methods_of cache
     @@flag = true
   end
   

@@ -108,6 +108,7 @@ module AST
     begin
       ast = rewriter.process(ast)
     rescue Exception => e 
+      raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
       puts "EXCEPTION"
       puts ast
       binding.pry
@@ -138,6 +139,7 @@ module AST
         binding.pry
       end
     rescue Exception => e
+      raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
       if ENV["MANFLAG"]== "T"
         binding.pry
       end

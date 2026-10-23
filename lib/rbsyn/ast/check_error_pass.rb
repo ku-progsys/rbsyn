@@ -121,6 +121,7 @@ class CheckErrorPass < ::AST::Processor
         #node.update_ttype(tret)  # uncomment if you would like the type to be updated with the emperical  types
         return tret
       rescue Exception => e
+        raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
         return "error"
       end
     end
@@ -162,7 +163,8 @@ class CheckErrorPass < ::AST::Processor
     
     if template[:args].size != signature[:args].size
       return false
-    elsif !(signature[:recvr] <= template[:recvr])  # comment if you want it to be non-conservative in what it rejects
+    # elsif !(signature[:recvr] <= template[:recvr])  # AI altered (2026-10-20): recorded RDL bounds, see TypeOperations.leq_nc
+    elsif !TypeOperations.leq_nc(signature[:recvr], template[:recvr])  # AI generated # comment if you want it to be non-conservative in what it rejects
       # TODO clean comment and put in readme or experiemental log
       # we aren't using liskov, we are not trying to find out if an unknown function
       # is a subtype, we are trying to find out if a known function is being used 
@@ -182,6 +184,7 @@ class CheckErrorPass < ::AST::Processor
     begin
       return !(template[:args].zip(signature[:args]).any? {|t,s| !left_intersection_subtype(t, s)})
     rescue Exception => e 
+      raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
       binding.pry
     end
 #     => 933
@@ -203,6 +206,7 @@ class CheckErrorPass < ::AST::Processor
         #puts "testing function on template: #{template}\n\n\nsignature: #{signature}\n\n"
         return true
       end
+      return false # AI generated (2026-10-20): otherwise :ALL fell through below (Symbol#size is 3, then [recvr] + :ALL raised into binding.pry)
     end
     if template[:args].size != signature[:args].size
       # for now I can't think of how to handle a vararg
@@ -214,18 +218,33 @@ class CheckErrorPass < ::AST::Processor
 
         # t <= s || left_intersection_subtype(t, s)  # same as above, uncomment second predicate if you want it to be overzealous
 
-        !left_intersection_supertype(t, s)
+        # !left_intersection_supertype(t, s) # AI altered (2026-10-20): wildcard positions, see wildcard_supertype
+        !wildcard_supertype(t, s) # AI generated
 
         #   return false
         # end
         } )
       rescue Exception => e 
+        raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
         binding.pry
         
       end
 
     #return true
 
+  end
+
+  # AI generated (2026-10-20): one position of a failure record against the call being checked. :ANY matches
+  # anything. An AnyKeysHash matches a hash that has that key with a value of a matching type (any other keys); a
+  # %dyn argument matches it, as %dyn matches any recorded type here. Anything else as before.
+  def wildcard_supertype(t, s) # AI generated
+    return true if t.equal?(:ANY) # identity: RDL types raise NoMethodError when compared to a symbol with ==
+    return left_intersection_supertype(t, s) unless t.is_a?(AnyKeysHash)
+    return true if s.is_a?(RDL::Type::DynamicType)
+    return false unless s.is_a?(RDL::Type::FiniteHashType) && s.elts.key?(t.key)
+    return true if t.type.equal?(:ANY) # AI generated (2026-10-20): wrong-key record, the key alone fails
+    unopt = ->(x) { x.is_a?(RDL::Type::OptionalType) ? x.type : x }
+    left_intersection_supertype(unopt.(t.type), unopt.(s.elts[t.key]))
   end
 
   def left_intersection_subtype(lower, upper)
@@ -278,12 +297,14 @@ class CheckErrorPass < ::AST::Processor
     end
     x = l.any? do |t_left| u.any? do |t_right| 
       begin 
-        t_right <= t_left
+        # t_right <= t_left # AI altered (2026-10-20): recorded RDL bounds, see TypeOperations.leq_nc
+        TypeOperations.leq_nc(t_right, t_left) # AI generated
       rescue NoMethodError
         # accounts for non-related types
         false 
       rescue FrozenError => e 
-        thaw(t_right) <= thaw(t_left)
+        # thaw(t_right) <= thaw(t_left) # AI altered (2026-10-20)
+        TypeOperations.leq_nc(thaw(t_right), thaw(t_left)) # AI generated
       end 
     end end
     #return l.any? { |t_left| u.any? { |t_right| t_right <= t_left  }}

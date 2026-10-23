@@ -1,0 +1,42 @@
+date,benchmark,config,timeout_s,result,test_time_s,peak_mb,notes,log
+2026-10-19,diaspora/invitation_code_use,INFO_ORDER=off,300,PASS,1.12,,before 2026-10-20 memory fixes,bench_dev_regress_1019_noorder
+2026-10-19,diaspora/user_confirm_email,INFO_ORDER=off,300,PASS,136.50,,before 2026-10-20 memory fixes,bench_dev_regress_1019_noorder
+2026-10-19,discourse/clear_global_notice_if_needed,INFO_ORDER=off,300,PASS,2.28,,before 2026-10-20 memory fixes; vanilla fails,bench_dev_regress_1019_noorder
+2026-10-19,gitlab/issue_close,INFO_ORDER=off,300,PASS,1.19,,before 2026-10-20 memory fixes,bench_dev_regress_1019_noorder
+2026-10-19,gitlab/issue_reopen,INFO_ORDER=off,300,PASS,2.83,,before 2026-10-20 memory fixes,bench_dev_regress_1019_noorder
+2026-10-19,synthetic/false,INFO_ORDER=off,300,PASS,0.03,,before 2026-10-20 memory fixes,bench_dev_regress_1019_noorder
+2026-10-19,synthetic/lvar,INFO_ORDER=off,300,PASS,0.03,,before 2026-10-20 memory fixes,bench_dev_regress_1019_noorder
+2026-10-19,synthetic/branch,INFO_ORDER=off,300,PASS,3.31,,before 2026-10-20 memory fixes,bench_dev_regress_1019_noorder
+2026-10-19,synthetic/method_chain,INFO_ORDER=off,300,PASS,1.93,,before 2026-10-20 memory fixes,bench_dev_regress_1019_noorder
+2026-10-19,synthetic/user_exists,INFO_ORDER=off,300,PASS,2.69,,before 2026-10-20 memory fixes,bench_dev_regress_1019_noorder
+2026-10-20,gitlab/issue_close,INFO_ORDER=off,200,PASS,0.92,,after memory fixes (regression check),explore_1020/issue_close_copyfix.log
+2026-10-20,synthetic/overview_example,INFO_ORDER=off,300,TIMEOUT,300.01,281,inference 115s; typed search 185s no solution,ov_copyfix.log
+2026-10-20,diaspora/pod_schedule_check_if_needed,default (ordering on),300,TIMEOUT,300.00,3304,inference 242s,oom_recheck_1020
+2026-10-20,discourse/unstage_user,default (ordering on),300,TIMEOUT,300.01,3571,inference not finished,oom_recheck_1020
+2026-10-20,discourse/activate,default (ordering on),300,NO_CANDIDATES,76.34,1097,typed search exhausted after inference,oom_recheck_1020
+2026-10-20,discourse/unstage_user,INFO_ORDER=off ,1200,TIMEOUT,1200.01,282,inference 13:16:46 13:16:49 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_1020/discourse_unstage_user.log
+2026-10-20,diaspora/pod_schedule_check_if_needed,INFO_ORDER=off ,1200,TIMEOUT,1200.01,599,inference 13:16:46 13:16:48 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_1020/diaspora_pod_schedule_check_if_needed.log
+2026-10-20,discourse/check_site_contact_username,INFO_ORDER=off ,1200,PASS,144.95,190,inference 13:36:48 13:36:49 ,long_1020/discourse_check_site_contact_username.log
+2026-10-20,gitlab/discussion_build,INFO_ORDER=off ,1200,NO_CANDIDATES,1.86,,inference 13:44:09 13:44:11 ; RbSynError: No candidates found ,long_1020/gitlab_discussion_build.log
+2026-10-20,discourse/activate,INFO_ORDER=off ,1200,NO_CANDIDATES,4.96,,inference 13:44:13 13:44:17 ; RbSynError: No candidates found ,long_1020/discourse_activate.log
+2026-10-20,synthetic/merge,INFO_ORDER=off ,1200,NO_CANDIDATES,47.54,151,inference 13:44:19 13:44:19 ; RbSynError: No candidates found ,long_1020/synthetic_merge.log
+2026-10-20,diaspora/user_process_invite_acceptence,INFO_ORDER=off ,1200,PASS,1.17,,inference 13:45:09 13:45:10 ,long_1020/diaspora_user_process_invite_acceptence.log
+2026-10-20,synthetic/overview_example,INFO_ORDER=off ,1200,TIMEOUT,1200.01,422,inference 13:36:48 13:38:47 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_1020/synthetic_overview_example.log
+2026-10-20,discourse/unstage_user,INFO_ORDER=off ITERS=38,600,TIMEOUT,600.11,265,inference 16:31:11 16:31:17 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s1/discourse_unstage_user.log
+2026-10-20,diaspora/pod_schedule_check_if_needed,INFO_ORDER=off ITERS=38,600,TIMEOUT,600.07,246,inference 16:31:11 16:31:14 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s1/diaspora_pod_schedule_check_if_needed.log
+2026-10-20,gitlab/discussion_build,INFO_ORDER=off ITERS=38,600,NO_CANDIDATES,4.48,,inference 16:41:21 16:41:25 ; RbSynError: No candidates found ,long_esc1020_s1/gitlab_discussion_build.log
+2026-10-20,discourse/activate,INFO_ORDER=off ITERS=38,600,NO_CANDIDATES,5.96,,inference 16:41:27 16:41:24 ; RbSynError: No candidates found ,long_esc1020_s1/discourse_activate.log
+2026-10-20,synthetic/overview_example,INFO_ORDER=off ITERS=38,600,TIMEOUT,600.01,401,inference 16:41:21 16:47:40 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s1/synthetic_overview_example.log
+2026-10-20,synthetic/merge,INFO_ORDER=off ITERS=38,600,TIMEOUT,600.11,200,inference 16:41:27 16:41:28 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s1/synthetic_merge.log
+2026-10-20,diaspora/pod_schedule_check_if_needed,INFO_ORDER=off ITERS=38,1200,TIMEOUT,1200.01,432,inference 16:51:15 16:51:17 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s2/diaspora_pod_schedule_check_if_needed.log
+2026-10-20,discourse/unstage_user,INFO_ORDER=off ITERS=38,1200,TIMEOUT,1200.08,363,inference 16:51:15 16:51:21 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s2/discourse_unstage_user.log
+2026-10-20,gitlab/discussion_build,INFO_ORDER=off ITERS=38,1200,NO_CANDIDATES,4.90,,inference 17:10:43 17:10:48 ; RbSynError: No candidates found ,long_esc1020_s2/gitlab_discussion_build.log
+2026-10-20,discourse/activate,INFO_ORDER=off ITERS=38,1200,NO_CANDIDATES,6.68,,inference 17:10:44 17:10:49 ; RbSynError: No candidates found ,long_esc1020_s2/discourse_activate.log
+2026-10-20,synthetic/overview_example,INFO_ORDER=off ITERS=38,1200,TIMEOUT,1200.01,491,inference 17:10:49 17:17:14 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s2/synthetic_overview_example.log
+2026-10-20,synthetic/merge,INFO_ORDER=off ITERS=38,1200,TIMEOUT,1200.01,206,inference 17:10:51 17:10:52 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s2/synthetic_merge.log
+2026-10-20,diaspora/pod_schedule_check_if_needed,INFO_ORDER=off ITERS=76,1200,TIMEOUT,1200.01,451,inference 17:29:54 17:30:04 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s3/diaspora_pod_schedule_check_if_needed.log
+2026-10-20,discourse/unstage_user,INFO_ORDER=off ITERS=76,1200,TIMEOUT,1200.14,354,inference 17:29:54 17:30:06 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s3/discourse_unstage_user.log
+2026-10-20,discourse/activate,INFO_ORDER=off ITERS=76,1200,NO_CANDIDATES,10.74,163,inference 17:48:40 17:48:49 ; RbSynError: No candidates found ,long_esc1020_s3/discourse_activate.log
+2026-10-20,gitlab/discussion_build,INFO_ORDER=off ITERS=76,1200,TIMEOUT,1200.01,235,inference 17:48:39 17:49:00 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s3/gitlab_discussion_build.log
+2026-10-20,synthetic/overview_example,INFO_ORDER=off ITERS=76,1200,TIMEOUT,1200.12,727,inference 17:48:51 18:03:25 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s3/synthetic_overview_example.log
+2026-10-20,synthetic/merge,INFO_ORDER=off ITERS=76,1200,TIMEOUT,1200.02,232,inference 18:07:35 18:07:37 ; Timeout::Error: execution expired /home/bryanr/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/timeout-0.4.2/lib/timeout.,long_esc1020_s3/synthetic_merge.log

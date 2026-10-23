@@ -1,3 +1,4 @@
+require_relative "rbsyn/run_switches" # AI generated (2026-10-20): run switches, edit lib/rbsyn/run_switches.rb
 require "rdl"
 require "unparser"
 require 'parser/current'
@@ -27,6 +28,7 @@ require "rbsyn/ast/flatten_prog_pass"
 require "rbsyn/context"
 require "rbsyn/bool_cond"
 require "rbsyn/dyn_arg_exhaustion" # AI generated: %dyn argument exhaustion used by SynHelper#generate
+require "rbsyn/dead_call_prune" # AI generated (2026-10-20): dead-candidate pruning used by SynHelper#generate
 require "rbsyn/learned_type_writeback" # AI generated: learned types written into hole-free candidates (ProgWrapper)
 require "rbsyn/syn_helper"
 require "rbsyn/dsl"

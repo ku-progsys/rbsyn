@@ -13,7 +13,8 @@ class LearnedTypeWriteBack < ::AST::Processor # AI generated
 
   def initialize(type_info)
     @successes = type_info.type_successes
-    @matcher = CheckErrorPass.new(type_info.type_errs, type_info.type_successes)
+    # @matcher = CheckErrorPass.new(type_info.type_errs, type_info.type_successes) # AI altered (2026-10-20): replaced, see check_error_pass_v2.rb
+    @matcher = (ENV["CHECKER"] == "old" ? CheckErrorPass : CheckErrorPassV2).new(type_info.type_errs, type_info.type_successes) # AI generated
     @changed = false
   end
 
@@ -21,7 +22,8 @@ class LearnedTypeWriteBack < ::AST::Processor # AI generated
     recv, mth, *args = node.children
     new_recv = recv.is_a?(TypedNode) ? process(recv) : recv
     new_args = args.map { |a| a.is_a?(TypedNode) ? process(a) : a }
-    rebuilt = node.updated(nil, [new_recv, mth, *new_args])
+    # rebuilt = node.updated(nil, [new_recv, mth, *new_args])  # AI altered: updated ignores type-only changes (see below)
+    rebuilt = DynArgExhaustion.rebuild_if_changed(node, [new_recv, mth, *new_args]) # AI generated
 
     learned = learned_result(mth, new_recv, new_args)
     return rebuilt if learned.nil? || learned == node.ttype
@@ -30,7 +32,10 @@ class LearnedTypeWriteBack < ::AST::Processor # AI generated
   end
 
   def handler_missing(node)
-    rebuilt = node.updated(nil, node.children.map { |k| k.is_a?(TypedNode) ? process(k) : k })
+    # rebuilt = node.updated(nil, node.children.map { |k| k.is_a?(TypedNode) ? process(k) : k })  # AI altered:
+    # TypedNode#updated returns the old node when children are == (node equality ignores types), so learned types
+    # written into nested calls were dropped and only the top node of each tree could change
+    rebuilt = DynArgExhaustion.rebuild_if_changed(node, node.children.map { |k| k.is_a?(TypedNode) ? process(k) : k }) # AI generated
     if node.type == :begin && rebuilt.children.size == 1 && rebuilt.children[0].is_a?(TypedNode) &&
        node.ttype.is_a?(RDL::Type::DynamicType) && !rebuilt.children[0].ttype.is_a?(RDL::Type::DynamicType)
       @changed = true

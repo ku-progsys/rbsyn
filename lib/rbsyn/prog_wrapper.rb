@@ -8,6 +8,9 @@ class ProgWrapper
 
   attr_reader :seed, :env, :exprs, :looking_for, :target, :inferred_errors, :exprs
   attr_accessor :passed_asserts, :inferred_errors, :ctx, :env, :ttype, :dynamic_components, :typehash, :typestring
+  attr_accessor :info_score # AI generated: cached information-guided score (InferTypes#info_score), nil = not computed
+  attr_accessor :occ_counted # AI generated (2026-10-19): counted in InferTypes#note_occurrences
+  attr_accessor :info_syms # AI generated (2026-10-19): cached scoring symbols (InferTypes#info_symbols)
 
   def remove_duplicates(list)
     counts = {}
@@ -149,6 +152,8 @@ class ProgWrapper
 
   def add_side_effect_expr(expr)
     @prog_size_cache = nil # AI generated: program changed, invalidate cached size
+    @hole_count_cache = nil # AI generated (2026-10-20): same for the hole count
+    @info_syms = nil # AI generated (2026-10-19): program changed, invalidate cached scoring symbols
     @structure_string = @structure_hash = @hole_free = nil # AI generated: program changed, invalidate cached keys
     @exprs << expr
   end
@@ -235,6 +240,7 @@ class ProgWrapper
           # so skip
           next
         rescue Exception => e
+          raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
           ($__rej ||= Hash.new(0))["#{e.class}: #{e.message.to_s[0, 90]}"] += 1 if ENV["DBG_DYN"] # INSTRUMENTATION Q2 (AI generated, remove)
          
           #refiner = DynamicRefineTypes.new(@ctx, new_env)
@@ -359,6 +365,11 @@ class ProgWrapper
           #   binding.pry
           # end
           flag = false
+          # AI generated (2026-10-19): %dyn placeholder methods exist only during inference (methods_of adds DynamicType
+          # to the parents only when ADD_DYN is TRUE). Offering them here in the typed search made the effect search
+          # build calls that methods_of does not know, e.g. InvitationCode#invited_by_id= -> fn_call crashed on
+          # info[:type] for nil (user_process_invite_acceptence, open_bugs item 4).
+          next if cls.include?("DynamicType") && ENV["ADD_DYN"] != "TRUE" # AI generated
           v2.fetch(:write, ['']).each { |weff|
             if cls.include?("DynamicType")
               save_cls = cls
@@ -368,8 +379,10 @@ class ProgWrapper
             end
             begin
             cls_qual = RDL::Util.to_class(cls)
-            rescue Exception => e 
-              binding.pry 
+            rescue Exception => e
+              raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
+              warn "[KC] to_class failed for RDL key #{cls.inspect} (method #{meth.inspect}, write effects #{v2.fetch(:write, ['']).inspect}): #{e.class}: #{e.message[0, 80]}" if ENV["DBG_DYN"] # INSTRUMENTATION KC (AI generated, remove)
+              # binding.pry # AI altered (2026-10-20): would hang unattended runs
               RDL::Util.to_class
             end
 
@@ -409,6 +422,20 @@ class ProgWrapper
   def has_hole?
     [@seed, *@exprs].any? { |prog| NoHolePass.has_hole? prog, @env }
   end
+
+  # AI generated (2026-10-20): number of holes left in the program (exploration/exploitation pick in generate)
+  def hole_count # AI generated
+    @hole_count_cache ||= begin # AI generated
+      count = 0 # AI generated
+      walk = lambda { |node| # AI generated
+        next unless node.is_a?(Parser::AST::Node) # AI generated
+        count += 1 if node.type == :hole # AI generated
+        node.children.each { |c| walk.(c) } # AI generated
+      } # AI generated
+      [@seed, *@exprs].each { |prog| walk.(prog) } # AI generated
+      count # AI generated
+    end # AI generated
+  end # AI generated
 
   # def prog_size
   #   [@seed, *@exprs].map { |prog| ProgSizePass.prog_size prog, @env }.sum

@@ -134,6 +134,7 @@ module TypeOperations
               begin
                 i << targ.compute(bind)
               rescue Exception => e 
+                raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
  
                 targ.compute(bind) 
               end
@@ -440,10 +441,63 @@ module TypeOperations
     methods_of_uninstrumented(trecv)
   end
 
-  def methods_of_uninstrumented(trecv)
+  # def methods_of_uninstrumented(trecv) # AI altered (2026-10-19): now cached, see methods_of_cached below
+  def methods_of_uninstrumented(trecv) # AI generated
+    return methods_of_build(trecv) if ENV.key?("NO_METHODS_CACHE") # AI generated: NO_METHODS_CACHE=1 disables the cache
+    methods_of_cached(trecv) # AI generated
+  end
+
+  # AI generated (2026-10-19): methods_of rebuilt the merged method table from every parent class on every call (14% of
+  # a profiled discussion_build run). The merged table is cached per (receiver type, ADD_DYN, DYN_RECV_ALL) and the whole
+  # cache is dropped when TypeOperations.methods_gen changes, which is bumped on every change to RDL's method tables
+  # (RDL::Info add/set/set!/remove, ParentsHelper window changes, with_condition_terms restore). Callers modify the
+  # result (Reachability deletes :__getobj__, generic return types are overwritten), so each call gets a copy.
+  @@methods_gen = 0 # AI generated
+  def self.bump_methods_gen # AI generated
+    @@methods_gen += 1
+  end
+
+  def self.methods_gen # AI generated
+    @@methods_gen
+  end
+
+  # AI generated (2026-10-20): subtype check that does not record bounds. RDL's `a <= b` appends to ubounds/lbounds of
+  # finite hash and tuple types on every success (bookkeeping for RDL's promote!, which rbsyn never uses). Our error
+  # checks compared the same argument hash type ~540k times, its bound lists grew without limit, and fn_call's
+  # Marshal deep copy then serialized 0.3-1.1 GB per call (overview_example). Identical objects are always subtypes.
+  # Note RDL does not pass no_constraint to its recursive calls, so hash types nested in unions can still record.
+  def self.leq_nc(left, right) # AI generated
+    left.equal?(right) || RDL::Type::Type.leq(left, right, no_constraint: true)
+  end
+
+  def methods_of_cached(trecv) # AI generated
+    $__methods_cache = {} if $__methods_cache.nil? || $__methods_cache_gen != @@methods_gen
+    $__methods_cache_gen = @@methods_gen
+    key = [trecv.class.name, trecv.to_s, ENV["ADD_DYN"], ENV.key?("DYN_RECV_ALL")]
+    table = ($__methods_cache[key] ||= methods_of_build(trecv))
+    copy_class_methods(table)
+  end
+
+  def methods_of_build(trecv) # AI generated: the previous body of methods_of_uninstrumented, unchanged
     # <<< INSTRUMENTATION M <<<
 
-    parents = parents_of(trecv)
+    # parents = parents_of(trecv) # AI altered (2026-10-19): see ROLLBACK note below
+    # !!! ROLLBACK POINT (AI generated, 2026-10-19). To restore the old behaviour run with DYN_RECV_ALL=1, or delete  !!!
+    # !!! this block and uncomment the line above.                                                                     !!!
+    # During inference, a receiver of UNKNOWN type (%dyn) is offered only the DynamicType placeholder methods. Before,
+    # parents_of(%dyn) returned every declared class, so every signature learned for a method on ANY class was offered
+    # as a separate option. Those options all produce the same program text as the placeholder (which already accepts
+    # any argument and returns %dyn), so they only duplicated candidates: 19 options per step instead of 10 in
+    # discussion_build, ~34k alternatives for a depth-3 hole, SystemStackError. Learned signatures still apply wherever
+    # the receiver's class is known. The user thinks the type information may be worth keeping here; revisit later.
+    if ENV["ADD_DYN"] == "TRUE" && trecv.is_a?(RDL::Type::DynamicType) && !ENV.key?("DYN_RECV_ALL") # AI generated
+      # parents = ["DynamicType"] # AI altered (2026-10-19): class-method placeholders live under [s]DynamicType; without
+      #                            # them the effect search built e.g. EmailToken.confirm on a %dyn receiver that
+      #                            # methods_of did not offer (activate, check_site_contact_username)
+      parents = ["DynamicType", "[s]DynamicType"] # AI generated: a value of unknown type may also be a class
+    else # AI generated
+      parents = parents_of(trecv) # AI generated
+    end # AI generated
 
       if ENV["ADD_DYN"] == "TRUE"
         parents.append("DynamicType") unless parents.include?("DynamicType")
@@ -488,3 +542,13 @@ module TypeOperations
     
   end
 end
+# AI generated (2026-10-19): every change to RDL's method tables invalidates the methods_of cache (see methods_of_cached)
+module RDLInfoMethodsGen # AI generated
+  [:add, :set, :set!, :remove].each do |m|
+    define_method(m) do |*args, **kw, &blk|
+      TypeOperations.bump_methods_gen
+      super(*args, **kw, &blk)
+    end
+  end
+end
+RDL::Info.prepend(RDLInfoMethodsGen) # AI generated

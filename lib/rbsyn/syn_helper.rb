@@ -70,10 +70,13 @@ module SynHelper
     sweep_mode = ENV.key?("SWEEP_DYN") # AI generated: opt-in single-pass inference (see the inference limit below)
     exhaustion = DynArgExhaustion.new(@ctx.type_info) # AI generated: exhaustion of %dyn argument holes (lib/rbsyn/dyn_arg_exhaustion.rb)
     last_watermark = nil # AI generated: smallest program size in the work list at the last exhaustion check
+    pruner = DeadCallPrune.new(@ctx.type_info) # AI generated (2026-10-20): drops candidates with a dead call (lib/rbsyn/dead_call_prune.rb)
     work_list = [seed_hole,]
     basehashlist = []
     evaluated_srcs = Set.new # AI generated: sources of hole-free programs already run against the specs
     counter = 0
+    programs_run = 0 # AI generated (2026-10-20): concrete programs run in this search (p(explore))
+    explore_picks = 0 # AI generated (2026-10-20): picks made by exploration, logged at the end
 
     until work_list.empty?
       # ENV["COUNT"] = (ENV["COUNT"].to_i + 1).to_s
@@ -88,6 +91,8 @@ module SynHelper
       # components are swept off the work list (kept in @swept_dyn for later reintroduction), inference
       # mode is switched off, and the same search continues with the typed candidates it already has.
       if counter >= type_search_depth && add_dyn # AI generated
+        @ctx.logger.debug("EXPLORE: inference ended at #{counter}: #{programs_run} programs run, #{explore_picks} exploration picks") if ENV["EXPLORE"] == "on" # AI generated (2026-10-20)
+        @ctx.logger.debug("PRUNE: inference ended at #{counter}, dropped #{pruner.dropped.to_h}") # AI generated (2026-10-20)
         raise NameError, "done checking for types at count: #{counter}" unless sweep_mode # AI generated: old path
         swept = work_list.select { |prog_wrap| prog_wrap.dynamic_components > 0 } # AI generated
         if swept.size == work_list.size # AI generated: nothing typed to continue with, fall back to the restart path
@@ -114,6 +119,8 @@ module SynHelper
       end
       raise SwitchToInference, "typed search reached #{counter} iterations" if switch_after && !add_dyn && counter >= switch_after # AI generated
       counter += 1
+      # AI generated: refresh the cached information scores every 100 iterations (P changes as calls are tested)
+      work_list.each { |pw| pw.info_score = nil } if add_dyn && counter % 100 == 0 # AI generated
       # puts "counter: #{counter}"
       #puts counter
       # binding.pry
@@ -126,8 +133,48 @@ module SynHelper
       # work_list = work_list.sort { |a, b| comparator(a, b) }  # AI altered: redundant, the list is already
       #                                                        # sorted at the end of the previous iteration
       $__prof_t = __prof_mark(:sort1, $__prof_t) if ENV["DBG_DYN"] # INSTRUMENTATION P (AI generated, remove)
-   
-      base = work_list.shift
+
+      # base = work_list.shift # AI altered (2026-10-19): weighted random pick during inference
+      # AI generated: during inference with information ordering, the next candidate is drawn at random from those with
+      # the fewest inferred errors, with probability proportional to its information score (entropy / size penalty),
+      # instead of always taking the best one. Seeded (INFO_SEED, default 1) so runs are reproducible.
+      # OFF by default (2026-10-19, user: discuss later); INFO_SAMPLE=on enables it.
+      # AI generated (2026-10-20): exploration/exploitation pick during inference (EXPLORE=on, off by default).
+      # Exploit = among the candidates with the fewest inferred errors, take the one with the fewest holes left (the
+      # closest to a program that can be run); explore = take the head of the list (current order). The choice is made
+      # per candidate program with p(explore) = n / (n + EXPLORE_K), n = concrete programs run so far in this search,
+      # so new holes are rarely opened until some programs have been run. Seeded (INFO_SEED, default 1).
+      if add_dyn && ENV["EXPLORE"] == "on" && !work_list.empty? # AI generated
+        @info_rng ||= Random.new((ENV["INFO_SEED"] || "1").to_i) # AI generated
+        explore_k = (ENV["EXPLORE_K"] || "100").to_f # AI generated
+        p_explore = programs_run / (programs_run + explore_k) # AI generated
+        if @info_rng.rand < p_explore # AI generated
+          base = work_list.shift # AI generated
+          explore_picks += 1 # AI generated
+        else # AI generated
+          min_err = work_list.first.inferred_errors # AI generated
+          idx = 0 # AI generated
+          work_list.each_with_index do |pw, i| # AI generated: list is sorted, the first min keeps the current order
+            break if pw.inferred_errors != min_err # AI generated
+            idx = i if pw.hole_count < work_list[idx].hole_count # AI generated
+          end # AI generated
+          base = work_list.delete_at(idx) # AI generated
+        end # AI generated
+      elsif add_dyn && ENV["INFO_ORDER"] != "off" && ENV["INFO_SAMPLE"] == "on" && !work_list.empty? # AI altered: was `if`
+        @info_rng ||= Random.new((ENV["INFO_SEED"] || "1").to_i) # AI generated
+        min_err = work_list.first.inferred_errors # AI generated
+        group = work_list.take_while { |pw| pw.inferred_errors == min_err } # AI generated
+        weights = group.map { |pw| pw.info_score ||= @ctx.type_info.info_score(pw) } # AI generated
+        total = weights.sum # AI generated
+        idx = 0 # AI generated: all weights 0 -> take the first
+        if total > 0 # AI generated
+          r = @info_rng.rand * total # AI generated
+          idx = weights.index { |w| (r -= w) < 0 } || group.size - 1 # AI generated
+        end # AI generated
+        base = work_list.delete_at(idx) # AI generated
+      else # AI generated
+        base = work_list.shift # AI generated
+      end # AI generated
 
 
       # if basehashlist.include? base.typehash  # AI altered: identical hole-free programs carrying different
@@ -171,6 +218,8 @@ module SynHelper
       $__prof_t = __prof_mark(:pop_dedupe, $__prof_t) if ENV["DBG_DYN"] # INSTRUMENTATION P (AI generated, remove)
       __bt0 = Process.clock_gettime(Process::CLOCK_MONOTONIC) if ENV["DBG_DYN"] # INSTRUMENTATION B (AI generated, remove)
       generated = base.build_candidates()
+      pruner.refresh # AI generated (2026-10-20)
+      generated = pruner.filter(generated) # AI generated (2026-10-20): dead children are neither run nor queued
       if ENV["DBG_DYN"] # INSTRUMENTATION B (AI generated, remove)
         __bdt = Process.clock_gettime(Process::CLOCK_MONOTONIC) - __bt0 # INSTRUMENTATION B
         warn "[B] counter=#{counter} add_dyn=#{add_dyn} build=#{__bdt.round(2)}s generated=#{generated.size} look=#{base.looking_for} ast=#{base.to_ast.to_s.gsub(/\s+/, ' ')[0, 200]}" if __bdt > 0.5 # INSTRUMENTATION B
@@ -228,6 +277,7 @@ module SynHelper
         evaluated_srcs << src # AI generated
         seen # AI generated
       } # AI generated
+      programs_run += evaluable.size # AI generated (2026-10-20): n for p(explore)
       evaluable.each { |prog_wrap|
         res = 1
         klass = 1
@@ -235,6 +285,7 @@ module SynHelper
         # puts "TESTING: \n#{prog_wrap.to_ast} \nof TTYPE: #{prog_wrap.to_ast.ttype}"
         #puts Unparser.unparse(prog_wrap.to_ast)
         tempbool = false
+        __info_new_before = @ctx.type_info.info_new_total if add_dyn # AI generated (2026-10-19): see note_program_tested
 
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
@@ -272,9 +323,13 @@ module SynHelper
             tempbool = true
             next
           rescue SyntaxError => err
-            # really this shouldn't happen, our generator shouldn't be attempting to create ill formed formulae, but right now I don't have a workaround for some ad hoc constructs.  
+            # really this shouldn't happen, our generator shouldn't be attempting to create ill formed formulae, but right now I don't have a workaround for some ad hoc constructs.
             tempbool = true
             next
+          rescue SystemStackError => err # AI generated: e.g. arg0.closed_at = arg0 (a record stored in its own attribute)
+            # makes ActiveRecord recurse forever; SystemStackError is not a StandardError, so it ended the whole test # AI generated
+            tempbool = true # AI generated
+            next # AI generated
           end
 
           begin
@@ -313,12 +368,16 @@ module SynHelper
               warn "[PE] postcondition raised #{e.class}: #{e.message[0, 120]} at #{e.backtrace.first(3).join(' <- ')} prog=#{prog_wrap.to_ast.to_s.gsub(/\s+/, ' ')[0, 120]}" # INSTRUMENTATION PE
             end # INSTRUMENTATION PE
             next
-          rescue ComplexError => e 
+          rescue ComplexError => e
             next
+          rescue SystemStackError => e # AI generated: the post-condition can recurse on a self-referencing record too
+            next # AI generated
           end
-          
+
         }
         #BLOCK END
+        # AI generated (2026-10-19): mark the program's call subexpressions as seen; count it in u if nothing new was learned
+        @ctx.type_info.note_program_tested(prog_wrap, __info_new_before) if add_dyn # AI generated
 
         
         if tempbool
@@ -393,7 +452,31 @@ module SynHelper
       # <<< INSTRUMENTATION W <<<
       # if newsuccess  # AI altered: new errors also change inferred_errors, so rescore on either
       if newsuccess || newerror # AI generated
-        work_list.map {|prog_wrap|
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # !!! WARNING: UNSAFE CHANGE (AI generated, 2026-10-13). FULL RESCORING WITH RESCORE_TOP=all.                  !!!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # During INFERENCE ONLY, just the first RESCORE_TOP candidates of the sorted work list (default 100, the ones
+        # popped next) are rescored on a new success/error; the rest keep the score from their last rescoring.
+        # ASSUMES OLDER SCORES ARE "SEMI-CORRECT". WAYS THIS CAN BREAK THINGS:
+        #   1. A candidate deeper in the list whose score would IMPROVE with the new type info (fewer inferred errors)
+        #      keeps its stale, worse score and may never rise into the rescored window, so it is never popped.
+        #   2. A candidate whose score would WORSEN keeps a stale good score and can be popped and expanded too early.
+        #   3. Hole-free candidates outside the window do not get their learned types written back.
+        # The typed search (add_dyn false) still rescores everything. IF INFERENCE STOPS FINDING A TYPE IT FOUND
+        # BEFORE THIS CHANGE, CHECK THIS FIRST.
+        rescore_top = ENV["RESCORE_TOP"] # AI generated
+        rescore_set = if add_dyn && rescore_top != "all" # AI generated
+          work_list.first(rescore_top.nil? ? 100 : rescore_top.to_i) # AI generated
+        else # AI generated
+          work_list # AI generated
+        end # AI generated
+        # work_list.map {|prog_wrap|  # AI altered: only rescore_set (all of work_list unless inferring, see above)
+        rescore_set.map {|prog_wrap| # AI generated
+          # AI generated (2026-10-13): skip candidates with no %dyn component. Every call in them already resolves to a
+          # learned success (CheckErrorPass returns the first matching success), so new type info cannot change their
+          # score. Rescoring the whole work list on every new success/error made each inference iteration cost
+          # O(work list). RESCORE_ALL=1 restores the old behaviour.
+          next if prog_wrap.dynamic_components == 0 && !ENV.key?("RESCORE_ALL") # AI generated
           prog_wrap.write_back_learned_types!(@ctx.type_info) # AI generated: hole-free candidates take their learned types
           prog_wrap.inferred_errors, prog_wrap.dynamic_components = @ctx.type_info.check_errors(prog_wrap)
         }
@@ -420,8 +503,12 @@ module SynHelper
       #                                                                         # dominated runtime on 10k+ lists
       # AI generated: while inferring, record %dyn argument holes of new candidates and concretize any whose
       # (receiver type, method, position, depth) is already exhausted (see DynArgExhaustion)
+      # AI generated (2026-10-20): failures recorded while running this batch can make queued candidates dead
+      work_list = pruner.filter(work_list) if pruner.refresh # AI generated
+      remainder_holes = pruner.filter(remainder_holes) # AI generated
       if add_dyn # AI generated
-        watermark = work_list.empty? ? nil : work_list.map(&:prog_size).min # AI generated
+        # watermark = work_list.empty? ? nil : work_list.map(&:prog_size).min # AI altered (2026-10-20): see front_min_size
+        watermark = front_min_size(work_list) # AI generated
         remainder_holes = remainder_holes.flat_map { |prog_wrap| # AI generated
           exhaustion.note(prog_wrap) # AI generated
           replaced = watermark.nil? ? nil : exhaustion.concretize(prog_wrap, watermark) # AI generated
@@ -431,7 +518,8 @@ module SynHelper
       work_list = [*work_list, *remainder_holes].sort_by { |prog_wrap| comparator_key(prog_wrap) } # AI generated
       # AI generated: when the watermark rises, concretize exhausted %dyn arguments across the whole work list
       if add_dyn && !work_list.empty? # AI generated
-        watermark = work_list.map(&:prog_size).min # AI generated
+        # watermark = work_list.map(&:prog_size).min # AI altered (2026-10-20): see front_min_size
+        watermark = front_min_size(work_list) # AI generated
         if last_watermark.nil? || watermark > last_watermark # AI generated
           before = [exhaustion.concretized, exhaustion.dropped] # AI generated
           work_list = work_list.flat_map { |prog_wrap| # AI generated
@@ -565,12 +653,59 @@ module SynHelper
   # errors, size, passed assertions (size-ordered exploration is also what makes "all programs of size <= n
   # have been seen" meaningful). With inference off the goal is solving: inferred errors, passed assertions,
   # size (as vanilla), which follows effect chains greedily. passed_asserts sign fix kept in both.
+  # AI generated (2026-10-20): smallest program size among the candidates with the fewest inferred errors, i.e. the
+  # ones the search picks from. Candidates moved back for inferred errors are not picked before those, so counting
+  # them (the old minimum over the whole list) kept the watermark at their size and exhaustion never advanced.
+  # WATERMARK=all restores the minimum over the whole work list.
+  def front_min_size(work_list) # AI generated
+    return nil if work_list.empty?
+    return work_list.map(&:prog_size).min if ENV["WATERMARK"] == "all"
+    min_err = work_list.map(&:inferred_errors).min
+    work_list.select { |pw| pw.inferred_errors == min_err }.map(&:prog_size).min
+  end
+
   def comparator_key(prog_wrap) # AI generated
-    tail = [-prog_wrap.dynamic_components, prog_wrap.ttype == @ctx.functype.ret ? 0 : 1]
+    tail =[-prog_wrap.dynamic_components, prog_wrap.ttype == @ctx.functype.ret ? 0 : 1]
+    # AI generated (2026-10-13): information-guided ordering during inference. Size is replaced by
+    # -(sum of P over the candidate's calls to methods of interest) / size, P = how often that (receiver class, method)
+    # has revealed new type information when tested (untested = 1); see InferTypes#info_score. The score is cached on
+    # the candidate and recomputed every 100 iterations (generate). Only the ORDER of candidates changes, not how they
+    # are generated. INFO_ORDER=off restores ordering by size.
+    if ENV["ADD_DYN"] == "TRUE" && ENV["INFO_ORDER"] != "off" # AI generated
+      # AI generated (2026-10-19): count the candidate's methods once, the first time it is scored (occ_m in info_p)
+      unless prog_wrap.occ_counted # AI generated
+        @ctx.type_info.note_occurrences(prog_wrap) # AI generated
+        prog_wrap.occ_counted = true # AI generated
+      end # AI generated
+      prog_wrap.info_score ||= @ctx.type_info.info_score(prog_wrap) # AI generated
+      return [prog_wrap.inferred_errors, -prog_wrap.info_score, -prog_wrap.passed_asserts, *tail] # AI generated
+    end # AI generated
     if ENV["ADD_DYN"] == "TRUE"
       [prog_wrap.inferred_errors, prog_wrap.prog_size, -prog_wrap.passed_asserts, *tail]
     else
       [prog_wrap.inferred_errors, -prog_wrap.passed_asserts, prog_wrap.prog_size, *tail]
+    end
+  end
+
+  # AI generated: `!` is made visible only while a condition (branch or merge condition) is searched for, as
+  # BasicObject#! with RDL's own core signature '() -> %bool' (pure), then the RDL table is put back as it was.
+  # Exception to the %dyn-only rule for an easily known term (2026-10-13). NO_COND_BANG=1 turns it off (ablation).
+  def with_condition_terms # AI generated
+    return yield if ENV.key?("NO_COND_BANG")
+    info = RDL::Globals.info.info
+    had_class = info.key?("BasicObject")
+    saved = had_class && info["BasicObject"].key?(:!) ? info["BasicObject"][:!].transform_values { |v| v.is_a?(Array) ? v.dup : v } : nil
+    RDL.type :BasicObject, :!, '() -> %bool', wrap: false
+    begin
+      yield
+    ensure
+      if saved
+        info["BasicObject"][:!] = saved
+      elsif info.key?("BasicObject")
+        info["BasicObject"].delete(:!)
+        info.delete("BasicObject") if !had_class && info["BasicObject"].empty?
+      end
+      TypeOperations.bump_methods_gen # AI generated (2026-10-19): table edited directly, drop the methods_of cache
     end
   end
 

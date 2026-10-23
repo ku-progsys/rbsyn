@@ -36,6 +36,7 @@ class ExtractASTPass < ::AST::Processor
       begin
         @new_env.bump_count(selected.children[0]) if selected.type == :envref
       rescue Exception => e 
+        raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
         binding.pry
       end
       #TODO MOVE REGEX HANDLING TO A MORE APPROPRIATE LOCATION

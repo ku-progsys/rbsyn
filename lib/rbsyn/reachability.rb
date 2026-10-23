@@ -214,6 +214,7 @@ class Reachability
             end
           }
         rescue Exception => e 
+          raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
           binding.pry
         end
         

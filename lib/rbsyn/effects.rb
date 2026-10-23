@@ -149,6 +149,7 @@ class EffectAnalysis
       else
         raise RbSynError, "unhandled type #{klass}"
       end
+      warn "[TY] type_of found no type for #{klass} (#{klass.class.name.split('::').last}) ##{meth}" if ENV["DBG_DYN"] && tmeth.nil? # INSTRUMENTATION TY (AI generated, remove)
       # take only the first type for now
       case tmeth[0]
       when RDL::Type::MethodType

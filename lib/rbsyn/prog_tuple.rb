@@ -202,7 +202,8 @@ class ProgTuple
         sd.look_for(:type, RDL::Globals.types[:bool])
         sd
       }
-      bsyn1 = generate_typed_then_inference(bool_seed, [*first.preconds, *second.preconds], output1, true, "Merge condition 1") # AI generated
+      # bsyn1 = generate_typed_then_inference(bool_seed, [*first.preconds, *second.preconds], output1, true, "Merge condition 1") # AI altered: `!` visible during condition search only
+      bsyn1 = with_condition_terms { generate_typed_then_inference(bool_seed, [*first.preconds, *second.preconds], output1, true, "Merge condition 1") } # AI generated
 
      
       output2 = (Array.new(first.preconds.size, false) + Array.new(second.preconds.size, true)).map { |item|
@@ -217,7 +218,8 @@ class ProgTuple
         seed = ProgWrapper.new(@ctx, s(RDL::Globals.types[:bool], :envref, b2_ref), env)
         seed.look_for(:type, RDL::Globals.types[:bool])
         # bsyn2 = generate(seed, [*first.preconds, *second.preconds], output2, true)  # AI altered: typed first, inference fallback
-        bsyn2 = generate_typed_then_inference(bool_seed, [*first.preconds, *second.preconds], output2, true, "Merge condition 2") # AI generated
+        # bsyn2 = generate_typed_then_inference(bool_seed, [*first.preconds, *second.preconds], output2, true, "Merge condition 2") # AI altered: `!` visible during condition search only
+        bsyn2 = with_condition_terms { generate_typed_then_inference(bool_seed, [*first.preconds, *second.preconds], output2, true, "Merge condition 2") } # AI generated
 
       end
 
