@@ -116,11 +116,12 @@ unless File.exist?(ckpt_path)
   run_rake(root, test_file, { "ABLATE_ROUND" => round_file, "ABLATE_OUT" => File.join(out, "check_out.json"), "ABLATE_CHECK" => "1",
                               "RUBYOPT" => "-r#{root}/scripts/ablation/hook.rb" }, 120, check_log)
   abort "pool declarations did not load, see #{check_log}" unless File.read(check_log).include?("[ABLATE_CHECK]")
-  File.write(ckpt_path, JSON.pretty_generate({ "benchmark" => bench, "seed" => seed, "limit" => limit,
-                                               "order" => pool.map { |x| x["name"] }, "next_round" => 0, "done" => false }))
+  # header before the checkpoint, so a checkpoint always has its CSV
   CSV.open(csv_path, "w") { |c|
     c << %w[benchmark round n_added added_moi added_computed_in_vanilla result solve_time_s types_learned types_rejected_hard types_rejected_soft moi_available]
   }
+  File.write(ckpt_path, JSON.pretty_generate({ "benchmark" => bench, "seed" => seed, "limit" => limit,
+                                               "order" => pool.map { |x| x["name"] }, "next_round" => 0, "done" => false }))
   puts "pool: #{pool.size} scrubbed signatures on #{(reach & blocked.keys).size} reachable classes (#{window_names.size} already in the window), all load"
 end
 exit 0 if pool_only
@@ -131,6 +132,10 @@ abort "#{bench}: already done (#{ckpt['stop_reason']})" if ckpt["done"]
 
 # --- 2. rounds ---
 r = ckpt["next_round"]
+# resume after a kill: drop CSV rows of rounds the checkpoint does not count yet (killed between the row and the checkpoint)
+rows = CSV.read(csv_path)
+File.write(csv_path + ".tmp", rows.select.with_index { |row, i| i.zero? || row[1].to_i < r }.map(&:to_csv).join)
+File.rename(csv_path + ".tmp", csv_path)
 loop do
   if r > pool.size
     ckpt.merge!("done" => true, "stop_reason" => "pool exhausted")
