@@ -1,0 +1,1 @@
+{"decls":[{"name":"admin","args":0,"read":["self"],"write":null,"from":["User"],"computed":false},{"name":"active=","args":1,"read":null,"write":["self"],"from":["User"],"computed":false},{"name":"name=","args":1,"read":null,"write":["self"],"from":["User"],"computed":false}],"moi":["admin","active=","name="]}

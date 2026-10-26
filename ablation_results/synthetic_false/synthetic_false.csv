@@ -1,0 +1,3 @@
+benchmark,round,n_added,added_moi,added_computed_in_vanilla,result,solve_time_s,types_learned,types_rejected_hard,types_rejected_soft,moi_available
+synthetic/false,0,0,,,PASS,0.02,"","","",""
+synthetic/false,1,1,admin,false,NO_CANDIDATES,,"","NOMINAL: String :admin => ALL | SINGLETON:NOMINAL: Class, VAL: User :admin => ALL | SINGLETON:NOMINAL: Class, VAL: UserEmail :admin => ALL","",admin

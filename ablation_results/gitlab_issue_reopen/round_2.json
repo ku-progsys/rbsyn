@@ -1,0 +1,1 @@
+{"decls":[{"name":"otp_required_for_login","args":0,"read":["self"],"write":null,"from":["GitlabUser"],"computed":false},{"name":"id=","args":1,"read":null,"write":["self"],"from":["GitlabUser","GitlabIssue"],"computed":false}],"moi":["otp_required_for_login","id="]}

@@ -1,0 +1,1 @@
+{"decls":[{"name":"invited_by=","args":1,"read":null,"write":["self"],"from":["DiasporaUser"],"computed":false}],"moi":["invited_by="]}

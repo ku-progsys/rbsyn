@@ -1,0 +1,36 @@
+{
+  "functype": "(String) -> %bool",
+  "components": [
+    "User",
+    "UserEmail",
+    "SiteSettings",
+    "{:hashkeys=>[:id, :name, :username, :password, :staged, :active, :admin, :moderator]}"
+  ],
+  "reachable": [
+    "ActiveRecord::Base",
+    "ActiveRecord_Relation",
+    "BasicObject",
+    "EmailToken",
+    "User",
+    "UserEmail",
+    "[s]ActiveRecord::Base"
+  ],
+  "reachable_not_in_dump": [
+    "FalseClass",
+    "Integer",
+    "SiteSettings",
+    "String",
+    "TrueClass",
+    "[s]SiteSettings",
+    "[s]User",
+    "[s]UserEmail",
+    "[s]{:hashkeys=>[:id, :name, :username, :password, :staged, :active, :admin, :moderator]}",
+    "{:hashkeys=>[:id, :name, :username, :password, :staged, :active, :admin, :moderator]}"
+  ],
+  "hash_vals": [
+
+  ],
+  "unresolved_computed": [
+
+  ]
+}

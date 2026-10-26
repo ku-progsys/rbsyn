@@ -1,0 +1,44 @@
+Machine that ran the MOI ablation (2026-10-23, run_all.sh, seed 1, 1200 s per round, commit 4c15a41)
+Collected 2026-10-26 13:52:38 CDT
+
+== CPU ==
+Architecture:                            x86_64
+CPU(s):                                  20
+Model name:                              Intel(R) Core(TM) Ultra 7 265K
+Thread(s) per core:                      1
+Core(s) per socket:                      20
+Socket(s):                               1
+CPU(s) scaling MHz:                      31%
+CPU max MHz:                             5500.0000
+CPU min MHz:                             800.0000
+L1d cache:                               704 KiB (18 instances)
+L1i cache:                               1.1 MiB (18 instances)
+L2 cache:                                36 MiB (11 instances)
+L3 cache:                                30 MiB (1 instance)
+
+Per-core max frequency (8 performance cores at 5.4-5.5 GHz, 12 efficiency cores at 4.6 GHz):
+  12 CPUs at 4600.0000 MHz
+  6 CPUs at 5400.0000 MHz
+  2 CPUs at 5500.0000 MHz
+CPU frequency governor: powersave
+
+== Memory ==
+               total        used        free      shared  buff/cache   available
+Mem:            30Gi       2.2Gi        21Gi       108Mi       6.5Gi        27Gi
+Swap:          8.0Gi          0B       8.0Gi
+
+== Disk ==
+/dev/nvme0n1p2  937G   20G  870G   3% /
+NAME    MODEL                    SIZE ROTA
+nvme0n1 3500 SED Micron 1024GB 953.9G    0
+
+== OS ==
+Ubuntu 26.04.1 LTS
+Kernel: 7.0.0-31-generic
+
+== Software ==
+ruby 3.2.2 (2023-03-30 revision e51014f9c0) [x86_64-linux]
+Bundler 2.4.22
+
+Each benchmark round ran as one single-threaded Ruby process; only one ran at a time.
+The process was not pinned to a core, so the OS could place a round on a P-core or an E-core; solve times can vary by that.

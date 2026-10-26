@@ -1,0 +1,276 @@
+warning: parser/current is loading parser/ruby27, which recognizes
+warning: 2.7.x-compliant syntax, but you are running 3.2.2.
+warning: please see https://github.com/whitequark/parser#compatibility-with-ruby-mri.
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/type_ops.rb:14: warning: `-' after local variable or literal is interpreted as binary operator
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/type_ops.rb:14: warning: even though it seems like unary operator
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5: warning: /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5: warning: loading in progress, circular require considered harmful - /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast.rb
+	from /home/cyber/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/rake-13.2.1/lib/rake/rake_test_loader.rb:6:in  `<main>'
+	from /home/cyber/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/rake-13.2.1/lib/rake/rake_test_loader.rb:6:in  `select'
+	from /home/cyber/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/rake-13.2.1/lib/rake/rake_test_loader.rb:21:in  `block in <main>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/test/benchmark/diaspora/invitation_code_use_benchmark.rb:2:in  `<top (required)>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/test/test_helper.rb:8:in  `<top (required)>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn.rb:19:in  `<top (required)>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast.rb:1:in  `<top (required)>'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast.rb:1:in  `require_relative'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:1:in  `<top (required)>'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5:in  `<class:TrackerRewrite>'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5:in  `require_relative'
+
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:79: warning: assigned but unused variable - result
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:227: warning: mismatched indentations at 'rescue' with 'begin' at 215
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:231: warning: mismatched indentations at 'end' with 'begin' at 215
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:306: warning: assigned but unused variable - e
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/syn_helper.rb:418: warning: assigned but unused variable - newtypes
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:401: warning: mismatched indentations at 'end' with 'def' at 384
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:560: warning: mismatched indentations at 'end' with 'if' at 556
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:787: warning: mismatched indentations at 'end' with 'def' at 737
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:823: warning: assigned but unused variable - temp
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:407: warning: mismatched indentations at 'else' with 'if' at 405
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:409: warning: mismatched indentations at 'end' with 'else' at 407
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:9: warning: method redefined; discarding old exprs
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:10: warning: method redefined; discarding old inferred_errors
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:10: warning: method redefined; discarding old env
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:87: warning: method redefined; discarding old typehash
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:449: warning: method redefined; discarding old ttype
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/synthesizer.rb:7: warning: method redefined; discarding old debug
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/debugger.rb:5: warning: previous definition of debug was here
+-- create_table(:users, {:force=>true})
+   -> 0.0022s
+-- create_table(:user_emails, {:force=>true})
+   -> 0.0002s
+-- create_table(:email_tokens, {:force=>true})
+   -> 0.0002s
+-- create_table(:another_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:posts, {:force=>true})
+   -> 0.0001s
+-- create_table(:demo_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_issues, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_notes, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_merge_requests, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_discussions, {:force=>true})
+   -> 0.0001s
+-- create_table(:invitation_codes, {:force=>true})
+   -> 0.0001s
+-- create_table(:diaspora_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:diaspora_pods, {:force=>true})
+   -> 0.0001s
+-- create_table(:mastodon_accounts, {:force=>true})
+   -> 0.0002s
+-- create_table(:mastodon_account_stats, {:force=>true})
+   -> 0.0001s
+-- create_table(:mastodon_statuses, {:force=>true})
+   -> 0.0001s
+-- create_table(:mastodon_status_stats, {:force=>true})
+   -> 0.0001s
+-- create_table(:follows, {:force=>true})
+   -> 0.0002s
+-- create_table(:favourites, {:force=>true})
+   -> 0.0002s
+Started with run options --seed 20103
+
+Diaspora
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/type_ops.rb:474: warning: global variable `$__methods_cache' not initialized
+  test_0001_invitation_code#use!                                 [32m PASS[0m (6.48s)
+
+Finished in 6.48820s
+1 tests, 0 assertions, [32m0 failures, 0 errors, [0m[33m0 skips[0m
+warning: parser/current is loading parser/ruby27, which recognizes
+warning: 2.7.x-compliant syntax, but you are running 3.2.2.
+warning: please see https://github.com/whitequark/parser#compatibility-with-ruby-mri.
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/type_ops.rb:14: warning: `-' after local variable or literal is interpreted as binary operator
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/type_ops.rb:14: warning: even though it seems like unary operator
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5: warning: /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5: warning: loading in progress, circular require considered harmful - /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast.rb
+	from /home/cyber/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/rake-13.2.1/lib/rake/rake_test_loader.rb:6:in  `<main>'
+	from /home/cyber/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/rake-13.2.1/lib/rake/rake_test_loader.rb:6:in  `select'
+	from /home/cyber/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/rake-13.2.1/lib/rake/rake_test_loader.rb:21:in  `block in <main>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/test/benchmark/diaspora/invitation_code_use_benchmark.rb:2:in  `<top (required)>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/test/test_helper.rb:8:in  `<top (required)>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn.rb:19:in  `<top (required)>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast.rb:1:in  `<top (required)>'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast.rb:1:in  `require_relative'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:1:in  `<top (required)>'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5:in  `<class:TrackerRewrite>'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5:in  `require_relative'
+
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:79: warning: assigned but unused variable - result
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:227: warning: mismatched indentations at 'rescue' with 'begin' at 215
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:231: warning: mismatched indentations at 'end' with 'begin' at 215
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:306: warning: assigned but unused variable - e
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/syn_helper.rb:418: warning: assigned but unused variable - newtypes
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:401: warning: mismatched indentations at 'end' with 'def' at 384
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:560: warning: mismatched indentations at 'end' with 'if' at 556
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:787: warning: mismatched indentations at 'end' with 'def' at 737
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:823: warning: assigned but unused variable - temp
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:407: warning: mismatched indentations at 'else' with 'if' at 405
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:409: warning: mismatched indentations at 'end' with 'else' at 407
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:9: warning: method redefined; discarding old exprs
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:10: warning: method redefined; discarding old inferred_errors
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:10: warning: method redefined; discarding old env
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:87: warning: method redefined; discarding old typehash
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:449: warning: method redefined; discarding old ttype
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/synthesizer.rb:7: warning: method redefined; discarding old debug
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/debugger.rb:5: warning: previous definition of debug was here
+-- create_table(:users, {:force=>true})
+   -> 0.0022s
+-- create_table(:user_emails, {:force=>true})
+   -> 0.0002s
+-- create_table(:email_tokens, {:force=>true})
+   -> 0.0002s
+-- create_table(:another_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:posts, {:force=>true})
+   -> 0.0001s
+-- create_table(:demo_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_issues, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_notes, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_merge_requests, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_discussions, {:force=>true})
+   -> 0.0001s
+-- create_table(:invitation_codes, {:force=>true})
+   -> 0.0001s
+-- create_table(:diaspora_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:diaspora_pods, {:force=>true})
+   -> 0.0001s
+-- create_table(:mastodon_accounts, {:force=>true})
+   -> 0.0002s
+-- create_table(:mastodon_account_stats, {:force=>true})
+   -> 0.0002s
+-- create_table(:mastodon_statuses, {:force=>true})
+   -> 0.0001s
+-- create_table(:mastodon_status_stats, {:force=>true})
+   -> 0.0001s
+-- create_table(:follows, {:force=>true})
+   -> 0.0001s
+-- create_table(:favourites, {:force=>true})
+   -> 0.0002s
+Started with run options --seed 2724
+
+Diaspora
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/type_ops.rb:474: warning: global variable `$__methods_cache' not initialized
+  test_0001_invitation_code#use!                                 [32m PASS[0m (6.60s)
+
+Finished in 6.61274s
+1 tests, 0 assertions, [32m0 failures, 0 errors, [0m[33m0 skips[0m
+warning: parser/current is loading parser/ruby27, which recognizes
+warning: 2.7.x-compliant syntax, but you are running 3.2.2.
+warning: please see https://github.com/whitequark/parser#compatibility-with-ruby-mri.
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/type_ops.rb:14: warning: `-' after local variable or literal is interpreted as binary operator
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/type_ops.rb:14: warning: even though it seems like unary operator
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5: warning: /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5: warning: loading in progress, circular require considered harmful - /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast.rb
+	from /home/cyber/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/rake-13.2.1/lib/rake/rake_test_loader.rb:6:in  `<main>'
+	from /home/cyber/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/rake-13.2.1/lib/rake/rake_test_loader.rb:6:in  `select'
+	from /home/cyber/.rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/rake-13.2.1/lib/rake/rake_test_loader.rb:21:in  `block in <main>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/test/benchmark/diaspora/invitation_code_use_benchmark.rb:2:in  `<top (required)>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/test/test_helper.rb:8:in  `<top (required)>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn.rb:19:in  `<top (required)>'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from <internal:/home/cyber/.rbenv/versions/3.2.2/lib/ruby/3.2.0/rubygems/core_ext/kernel_require.rb>:37:in  `require'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast.rb:1:in  `<top (required)>'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast.rb:1:in  `require_relative'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:1:in  `<top (required)>'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5:in  `<class:TrackerRewrite>'
+	from /home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/track_rewrite.rb:5:in  `require_relative'
+
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:79: warning: assigned but unused variable - result
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:227: warning: mismatched indentations at 'rescue' with 'begin' at 215
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:231: warning: mismatched indentations at 'end' with 'begin' at 215
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/check_error_pass.rb:306: warning: assigned but unused variable - e
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/syn_helper.rb:418: warning: assigned but unused variable - newtypes
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:401: warning: mismatched indentations at 'end' with 'def' at 384
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:560: warning: mismatched indentations at 'end' with 'if' at 556
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:787: warning: mismatched indentations at 'end' with 'def' at 737
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/ast/infer_types.rb:823: warning: assigned but unused variable - temp
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:407: warning: mismatched indentations at 'else' with 'if' at 405
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:409: warning: mismatched indentations at 'end' with 'else' at 407
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:9: warning: method redefined; discarding old exprs
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:10: warning: method redefined; discarding old inferred_errors
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:10: warning: method redefined; discarding old env
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:87: warning: method redefined; discarding old typehash
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/prog_wrapper.rb:449: warning: method redefined; discarding old ttype
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/synthesizer.rb:7: warning: method redefined; discarding old debug
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/debugger.rb:5: warning: previous definition of debug was here
+-- create_table(:users, {:force=>true})
+   -> 0.0022s
+-- create_table(:user_emails, {:force=>true})
+   -> 0.0002s
+-- create_table(:email_tokens, {:force=>true})
+   -> 0.0002s
+-- create_table(:another_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:posts, {:force=>true})
+   -> 0.0001s
+-- create_table(:demo_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_issues, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_notes, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_merge_requests, {:force=>true})
+   -> 0.0001s
+-- create_table(:gitlab_discussions, {:force=>true})
+   -> 0.0001s
+-- create_table(:invitation_codes, {:force=>true})
+   -> 0.0001s
+-- create_table(:diaspora_users, {:force=>true})
+   -> 0.0001s
+-- create_table(:diaspora_pods, {:force=>true})
+   -> 0.0001s
+-- create_table(:mastodon_accounts, {:force=>true})
+   -> 0.0002s
+-- create_table(:mastodon_account_stats, {:force=>true})
+   -> 0.0002s
+-- create_table(:mastodon_statuses, {:force=>true})
+   -> 0.0001s
+-- create_table(:mastodon_status_stats, {:force=>true})
+   -> 0.0001s
+-- create_table(:follows, {:force=>true})
+   -> 0.0001s
+-- create_table(:favourites, {:force=>true})
+   -> 0.0002s
+Started with run options --seed 27808
+
+Diaspora
+/home/cyber/rbsyn2/rbsyn/lib/rbsyn/type_ops.rb:474: warning: global variable `$__methods_cache' not initialized
+  test_0001_invitation_code#use!                                 [32m PASS[0m (6.66s)
+
+Finished in 6.67231s
+1 tests, 0 assertions, [32m0 failures, 0 errors, [0m[33m0 skips[0m

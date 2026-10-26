@@ -1,0 +1,28 @@
+{
+  "functype": "(User) -> %bot",
+  "components": [
+    "DiscourseSiteSetting"
+  ],
+  "reachable": [
+    "ActiveRecord::Base",
+    "ActiveRecord_Relation",
+    "BasicObject",
+    "EmailToken",
+    "User",
+    "UserEmail"
+  ],
+  "reachable_not_in_dump": [
+    "DiscourseSiteSetting",
+    "FalseClass",
+    "Integer",
+    "String",
+    "TrueClass",
+    "[s]DiscourseSiteSetting"
+  ],
+  "hash_vals": [
+
+  ],
+  "unresolved_computed": [
+
+  ]
+}

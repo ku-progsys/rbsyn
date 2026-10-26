@@ -1,0 +1,30 @@
+{
+  "functype": "(GitlabIssue) -> %bot",
+  "components": [
+    "GitlabIssue",
+    "Time"
+  ],
+  "reachable": [
+    "ActiveRecord::Base",
+    "ActiveRecord_Relation",
+    "BasicObject",
+    "GitlabIssue",
+    "GitlabUser",
+    "[s]ActiveRecord::Base",
+    "[s]Time"
+  ],
+  "reachable_not_in_dump": [
+    "FalseClass",
+    "Integer",
+    "String",
+    "Time",
+    "TrueClass",
+    "[s]GitlabIssue"
+  ],
+  "hash_vals": [
+
+  ],
+  "unresolved_computed": [
+
+  ]
+}

@@ -1,0 +1,1 @@
+{"decls":[{"name":"active=","args":1,"read":null,"write":["self"],"from":["User"],"computed":false},{"name":"token","args":0,"read":["self"],"write":null,"from":["EmailToken"],"computed":false}],"moi":["active=","token"]}

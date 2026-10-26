@@ -1,0 +1,1 @@
+{"decls":[{"name":"self.exists?","args":1,"read":null,"write":null,"from":["[s]ActiveRecord::Base"],"computed":true}],"moi":["exists?"]}

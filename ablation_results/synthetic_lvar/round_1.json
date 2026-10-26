@@ -1,0 +1,1 @@
+{"decls":[{"name":"admin","args":0,"read":["self"],"write":null,"from":["User"],"computed":false}],"moi":["admin"]}

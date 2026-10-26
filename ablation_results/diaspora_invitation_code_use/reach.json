@@ -1,0 +1,27 @@
+{
+  "functype": "(InvitationCode) -> %bot",
+  "components": [
+    "InvitationCode"
+  ],
+  "reachable": [
+    "ActiveRecord::Base",
+    "ActiveRecord_Relation",
+    "BasicObject",
+    "DiasporaUser",
+    "InvitationCode",
+    "[s]ActiveRecord::Base"
+  ],
+  "reachable_not_in_dump": [
+    "FalseClass",
+    "Integer",
+    "String",
+    "TrueClass",
+    "[s]InvitationCode"
+  ],
+  "hash_vals": [
+
+  ],
+  "unresolved_computed": [
+
+  ]
+}

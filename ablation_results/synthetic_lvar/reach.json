@@ -1,0 +1,30 @@
+{
+  "functype": "(String) -> String",
+  "components": [
+    "User",
+    "UserEmail"
+  ],
+  "reachable": [
+    "ActiveRecord::Base",
+    "ActiveRecord_Relation",
+    "BasicObject",
+    "EmailToken",
+    "User",
+    "UserEmail",
+    "[s]ActiveRecord::Base"
+  ],
+  "reachable_not_in_dump": [
+    "FalseClass",
+    "Integer",
+    "String",
+    "TrueClass",
+    "[s]User",
+    "[s]UserEmail"
+  ],
+  "hash_vals": [
+
+  ],
+  "unresolved_computed": [
+
+  ]
+}

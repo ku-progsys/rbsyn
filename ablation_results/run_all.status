@@ -1,0 +1,27 @@
+2026-10-23 11:25:43 start: 10 benchmarks, limit 1200s, seed 1, commit ed5abe8
+2026-10-23 11:25:43 gitlab/issue_close: begin
+2026-10-23 11:27:50 start: 10 benchmarks, limit 1200s, seed 1, commit 4c15a41
+2026-10-23 11:27:51 gitlab/issue_close: begin
+2026-10-23 11:32:02 stopped by stop.sh
+2026-10-23 11:32:02 start: 10 benchmarks, limit 1200s, seed 1, commit 4c15a41
+2026-10-23 11:32:02 gitlab/issue_close: begin
+2026-10-23 11:44:47 gitlab/issue_close: exit 0, pool exhausted | last row: gitlab/issue_close,27,27,count,false,PASS,35.71,"NOMINAL: GitlabIssue :state_id= => NOMINAL: GitlabIssue => NOMINAL: GitlabIssue | NOMINAL: GitlabIssue :state_id= => SINGLETON:NOMINAL: Class, VAL: Git
+2026-10-23 11:44:47 diaspora/invitation_code_use: begin
+2026-10-23 12:06:34 diaspora/invitation_code_use: exit 0, pool exhausted | last row: diaspora/invitation_code_use,29,29,diaspora_user_id,false,PASS,42.20,"NOMINAL: InvitationCode :count => NOMINAL: Integer | SINGLETON:NOMINAL: Class, VAL: InvitationCode :count => NOMINAL: Integer | NO
+2026-10-23 12:06:34 synthetic/user_exists: begin
+2026-10-23 12:19:06 synthetic/user_exists: exit 0, pool exhausted | last row: synthetic/user_exists,42,42,user_id,false,PASS,12.64,"SINGLETON:NOMINAL: Class, VAL: User :exists? => NOMINAL: String => OTHER: true or false | SINGLETON:NOMINAL: Class, VAL: User :exists? => SINGLETO
+2026-10-23 12:19:06 discourse/clear_global_notice_if_needed: begin
+2026-10-23 13:17:26 discourse/clear_global_notice_if_needed: exit 0, pool exhausted | last row: discourse/clear_global_notice_if_needed,38,38,where,true,PASS,87.18,"NOMINAL: User :id => NOMINAL: Integer | SINGLETON:NOMINAL: Class, VAL: DiscourseSiteSetting :< => SINGLETON:NOMINAL: Class, VAL: Di
+2026-10-23 13:17:26 gitlab/issue_reopen: begin
+2026-10-23 13:24:35 gitlab/issue_reopen: exit 0, pool exhausted | last row: gitlab/issue_reopen,26,26,encrypted_otp_secret=,false,PASS,12.83,"NOMINAL: GitlabIssue :closed_at= => SINGLETON:NOMINAL: Class, VAL: GitlabIssue => NOMINAL: Class | NOMINAL: GitlabIssue :closed_at= =>
+2026-10-23 13:24:35 diaspora/user_process_invite_acceptence: begin
+2026-10-23 13:47:15 diaspora/user_process_invite_acceptence: exit 0, round 10: TIMEOUT | last row: diaspora/user_process_invite_acceptence,10,10,confirm_email_token=,false,TIMEOUT,,"NOMINAL: DiasporaUser :invited_by_id= => NOMINAL: DiasporaUser => NOMINAL: DiasporaUser | NOMINAL: DiasporaUser :invi
+2026-10-23 13:47:15 synthetic/method_chain: begin
+2026-10-23 14:00:16 synthetic/method_chain: exit 0, pool exhausted | last row: synthetic/method_chain,41,41,user_id=,false,PASS,12.42,"NOMINAL: String :! => OTHER: true or false | SINGLETON:NOMINAL: Class, VAL: User :! => OTHER: true or false | SINGLETON:NOMINAL: Class, VAL: Use
+2026-10-23 14:00:16 synthetic/branch: begin
+2026-10-23 14:48:34 synthetic/branch: exit 0, pool exhausted | last row: synthetic/branch,41,41,user_id=,false,PASS,21.95,"SINGLETON:NOMINAL: Class, VAL: SiteSettings :reserved_username? => NOMINAL: String => OTHER: true or false | SINGLETON:NOMINAL: Class, VAL: SiteSettin
+2026-10-23 14:48:34 synthetic/lvar: begin
+2026-10-23 14:48:41 synthetic/lvar: exit 0, round 1: NO_CANDIDATES | last row: synthetic/lvar,1,1,admin,false,NO_CANDIDATES,,"","NOMINAL: String :admin => ALL | SINGLETON:NOMINAL: Class, VAL: User :admin => ALL | SINGLETON:NOMINAL: Class, VAL: UserEmail :admin => ALL","",admin
+2026-10-23 14:48:41 synthetic/false: begin
+2026-10-23 14:48:49 synthetic/false: exit 0, round 1: NO_CANDIDATES | last row: synthetic/false,1,1,admin,false,NO_CANDIDATES,,"","NOMINAL: String :admin => ALL | SINGLETON:NOMINAL: Class, VAL: User :admin => ALL | SINGLETON:NOMINAL: Class, VAL: UserEmail :admin => ALL","",admin
+2026-10-23 14:48:49 all done
