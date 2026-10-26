@@ -22,7 +22,7 @@ bench = ARGV[0] or abort "usage: ablate.rb <benchmark> [limit_seconds] [seed] [-
 limit = (ARGV[1] || 1200).to_i
 seed = (ARGV[2] || 1).to_i
 root = File.expand_path("../..", __dir__)
-out = File.join(ENV["ABLATE_DIR"] || File.expand_path("~/rbsyn_debug_logs/ablation"), bench.tr("/", "_"))
+out = File.join(ENV["ABLATE_DIR"] || File.join(root, "ablation_results"), bench.tr("/", "_"))
 FileUtils.mkdir_p(out)
 test_file = "test/benchmark/#{bench}_benchmark.rb"
 abort "no such benchmark: #{test_file}" unless File.exist?(File.join(root, test_file))

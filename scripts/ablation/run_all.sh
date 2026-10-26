@@ -6,13 +6,13 @@
 #
 # start / resume (detached, survives closing the terminal, keeps the machine awake):
 #   scripts/ablation/start.sh
-# progress:  cat ~/rbsyn_debug_logs/ablation/run_all.status
-# stop:      kill $(cat ~/rbsyn_debug_logs/ablation/run_all.pid)   (then the running test, see ablation_handoff.md)
+# progress:  cat ablation_results/run_all.status
+# stop:      scripts/ablation/stop.sh
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 export PATH="$HOME/.rbenv/shims:$HOME/.rbenv/bin:$PATH"
-OUT="${ABLATE_DIR:-$HOME/rbsyn_debug_logs/ablation}"
+OUT="${ABLATE_DIR:-$ROOT/ablation_results}"
 mkdir -p "$OUT"
 # only one driver at a time; a stale pid file (after a reboot or kill) is ignored
 if [ -f "$OUT/run_all.pid" ] && kill -0 "$(cat "$OUT/run_all.pid")" 2>/dev/null; then

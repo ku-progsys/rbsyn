@@ -2,7 +2,7 @@
 # AI generated (2026-10-23): start or resume the weekend ablation (run_all.sh) detached from the terminal.
 # Resuming needs nothing else: every benchmark continues from its own checkpoint.json.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-OUT="${ABLATE_DIR:-$HOME/rbsyn_debug_logs/ablation}"
+OUT="${ABLATE_DIR:-$ROOT/ablation_results}"
 mkdir -p "$OUT"
 INH=()
 command -v systemd-inhibit >/dev/null && INH=(systemd-inhibit --what=sleep:idle --who=rbsyn --why=ablation)

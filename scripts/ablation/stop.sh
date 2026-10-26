@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # AI generated (2026-10-23): stop the weekend ablation (driver, runner, and the running benchmark test).
 # Resume later with scripts/ablation/start.sh; the interrupted round is rerun from its checkpoint.
-OUT="${ABLATE_DIR:-$HOME/rbsyn_debug_logs/ablation}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+OUT="${ABLATE_DIR:-$ROOT/ablation_results}"
 [ -f "$OUT/run_all.pid" ] && kill "$(cat "$OUT/run_all.pid")" 2>/dev/null
 # patterns anchored on the processes' own command lines, so this script's shell never matches
 ps -eo pid,args | awk '$2 ~ /systemd-inhibit$/ && /--who=rbsyn/ {print $1}' | xargs -r kill 2>/dev/null

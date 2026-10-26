@@ -1,0 +1,4 @@
+# run-time files of scripts/ablation (locks, driver pid)
+.ablation.lock
+.pool.lock
+run_all.pid

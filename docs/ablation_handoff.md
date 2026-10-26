@@ -30,7 +30,7 @@ What exists (read these first, they are short):
 - scripts/ablation/ablate.rb: runner for ONE benchmark. Builds the pool once (dump, scrub, dedupe, skip names already
   in the window, seeded shuffle, load check), then rounds: round r = first r pool methods, TIMEOUT=limit (default
   1200 s), one CSV row per round, checkpoint.json (order + next_round) so rerunning resumes; stops at the first round
-  that does not PASS. Lock file so only one ablation runs at a time. Output: ~/rbsyn_debug_logs/ablation/<bench>/.
+  that does not PASS. Lock file so only one ablation runs at a time. Output: ablation_results/<bench>/ in the repo.
   CSV columns: benchmark, round, n_added, added_moi, result, solve_time_s, types_learned, types_rejected_hard,
   types_rejected_soft, moi_available.
 - Scrub rule: same argument count, every type %dyn, `wrap: false`; effects on the method's own class -> 'self',
