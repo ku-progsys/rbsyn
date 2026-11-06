@@ -42,11 +42,9 @@ class InferTypes
       @type_errs[i] = []
       @type_successes[i] = []
     end
-    @typestack = []
     @tracelist = {}
     # @checker = CheckErrorPass.new(@type_errs, @type_successes) # AI altered (2026-10-20): replaced, see check_error_pass_v2.rb
     @checker = (ENV["CHECKER"] == "old" ? CheckErrorPass : CheckErrorPassV2).new(@type_errs, @type_successes) # AI generated
-    @updated = false
     @set_exception = false
     @new_types = []
     # @new_success = false  # AI altered: name did not match attr_reader :newsuccess
@@ -58,15 +56,7 @@ class InferTypes
 
   # Information-entropy ordering of inference candidates was removed; it is available in commits up to dc740d5.
 
-  def compare_hashes(left, right)
-
-    return left.reject { |k, _| [:except].include?(k) } == right.reject { |k, _| [:except].include?(k) }
-
-  end
-
   def reset_instrumentation(tracelist)
-    @updated = false
-    @typestack = []
     @set_exception = false
     @new_types = []
     @counter = 0
@@ -601,20 +591,6 @@ end
   end
 
 
-  # AI generated: a receiver that is a class (SingletonType of a Class) means the observed
-  # call was a class method, so it must be registered as "self.meth" / looked up under "[s]Klass".
-  def class_receiver?(recvr) # AI generated
-    recvr.is_a?(RDL::Type::SingletonType) && recvr.val.is_a?(Class)
-  end
-
-  def rdl_meth_name(recvr, meth) # AI generated
-    class_receiver?(recvr) ? "self.#{meth}" : meth
-  end
-
-  def rdl_info_key(recvr) # AI generated
-    class_receiver?(recvr) ? RDL::Util.add_singleton_marker(recvr.to_s) : recvr.to_s
-  end
-
   # AI generated: where a learned signature is filed. RDL files methods under classes, so a union receiver (e.g. %bool,
   # i.e. true or false) is filed under each member's class, value singletons under their class (true -> TrueClass),
   # generic/hash types under their base class, and %dyn receivers not at all. Returns [[class name, class receiver?]].
@@ -633,7 +609,8 @@ end
     end
   end
 
-  # AI generated: carried_effects for one registration target (class name), with 'self' replaced by that class
+  # AI generated: the read/write effects declared on the %dyn placeholder (DynamicType, or [s]DynamicType for class
+  # methods) that this class does not have yet, with 'self' replaced by the class, so the effect system still sees them
   def carried_effects_for(name, class_recv, meth) # AI generated
     placeholder = class_recv ? RDL::Util.add_singleton_marker("DynamicType") : "DynamicType"
     key = class_recv ? RDL::Util.add_singleton_marker(name) : name
@@ -650,29 +627,6 @@ end
       carried = carried_effects_for(name, class_recv, meth)
       RDL.type name, (class_recv ? "self.#{meth}" : meth), sig, read: carried[:read], write: carried[:write]
     }
-  end
-
-  # AI generated: the read/write effects declared for a moi method on the %dyn placeholder
-  # (DynamicType, or [s]DynamicType for class methods) that the concrete class does not have yet.
-  # Carried onto the learned signature when it is registered, so the effect system still sees them.
-  def carried_effects(recvr, meth) # AI generated
-    placeholder = class_receiver?(recvr) ? RDL::Util.add_singleton_marker("DynamicType") : "DynamicType"
-    declared = (RDL::Globals.info.info[placeholder] || {})[meth.to_sym] || {}
-    existing = (RDL::Globals.info.info[rdl_info_key(recvr)] || {})[meth.to_sym] || {}
-    # {
-    #   read: (declared[:read] || []) - (existing[:read] || []),
-    #   write: (declared[:write] || []) - (existing[:write] || [])
-    # }
-    # AI altered: the declared effects say 'self'; on a learned signature the receiver's class is known, so 'self' is
-    # replaced with it ('self' -> 'DiasporaUser', 'self.x' -> 'DiasporaUser.x'). Left as 'self', ProgWrapper#
-    # methods_with_write_effect only substitutes it for the class being searched, and effect_leq raised
-    # "cannot have self during leq of effects" when a second model was involved.
-    owner = recvr.to_s # AI generated: class name for both NominalType and SingletonType(class) receivers
-    substitute = lambda { |effs| (effs || []).map { |e| e == 'self' ? owner : e.sub(/\Aself\./, "#{owner}.") } } # AI generated
-    { # AI generated
-      read: substitute.(declared[:read]) - (existing[:read] || []), # AI generated
-      write: substitute.(declared[:write]) - (existing[:write] || []) # AI generated
-    } # AI generated
   end
 
   def check_errors(ast)
