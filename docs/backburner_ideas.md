@@ -19,3 +19,9 @@ setters and `!=` hash variants that kept yielding near-duplicate signatures), so
 From the first inference run, estimate how fast new types / bad types are being learned (new hits per iteration
 over time, i.e. a decay rate). Use it to judge how long a later inference pass should run before it is unlikely
 to find anything new, instead of a fixed `moi.size * ITERS` iteration budget.
+
+## How to handle internal errors (2026-11-06, ignored for now)
+
+An error raised explicitly by a method, such as `raise NoMethodError, "not allowed"`, has no receiver, so `e.receiver` in
+`InferTypes#w_instrument` raises `ArgumentError` and the original error goes unrecorded. Open question: how should
+internal errors be handled in general? Not fixing this now: no benchmark uses errors as components.
