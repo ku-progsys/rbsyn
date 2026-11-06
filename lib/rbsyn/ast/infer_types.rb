@@ -83,20 +83,10 @@ end
 
     # since formal parameter may have a more generic value than the acutal argument we use argtypes to default to the more general formal param 
     argtypes = @tracelist[@counter] # so that we can elevate types when they are arguments. There is nuance to this that I am missing rn.
-    __dd_declared = (argtypes || []).dup if ENV["DBG_DYN"] # INSTRUMENTATION DD (AI generated, remove): declared types before they are consumed
     @counter += 1
     truefalse = RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true))
     # trace form: {method, reciever, args, result, exception}
     recarg = argtypes.shift
-    # >>> INSTRUMENTATION IM (AI generated, remove) >>>
-    if ENV["DBG_DYN"] && !recarg.nil?
-      __actual = recvr.is_a?(Class) ? RDL::Type::SingletonType.new(recvr) : RDL::Type::NominalType.new(recvr.class.to_s)
-      unless (__actual <= recarg rescue true)
-        $__im_n = ($__im_n || 0) + 1
-        warn "[IM] counter=#{@counter - 1} meth=#{meth} tracelist_recv=#{recarg} actual_recv=#{__actual} args=#{args.map { |a| a.class }.inspect} tracelist=#{@tracelist.inspect[0, 200]}" if $__im_n <= 15
-      end
-    end
-    # <<< INSTRUMENTATION IM <<<
     lnum_child = 0
     trace = {
       :method => meth,
@@ -123,15 +113,6 @@ end
           end},
       :result => nil, 
       :except => nil} # why is this nominal type this might need to change because of generics
-    # >>> INSTRUMENTATION DD (AI generated, remove): log any %dyn argument type recorded for an observed call
-    if ENV["DBG_DYN"] && trace[:args].is_a?(Array)
-      __dd_is_dyn = lambda { |t| t.is_a?(RDL::Type::DynamicType) || (t.is_a?(RDL::Type::OptionalType) && t.type.is_a?(RDL::Type::DynamicType)) }
-      if trace[:args].any? { |t| __dd_is_dyn.(t) } || __dd_is_dyn.(trace[:recvr])
-        $__dd_n = ($__dd_n || 0) + 1
-        warn "[DD] #{meth} recvr=#{trace[:recvr]} (actual #{recvr.class}) args=#{trace[:args].map(&:to_s).inspect} actual_arg_classes=#{args.map { |a| a.class }.inspect} declared(tracelist)=#{__dd_declared.map(&:to_s).inspect} counter=#{@counter - 1}" if $__dd_n <= 12
-      end
-    end
-    # <<< INSTRUMENTATION DD <<<
 
 
     begin
@@ -358,51 +339,37 @@ end
     def consolidate_type_errors(trace)
 
     meth = trace[:method]
-    begin
-      
-      @type_errs[meth].each_with_index do |sig, ind|
-        if sig[:recvr] != trace[:recvr]
-          next
-        end
-        if trace[:except].is_a?(NoMethodError) || trace[:except].is_a?(NameError)
-          #if we've already seen this error we don't need to update anything, method missing is method missing. 
-          #we know we've seen it because it will be the only one with this reciever for this method
+    @type_errs[meth].each_with_index do |sig, ind|
+      if sig[:recvr] != trace[:recvr]
+        next
+      end
+      if trace[:except].is_a?(NoMethodError) || trace[:except].is_a?(NameError)
+        #if we've already seen this error we don't need to update anything, method missing is method missing. 
+        #we know we've seen it because it will be the only one with this reciever for this method
+        return @type_errs
+      end
+      if sig[:wild] || trace[:wild] # AI generated (2026-10-20): wildcard records are kept as they are, see apply_wildcards
+        return @type_errs if sig[:wild] && trace[:wild] && same_wild_args?(sig[:args], trace[:args]) # AI generated
+        next # AI generated
+      end # AI generated
+      next if !!sig[:type_level] != !!trace[:type_level] # AI generated (2026-10-20): keep type-level records apart
+
+      if sig[:args].size == trace[:args].size
+        sigzip = sig[:args].zip(trace[:args])
+        if sigzip.all? { |old, current| TypeOperations.leq_nc(current, old) || TypeOperations.leq_nc(old, current) } # AI generated
+          @newerror = true
+          # if all arguments in the old observation are comprable to the current observation
+          # reduce each argument to the smallest smaller arguments will be expanding the incorrectness as incorrectness travels upwards. 
+          @type_errs[meth][ind][:args] = sigzip.map {|old, current| TypeOperations.leq_nc(old, current) ? old : current} # AI generated
+          
           return @type_errs
         end
-        if sig[:wild] || trace[:wild] # AI generated (2026-10-20): wildcard records are kept as they are, see apply_wildcards
-          return @type_errs if sig[:wild] && trace[:wild] && same_wild_args?(sig[:args], trace[:args]) # AI generated
-          next # AI generated
-        end # AI generated
-        next if !!sig[:type_level] != !!trace[:type_level] # AI generated (2026-10-20): keep type-level records apart
-
-        if sig[:args].size == trace[:args].size
-          begin
-            sigzip = sig[:args].zip(trace[:args])
-          rescue Exception => e
-            raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
-
-            binding.pry
-          end
-          if sigzip.all? { |old, current| TypeOperations.leq_nc(current, old) || TypeOperations.leq_nc(old, current) } # AI generated
-            @newerror = true
-            # if all arguments in the old observation are comprable to the current observation
-            # reduce each argument to the smallest smaller arguments will be expanding the incorrectness as incorrectness travels upwards. 
-            @type_errs[meth][ind][:args] = sigzip.map {|old, current| TypeOperations.leq_nc(old, current) ? old : current} # AI generated
-            
-            return @type_errs
-          end
-        end
       end
-
-      @newerror = true
-      @type_errs[meth].append(trace)
-      return @type_errs
-
-    rescue Exception => e
-      raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
-      binding.pry
-      raise e
     end
+
+    @newerror = true
+    @type_errs[meth].append(trace)
+    return @type_errs
   end
 
 
@@ -413,86 +380,63 @@ end
       puts "caught nil"
       return @type_successes
     end
-    # # >>> INSTRUMENTATION H (remove) >>>
-    # if ENV["DBG_DYN"] && trace[:method] == :exists?
-    #   (@type_successes[trace[:method]] || []).each do |sig|
-    #     next unless sig[:recvr] == trace[:recvr]
-    #     a, b = sig[:args].first, trace[:args].first
-    #     next unless a.is_a?(RDL::Type::FiniteHashType) && b.is_a?(RDL::Type::FiniteHashType)
-    #     r = begin
-    #       [a <= b, b <= a]
-    #     rescue Exception => e
-    #       "RAISED #{e.class}: #{e.message[0, 60]}"
-    #     end
-    #     warn "[H] old=#{a.elts.keys} new=#{b.elts.keys} (old<=new, new<=old)=#{r.inspect}"
-    #   end
-    # end
-    # # <<< INSTRUMENTATION H <<<
     meth = trace[:method]
-    begin
+    @type_successes[meth].each_with_index do |sig, ind|
+      if sig[:recvr] != trace[:recvr] 
+        next
+      end 
 
-      @type_successes[meth].each_with_index do |sig, ind|
-        if sig[:recvr] != trace[:recvr] 
-          next
-        end 
+      if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
+        temp = sig
+        # if args are correct size and returns are comprable
+        sigzip = sig[:args].zip(trace[:args])
+        if !(sigzip.any? {|old, current| old != current})
+          return @type_successes
+        end
 
-        if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
-          temp = sig
-          # if args are correct size and returns are comprable
-          sigzip = sig[:args].zip(trace[:args])
-          if !(sigzip.any? {|old, current| old != current})
-            return @type_successes
-          end
+        if !(sigzip.any? {|old, current| !(old <= current) && !(current <= old)}) # if all of the arguments are comparable
 
-          if !(sigzip.any? {|old, current| !(old <= current) && !(current <= old)}) # if all of the arguments are comparable
+          # we can consider the previous observation to be a call to an instance of this function 
+          # or a more specific instance of this function (perhaps we should not fold in, but RUBY only allows one function of the same arity per reciever" 
+          @type_successes[meth][ind][:args] = sigzip.map {|old, current| current <= old ? old : current}
+          @type_successes[meth][ind][:result] = sig[:result] <= trace[:result] ? trace[:result] : sig[:result]
+          # preserve the most generic version of the type
+          update = @type_successes[meth][ind]
 
-            # we can consider the previous observation to be a call to an instance of this function 
-            # or a more specific instance of this function (perhaps we should not fold in, but RUBY only allows one function of the same arity per reciever" 
-            @type_successes[meth][ind][:args] = sigzip.map {|old, current| current <= old ? old : current}
-            @type_successes[meth][ind][:result] = sig[:result] <= trace[:result] ? trace[:result] : sig[:result]
-            # preserve the most generic version of the type
-            update = @type_successes[meth][ind]
+          @newsuccess = true
+          @new_types << update
 
-            @newsuccess = true
-            @new_types << update
-
-            # AI altered: same clean-up, done for each class the signature is filed under (see registration_targets)
-            registration_targets(update[:recvr]).each do |name, class_recv| # AI generated
-              info = (RDL::Globals.info.info[class_recv ? RDL::Util.add_singleton_marker(name) : name] || {})[meth] # AI generated
-              next if info.nil? # AI generated
-              doomed = [] # AI generated
-              info[:type].each_with_index do |tipe, index| # AI generated
-                if tipe.args.zip(update[:args]).all? { |left, right| left <= right } && tipe.ret <= update[:result] # AI generated
-                  doomed << index # AI generated
-                end # AI generated
+          # AI altered: same clean-up, done for each class the signature is filed under (see registration_targets)
+          registration_targets(update[:recvr]).each do |name, class_recv| # AI generated
+            info = (RDL::Globals.info.info[class_recv ? RDL::Util.add_singleton_marker(name) : name] || {})[meth] # AI generated
+            next if info.nil? # AI generated
+            doomed = [] # AI generated
+            info[:type].each_with_index do |tipe, index| # AI generated
+              if tipe.args.zip(update[:args]).all? { |left, right| left <= right } && tipe.ret <= update[:result] # AI generated
+                doomed << index # AI generated
               end # AI generated
-              doomed.reverse_each do |index| # AI generated
-                info[:type].delete_at(index) # AI generated
-                info[:effect].delete_at(index) # AI generated
-              end # AI generated
-              TypeOperations.bump_methods_gen unless doomed.empty? # AI generated (2026-10-19): edited in place, drop methods_of cache
             end # AI generated
+            doomed.reverse_each do |index| # AI generated
+              info[:type].delete_at(index) # AI generated
+              info[:effect].delete_at(index) # AI generated
+            end # AI generated
+            TypeOperations.bump_methods_gen unless doomed.empty? # AI generated (2026-10-19): edited in place, drop methods_of cache
+          end # AI generated
 
-            # build the new, more general type into RDL
-            register_learned(update, meth) # AI generated
-            return @type_successes
-          end
+          # build the new, more general type into RDL
+          register_learned(update, meth) # AI generated
+          return @type_successes
         end
       end
-
-      # we have not found any type that is a comprable version of this one, we can add it in as is
-      @type_successes[meth].append(trace)
-      update = @type_successes[meth][-1]
-      @newsuccess = true
-      @new_types << update
-      register_learned(update, meth) # AI generated
-      return @type_successes
-
-    rescue Exception => e
-      raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException)) # AI generated: let timeouts through (was swallowed here)
-      binding.pry
-      raise e
     end
+
+    # we have not found any type that is a comprable version of this one, we can add it in as is
+    @type_successes[meth].append(trace)
+    update = @type_successes[meth][-1]
+    @newsuccess = true
+    @new_types << update
+    register_learned(update, meth) # AI generated
+    return @type_successes
   end
 
 
