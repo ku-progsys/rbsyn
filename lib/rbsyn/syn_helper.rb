@@ -119,8 +119,6 @@ module SynHelper
       end
       raise SwitchToInference, "typed search reached #{counter} iterations" if switch_after && !add_dyn && counter >= switch_after # AI generated
       counter += 1
-      # AI generated: refresh the cached information scores every 100 iterations (P changes as calls are tested)
-      work_list.each { |pw| pw.info_score = nil } if add_dyn && counter % 100 == 0 # AI generated
       # puts "counter: #{counter}"
       #puts counter
       # binding.pry
@@ -135,10 +133,6 @@ module SynHelper
       $__prof_t = __prof_mark(:sort1, $__prof_t) if ENV["DBG_DYN"] # INSTRUMENTATION P (AI generated, remove)
 
       # base = work_list.shift # AI altered (2026-10-19): weighted random pick during inference
-      # AI generated: during inference with information ordering, the next candidate is drawn at random from those with
-      # the fewest inferred errors, with probability proportional to its information score (entropy / size penalty),
-      # instead of always taking the best one. Seeded (INFO_SEED, default 1) so runs are reproducible.
-      # OFF by default (2026-10-19, user: discuss later); INFO_SAMPLE=on enables it.
       # AI generated (2026-10-20): exploration/exploitation pick during inference (EXPLORE=on, off by default).
       # Exploit = among the candidates with the fewest inferred errors, take the one with the fewest holes left (the
       # closest to a program that can be run); explore = take the head of the list (current order). The choice is made
@@ -160,18 +154,6 @@ module SynHelper
           end # AI generated
           base = work_list.delete_at(idx) # AI generated
         end # AI generated
-      elsif add_dyn && ENV["INFO_ORDER"] != "off" && ENV["INFO_SAMPLE"] == "on" && !work_list.empty? # AI altered: was `if`
-        @info_rng ||= Random.new((ENV["INFO_SEED"] || "1").to_i) # AI generated
-        min_err = work_list.first.inferred_errors # AI generated
-        group = work_list.take_while { |pw| pw.inferred_errors == min_err } # AI generated
-        weights = group.map { |pw| pw.info_score ||= @ctx.type_info.info_score(pw) } # AI generated
-        total = weights.sum # AI generated
-        idx = 0 # AI generated: all weights 0 -> take the first
-        if total > 0 # AI generated
-          r = @info_rng.rand * total # AI generated
-          idx = weights.index { |w| (r -= w) < 0 } || group.size - 1 # AI generated
-        end # AI generated
-        base = work_list.delete_at(idx) # AI generated
       else # AI generated
         base = work_list.shift # AI generated
       end # AI generated
@@ -285,7 +267,6 @@ module SynHelper
         # puts "TESTING: \n#{prog_wrap.to_ast} \nof TTYPE: #{prog_wrap.to_ast.ttype}"
         #puts Unparser.unparse(prog_wrap.to_ast)
         tempbool = false
-        __info_new_before = @ctx.type_info.info_new_total if add_dyn # AI generated (2026-10-19): see note_program_tested
 
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
@@ -376,8 +357,6 @@ module SynHelper
 
         }
         #BLOCK END
-        # AI generated (2026-10-19): mark the program's call subexpressions as seen; count it in u if nothing new was learned
-        @ctx.type_info.note_program_tested(prog_wrap, __info_new_before) if add_dyn # AI generated
 
         
         if tempbool
@@ -666,20 +645,6 @@ module SynHelper
 
   def comparator_key(prog_wrap) # AI generated
     tail =[-prog_wrap.dynamic_components, prog_wrap.ttype == @ctx.functype.ret ? 0 : 1]
-    # AI generated (2026-10-13): information-guided ordering during inference. Size is replaced by
-    # -(sum of P over the candidate's calls to methods of interest) / size, P = how often that (receiver class, method)
-    # has revealed new type information when tested (untested = 1); see InferTypes#info_score. The score is cached on
-    # the candidate and recomputed every 100 iterations (generate). Only the ORDER of candidates changes, not how they
-    # are generated. INFO_ORDER=off restores ordering by size.
-    if ENV["ADD_DYN"] == "TRUE" && ENV["INFO_ORDER"] != "off" # AI generated
-      # AI generated (2026-10-19): count the candidate's methods once, the first time it is scored (occ_m in info_p)
-      unless prog_wrap.occ_counted # AI generated
-        @ctx.type_info.note_occurrences(prog_wrap) # AI generated
-        prog_wrap.occ_counted = true # AI generated
-      end # AI generated
-      prog_wrap.info_score ||= @ctx.type_info.info_score(prog_wrap) # AI generated
-      return [prog_wrap.inferred_errors, -prog_wrap.info_score, -prog_wrap.passed_asserts, *tail] # AI generated
-    end # AI generated
     if ENV["ADD_DYN"] == "TRUE"
       [prog_wrap.inferred_errors, prog_wrap.prog_size, -prog_wrap.passed_asserts, *tail]
     else

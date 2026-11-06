@@ -40,7 +40,6 @@ class ExpandHolePass < ::AST::Processor
     @limit_depth = @params.fetch(:limit_depth, false)
     @variance = @params.fetch(:variance, COVARIANT)
     @recv = @params.fetch(:recv, false)
-    @ctx.type_info.note_hole_expansion(node.ttype) if ENV["ADD_DYN"] == "TRUE" && !@effect && !@limit_depth # AI generated: speculative hole score (InferTypes#hole_p)
     expanded = []
 
     if depth == 0

@@ -8,9 +8,6 @@ class ProgWrapper
 
   attr_reader :seed, :env, :exprs, :looking_for, :target, :inferred_errors, :exprs
   attr_accessor :passed_asserts, :inferred_errors, :ctx, :env, :ttype, :dynamic_components, :typehash, :typestring
-  attr_accessor :info_score # AI generated: cached information-guided score (InferTypes#info_score), nil = not computed
-  attr_accessor :occ_counted # AI generated (2026-10-19): counted in InferTypes#note_occurrences
-  attr_accessor :info_syms # AI generated (2026-10-19): cached scoring symbols (InferTypes#info_symbols)
 
   def remove_duplicates(list)
     counts = {}
@@ -153,7 +150,6 @@ class ProgWrapper
   def add_side_effect_expr(expr)
     @prog_size_cache = nil # AI generated: program changed, invalidate cached size
     @hole_count_cache = nil # AI generated (2026-10-20): same for the hole count
-    @info_syms = nil # AI generated (2026-10-19): program changed, invalidate cached scoring symbols
     @structure_string = @structure_hash = @hole_free = nil # AI generated: program changed, invalidate cached keys
     @exprs << expr
   end

@@ -3,6 +3,19 @@
 Two lists, kept up to date as changes are made. Details of each change: `docs/ai_fixes_to_review.md` and the
 `# AI generated` comments in the code.
 
+## Ablation re-run needed (noted 2026-11-05)
+
+The MOI ablation in `ablation_results/` ran on 2026-10-23 (commit 4c15a41, seed 1, 1200 s per round). Any search change
+kept after that commit can alter its times, so re-run the ablation at a later time before reporting them.
+
+Changes since that run:
+- Information-entropy ordering removed (2026-11-05; available in commits up to dc740d5, including `INFO_SEEN` and
+  `INFO_SAMPLE`). It was off by default. Checked on the slowest round of issue_close, invitation_code_use and
+  clear_global_notice_if_needed: learned and rejected sets identical, about 4-14% faster.
+
+Under evaluation: mid-batch re-prune on a new type-level failure (`syn_helper.rb`, `evaluable.each`), measurement
+only, in a throwaway worktree.
+
 ## A. Changes that would also change vanilla (re-run vanilla with them at the end)
 
 Speedups or fixes in code that vanilla shares (typed search, AST passes, method lookup). Not applied to `~/rbsyn` yet.
@@ -26,9 +39,6 @@ Known shared bug, not fixed: `s(..., *expanded)` splat in `ExpandHolePass#on_hol
 | Hole depth cap during inference (`INFO_MAX_HOLE_DEPTH`, default 3) | `ast/expand_hole_pass.rb` | inference no longer reaches deeper holes |
 | Bounded rescoring during inference (`RESCORE_TOP`, default 100; marked UNSAFE) | `syn_helper.rb` | candidates below the top 100 keep stale scores |
 | `%dyn` receivers get only placeholder methods, not learned signatures from all classes (`DYN_RECV_ALL=1` restores) | `type_ops.rb` (ROLLBACK POINT) | same programs generated, but drops type info you may want kept |
-| Seen-subexpression P = 0 (`INFO_SEEN=off`) | `ast/infer_types.rb` | ignores writes inside earlier siblings of the same expression |
-| Information ordering: entropy score, exponential size penalty, hole P = (a*u)/((a*u)+(c*e)), 1/occ_m, decay now off | `ast/infer_types.rb`, `syn_helper.rb` | order only (complete), but defines what the inference budget reaches |
-| Weighted random pick during inference (`INFO_SAMPLE=on`; off by default) | `syn_helper.rb` | non-deterministic order (seeded) |
 | Exploration/exploitation pick during inference (`EXPLORE=on`, `EXPLORE_K`; off by default, 2026-10-20): exploit = fewest holes, p(explore) = n/(n+K) | `syn_helper.rb`, `prog_wrapper.rb` | order only, but greedy fewest-holes pick before any program runs (first test: user_exists timed out) |
 | `!` visible only during condition search (`NO_COND_BANG=1` off) | `syn_helper.rb`, `synthesizer.rb`, `prog_tuple.rb` | exception to the %dyn-only rule |
 | Spec type guard: later specs run typed-only unless their types are new | `spec_type_guard.rb`, `synthesizer.rb` | skips inference for some specs |

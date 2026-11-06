@@ -4,9 +4,6 @@
 # so a one-off run can still override a value (e.g. `PRUNE_CHECK=off bundle exec rake ...`).
 # The values below are the current defaults; the comment says what the other value does.
 RUN_SWITCHES = {
-  # search order during inference: "off" = order by size (best so far); remove the line for information ordering
-  "INFO_ORDER" => "off",
-
   # failure checker: "new" = CheckErrorPassV2 (lib/rbsyn/ast/check_error_pass_v2.rb); "old" = original CheckErrorPass
   "CHECKER" => "new",
 
