@@ -377,7 +377,6 @@ end
   def consolidate_type_successes(trace)
 
     if trace[:recvr].to_s == "nil"
-      puts "caught nil"
       return @type_successes
     end
     meth = trace[:method]
