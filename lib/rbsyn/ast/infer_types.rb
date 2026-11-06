@@ -43,12 +43,9 @@ class InferTypes
       @type_successes[i] = []
     end
     @tracelist = {}
-    # @checker = CheckErrorPass.new(@type_errs, @type_successes) # AI altered (2026-10-20): replaced, see check_error_pass_v2.rb
     @checker = (ENV["CHECKER"] == "old" ? CheckErrorPass : CheckErrorPassV2).new(@type_errs, @type_successes) # AI generated
     @set_exception = false
     @new_types = []
-    # @new_success = false  # AI altered: name did not match attr_reader :newsuccess
-    # @new_error = false    # AI altered: name did not match attr_reader :newerror
     @newsuccess = false # AI generated
     @newerror = false   # AI generated
     @counter = 0
@@ -81,44 +78,6 @@ class InferTypes
     end
     local_hash
 end
-
-  # def hashargtypes(hash, lnum_child)
-  #   #AI version
-  #   truefalse = RDL::Type::OptionalType.new(RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true)))
-  #   local_hash = {}
-  #   locals_list = (@tracelist[@counter - 1 + lnum_child] || []).dup
-  #   hash.each do |key, val|
-  #     x = locals_list.shift
-  #     if !x.nil?
-  #       local_hash[key] = RDL::Type::OptionalType.new(x)
-  #     elsif val.is_a?(TrueClass) || val.is_a?(FalseClass)
-  #       local_hash[key] = truefalse
-  #     else
-  #       local_hash[key] = RDL::Type::OptionalType.new(RDL::Type::NominalType.new(val.class.to_s))
-  #     end
-  #   end
-  #   local_hash
-  # end
-
-  # def hashargtypes(hash, lnum_child)
-  #   truefalse = RDL::Type::OptionalType.new(RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true)))
-  #   local_hash = {}
-  #   locals_list = @tracelist[@counter + lnum_child]
-  #   hash.each do |key, val|
-      
-  #     x = locals_list.shift
-  #     if !x.nil?
-        
-  #       #BR might not want this to be an optional type 
-  #       local_hash[key] = RDL::OptionalType.new(x)
-  #     elsif i.is_a?(TrueClass) || i.is_a?(FalseClass) 
-  #       local_hash[key] = truefalse 
-  #     else 
-  #       local_hash[key] = RDL::Type::OptionalType.new(RDL::Type::NominalType.new(i.class.to_s))
-  #     end
-  #     local_hash
-  #   end
-  # end
 
   def w_instrument(recvr, meth, *args)
 
@@ -159,9 +118,6 @@ end
             truefalse 
           elsif i.is_a?(Hash)
             RDL::Type::FiniteHashType.new(hashargtypes(i, lnum_child), nil)
-            # binding.pry
-            # hashargtypes(i, lnum_child)< AI erase
-            # RDL::Type::FiniteHashType.new(i, nil) < AI erase
           else 
             RDL::Type::NominalType.new(i.class.to_s)
           end},
@@ -180,11 +136,6 @@ end
 
     begin
 
-      # if meth == :"self.exists?" || meth == :"exists?"
-      #   puts "METH: #{meth}"
-      #   puts "ARGS: #{args}"
-      #   # binding.pry
-      # end
       @raw_args = args # AI generated (2026-10-20): the actual argument values, for apply_wildcards
       result = recvr.send(meth, *args)
 
@@ -205,7 +156,6 @@ end
       # don't even bother using this program because it DEFINITELY has a type error, not just a potential error. 
       if !@set_exception 
         trace[:except] = e
-        # if e.receiver.to_s == recvr.class.to_s && e.name == meth # AI altered (2026-10-20): compared the receiver's value as text to its class name, never equal, so :ALL was never recorded
         if e.receiver.equal?(recvr) && e.name == meth # AI generated: the missing method was called on this receiver itself
           # ensure that error arose from outer class, not inner call.
           trace[:args] = :ALL
@@ -222,7 +172,6 @@ end
     rescue NameError => e 
       if !@set_exception 
         trace[:except] = e
-        # if e.to_s.downcase.include?("undefined method") &&  e.receiver.to_s == recvr.class.to_s && e.name == meth # AI altered (2026-10-20): same comparison as the NoMethodError branch
         if e.to_s.downcase.include?("undefined method") && e.receiver.equal?(recvr) && e.name == meth # AI generated
           trace[:args] = :ALL
         else
@@ -266,15 +215,11 @@ end
       trace[:result] = RDL::Type::NominalType.new(result.class.to_s)
     end
     
-    # if type_to_s(trace).to_s == "Hamster::Hash_1 :alloc => Hamster::Trie => nil => :except"
-    #   binding.pry
-    # end
     empty_hash_arg = trace[:args].is_a?(Array) &&
       # AI generated
       trace[:args].any? { |a| a.is_a?(RDL::Type::FiniteHashType) && a.elts.empty? }
 
     update_success(trace) unless empty_hash_arg
-    # update_success(trace)
     result
 
   end
@@ -388,8 +333,6 @@ end
 
   def get_reset_newtypes()
     temp = @new_types.dup
-    # @new_success = false  # AI altered: reset never reached @newsuccess, so it stayed true forever
-    # @new_error = false    # AI altered: reset never reached @newerror
     @newsuccess = false # AI generated
     @newerror = false   # AI generated
     @new_types = []
@@ -401,8 +344,6 @@ end
 
     if !match_exclusion?(trace) && !(trace[:recvr].to_s == "nil")
 
-      # ParentsHelper.addTypeManually(trace[:recvr].to_s)
-      # ParentsHelper.addTypeManually(trace[:result].to_s)
       # AI altered: add class names (a %bool receiver/result was added as "true or false", which RDL.nowrap also turned
       # into an RDL key); NilClass is skipped as "nil" was before
       [trace[:recvr], trace[:result]].each { |t| registration_targets(t).each { |name, _| ParentsHelper.addTypeManually(name) unless name == "NilClass" } } # AI generated
@@ -442,12 +383,10 @@ end
 
             binding.pry
           end
-          # if sigzip.all? { |old, current| current <= old || old <= current} # AI altered (2026-10-20): recorded RDL bounds
           if sigzip.all? { |old, current| TypeOperations.leq_nc(current, old) || TypeOperations.leq_nc(old, current) } # AI generated
             @newerror = true
             # if all arguments in the old observation are comprable to the current observation
             # reduce each argument to the smallest smaller arguments will be expanding the incorrectness as incorrectness travels upwards. 
-            # @type_errs[meth][ind][:args] = sigzip.map {|old, current| old <= current ? old : current} # AI altered (2026-10-20)
             @type_errs[meth][ind][:args] = sigzip.map {|old, current| TypeOperations.leq_nc(old, current) ? old : current} # AI generated
             
             return @type_errs
@@ -496,8 +435,6 @@ end
         if sig[:recvr] != trace[:recvr] 
           next
         end 
-        # puts "here"
-        # puts sig
 
         if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
           temp = sig
@@ -519,28 +456,6 @@ end
             @newsuccess = true
             @new_types << update
 
-            # RDL::Globals.info.info[update[:recvr].to_s][meth][:type].each_with_index do |tipe, index|
-            #   # now destroy any entries that are more precise than this one. 
-            #   if tipe.args.zip(update[:args]).all? {|left, right| left <= right} && tipe.ret <= update[:result] 
-            #     # any that is more specific we can destroy
-            #     RDL::Globals.info.info[update[:recvr].to_s][meth][:type].pop(index)
-            #     RDL::Globals.info.info[update[:recvr].to_s][meth][:effect].pop(index)
-            #   end  
-            # end
-            
-            # info = RDL::Globals.info.info[update[:recvr].to_s][meth]  # AI altered: class receivers live under the "[s]" key
-            # info = RDL::Globals.info.info[rdl_info_key(update[:recvr])][meth] # AI generated
-            # #AI version something about 
-            # doomed = []
-            # info[:type].each_with_index do |tipe, index|
-            #   if tipe.args.zip(update[:args]).all? { |left, right| left <= right } && tipe.ret <= update[:result]
-            #     doomed << index
-            #   end
-            # end
-            # doomed.reverse_each do |index|
-            #   info[:type].delete_at(index)
-            #   info[:effect].delete_at(index)
-            # end
             # AI altered: same clean-up, done for each class the signature is filed under (see registration_targets)
             registration_targets(update[:recvr]).each do |name, class_recv| # AI generated
               info = (RDL::Globals.info.info[class_recv ? RDL::Util.add_singleton_marker(name) : name] || {})[meth] # AI generated
@@ -559,11 +474,6 @@ end
             end # AI generated
 
             # build the new, more general type into RDL
-            # RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"  # AI altered: registered class methods as instance methods
-            # RDL.type update[:recvr].to_s, rdl_meth_name(update[:recvr], meth), "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"  # AI altered: did not carry the declared read/write effects over
-            # carried = carried_effects(update[:recvr], meth) # AI generated
-            # RDL.type update[:recvr].to_s, rdl_meth_name(update[:recvr], meth), "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}", read: carried[:read], write: carried[:write] # AI generated
-            # AI altered: filed under update[:recvr].to_s, which for a %bool receiver is "true or false" (not a class); see register_learned
             register_learned(update, meth) # AI generated
             return @type_successes
           end
@@ -575,11 +485,6 @@ end
       update = @type_successes[meth][-1]
       @newsuccess = true
       @new_types << update
-      # RDL.type update[:recvr].to_s, meth, "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"  # AI altered: registered class methods as instance methods
-      # RDL.type update[:recvr].to_s, rdl_meth_name(update[:recvr], meth), "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}"  # AI altered: did not carry the declared read/write effects over
-      # carried = carried_effects(update[:recvr], meth) # AI generated
-      # RDL.type update[:recvr].to_s, rdl_meth_name(update[:recvr], meth), "(#{update[:args].map(&:to_s).join(', ')}) -> #{update[:result].to_s}", read: carried[:read], write: carried[:write] # AI generated
-      # AI altered: filed under update[:recvr].to_s, which for a %bool receiver is "true or false" (not a class); see register_learned
       register_learned(update, meth) # AI generated
       return @type_successes
 
@@ -632,9 +537,6 @@ end
   def check_errors(ast)
     @checker.update_reset(@type_errs, @type_successes) # resetting the checker
     @checker.process(ast) # the # of errors 
-    # binding.pry if x.is_a?(RDL::Type::DynamicType)
-    # @checker.update_reset(@type_errs, @type_successes) # resetting the checker
-    # x = @checker.process(ast) # the # of errors 
     [@checker.errors, @checker.dynamic_components]  
 
   end
@@ -679,7 +581,6 @@ end
 
   def type_to_s(type)
 
-    # binding.pry
     
     t = expanded_type_to_s(type[:recvr])
     
@@ -702,7 +603,6 @@ end
 
 
     if !type[:except].nil?
-      # t = " #{t} => :except" # AI altered (2026-10-20): type-level failures print as :type_except
       t = " #{t} => #{type[:type_level] ? ':type_except' : ':except'}" # AI generated
     end
 
