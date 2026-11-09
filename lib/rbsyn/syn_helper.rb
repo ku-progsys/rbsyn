@@ -68,6 +68,10 @@ module SynHelper
 
     correct_progs = []
     sweep_mode = ENV.key?("SWEEP_DYN") # AI generated: opt-in single-pass inference (see the inference limit below)
+    # AI generated (2026-11-08): a correct program found during inference is returned and the typed pass is skipped.
+    # By default it is returned at once; with INFER_FINISH_BUDGET=1 it is kept and returned when the inference budget
+    # runs out (or the work list empties), so later specs get the types from the whole budget. Log line: INFERENCE SOLVED
+    finish_budget = ENV.key?("INFER_FINISH_BUDGET") # AI generated
     exhaustion = DynArgExhaustion.new(@ctx.type_info) # AI generated: exhaustion of %dyn argument holes (lib/rbsyn/dyn_arg_exhaustion.rb)
     last_watermark = nil # AI generated: smallest program size in the work list at the last exhaustion check
     pruner = DeadCallPrune.new(@ctx.type_info) # AI generated (2026-10-20): drops candidates with a dead call (lib/rbsyn/dead_call_prune.rb)
@@ -93,6 +97,10 @@ module SynHelper
       if counter >= type_search_depth && add_dyn # AI generated
         @ctx.logger.debug("EXPLORE: inference ended at #{counter}: #{programs_run} programs run, #{explore_picks} exploration picks") if ENV["EXPLORE"] == "on" # AI generated (2026-10-20)
         @ctx.logger.debug("PRUNE: inference ended at #{counter}, dropped #{pruner.dropped.to_h}") # AI generated (2026-10-20)
+        if finish_budget && !correct_progs.empty? # AI generated (2026-11-08): return the kept solution, skip the typed pass
+          @ctx.logger.debug("INFERENCE SOLVED: budget finished at #{counter}, returning #{correct_progs.size} kept solution(s)") # AI generated
+          return return_all ? correct_progs : correct_progs.first # AI generated
+        end # AI generated
         raise NameError, "done checking for types at count: #{counter}" unless sweep_mode # AI generated: old path
         swept = work_list.select { |prog_wrap| prog_wrap.dynamic_components > 0 } # AI generated
         if swept.size == work_list.size # AI generated: nothing typed to continue with, fall back to the restart path
@@ -369,10 +377,14 @@ module SynHelper
         # AI altered: the line above parses as test_outputs.all?(true && !add_dyn), i.e. all?(false) during inference,
         # which accepted programs whose outputs were all false. Intended: all outputs true, and not during inference
         # (except in SWEEP_DYN mode, where a correct program found while inferring is kept like any other)
-        if test_outputs.all?(true) && (!add_dyn || sweep_mode) # AI generated
+        # if test_outputs.all?(true) && (!add_dyn || sweep_mode) # AI generated # AI altered (2026-11-08): the user wants
+        #   correct programs found during inference returned, skipping the typed pass (see INFER_FINISH_BUDGET above)
+        if test_outputs.all?(true) # AI generated
             #puts "correct program \n#{format_ast(prog_wrap.to_ast)}"
             correct_progs << prog_wrap
-          return prog_wrap unless return_all
+          @ctx.logger.debug("INFERENCE SOLVED at count #{counter}#{finish_budget ? ' (kept, finishing inference budget)' : ''}: #{prog_wrap.to_ast.to_s.gsub(/\s+/, ' ')[0, 200]}") if add_dyn # AI generated
+          # return prog_wrap unless return_all # AI altered: with INFER_FINISH_BUDGET, inference continues to its budget
+          return prog_wrap unless return_all || (add_dyn && finish_budget) # AI generated
           
         elsif ENV.key? 'DISABLE_EFFECTS'
           prog_wrap.passed_asserts = 0
@@ -474,7 +486,8 @@ module SynHelper
       # work_list is empty and we have all correct programs that means we have
       # all correct programs up that length
       # if !correct_progs.empty? && return_all && !add_dyn
-      if !correct_progs.empty? && return_all && (!add_dyn || sweep_mode) # AI altered: SWEEP_DYN keeps correct programs found while inferring
+      # if !correct_progs.empty? && return_all && (!add_dyn || sweep_mode) # AI altered: SWEEP_DYN keeps correct programs found while inferring
+      if !correct_progs.empty? && return_all && !(add_dyn && finish_budget) # AI generated (2026-11-08): also during inference
         return correct_progs
       end
       
@@ -537,6 +550,10 @@ module SynHelper
       }
     end
 
+    unless correct_progs.empty? # AI generated (2026-11-08): solutions kept under INFER_FINISH_BUDGET, work list ran out first
+      @ctx.logger.debug("INFERENCE SOLVED: work list empty, returning #{correct_progs.size} kept solution(s)") # AI generated
+      return return_all ? correct_progs : correct_progs.first # AI generated
+    end # AI generated
     raise RbSynError, "No candidates found" + "\n\n" + log + "\n\n" + log2 + "\n\n"
 
   end
