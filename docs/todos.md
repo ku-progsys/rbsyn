@@ -9,3 +9,7 @@ method. Do this before item 4.
 3. Update concretized programs only after execution, and only if a new type was discovered.
 4. Cleanly separate collection from computation in `InferTypes`: `w_instrument` only collects what each call did, and
    merging and registering types is computed later, from what was collected.
+5. Test the spec type guard (`lib/rbsyn/spec_type_guard.rb`). It skips inference for a later spec when its argument
+   types and assertion calls were seen before, but the branch condition depends on the setup, not the assertions, and
+   can need methods no earlier spec used. Its fallback to inference only fires on "No candidates", not on timeout.
+   Compare against `INFERENCE_EVERY_PASS=1`.
