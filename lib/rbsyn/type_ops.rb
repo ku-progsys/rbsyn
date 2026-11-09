@@ -443,7 +443,8 @@ module TypeOperations
 
   # def methods_of_uninstrumented(trecv) # AI altered (2026-10-19): now cached, see methods_of_cached below
   def methods_of_uninstrumented(trecv) # AI generated
-    return methods_of_build(trecv) if ENV.key?("NO_METHODS_CACHE") # AI generated: NO_METHODS_CACHE=1 disables the cache
+    # return methods_of_build(trecv) if ENV.key?("NO_METHODS_CACHE") # AI generated: NO_METHODS_CACHE=1 disables the cache # AI altered: DYN_ONLY_MOI
+    return methods_of_dyn_only_moi(trecv, methods_of_build(trecv)) if ENV.key?("NO_METHODS_CACHE") # AI generated: NO_METHODS_CACHE=1 disables the cache
     methods_of_cached(trecv) # AI generated
   end
 
@@ -473,9 +474,38 @@ module TypeOperations
   def methods_of_cached(trecv) # AI generated
     $__methods_cache = {} if $__methods_cache.nil? || $__methods_cache_gen != @@methods_gen
     $__methods_cache_gen = @@methods_gen
-    key = [trecv.class.name, trecv.to_s, ENV["ADD_DYN"], ENV.key?("DYN_RECV_ALL")]
-    table = ($__methods_cache[key] ||= methods_of_build(trecv))
+    # key = [trecv.class.name, trecv.to_s, ENV["ADD_DYN"], ENV.key?("DYN_RECV_ALL")] # AI altered: key also holds DYN_ONLY_MOI
+    key = [trecv.class.name, trecv.to_s, ENV["ADD_DYN"], ENV.key?("DYN_RECV_ALL"), ENV.key?("DYN_ONLY_MOI")] # AI generated
+    # table = ($__methods_cache[key] ||= methods_of_build(trecv)) # AI altered: see methods_of_dyn_only_moi
+    table = ($__methods_cache[key] ||= methods_of_dyn_only_moi(trecv, methods_of_build(trecv))) # AI generated
     copy_class_methods(table)
+  end
+
+  # AI generated (2026-11-08, experiment): with DYN_ONLY_MOI=1, during inference a receiver of KNOWN type is offered only
+  # the %dyn placeholder for every method that has one, not the learned signatures as well. The placeholder already
+  # produces every program text the learned signature does (any argument, %dyn result), so the typed copies duplicate
+  # expansion work until their holes are filled (dedupe_key keeps hole types). Cost: hole fills are no longer guided
+  # by learned argument types. Off by default; the typed search (ADD_DYN != TRUE) is never affected.
+  def methods_of_dyn_only_moi(trecv, table) # AI generated
+    return table unless ENV.key?("DYN_ONLY_MOI") && ENV["ADD_DYN"] == "TRUE"
+    return table if trecv.is_a?(RDL::Type::DynamicType)
+    placeholders = parents_for_placeholders(trecv).reduce({}) { |acc, klass|
+      methods = copy_class_methods(RDL::Globals.info.info[klass])
+      next acc if methods.nil?
+      methods.each { |m, val| acc[m] = acc.key?(m) ? merge_methods(acc[m], val) : val }
+      acc
+    }
+    if ENV["DBG_DYN"] # INSTRUMENTATION DO (AI generated, remove)
+      replaced = (table.keys & placeholders.keys).select { |m| table[m][:type].map(&:to_s) != placeholders[m][:type].map(&:to_s) }
+      warn "[DO] #{trecv}: placeholder-only for #{replaced.map { |m| "#{m} (#{table[m][:type].map(&:to_s).join(' | ')})" }.join('; ')[0, 300]}" unless replaced.empty?
+    end # INSTRUMENTATION DO
+    table.merge(placeholders)
+  end
+
+  def parents_for_placeholders(trecv) # AI generated: the placeholder classes methods_of_build adds for this receiver
+    parents = ["DynamicType"]
+    parents << "[s]DynamicType" if trecv.is_a?(RDL::Type::SingletonType) && trecv.val.is_a?(Class)
+    parents
   end
 
   def methods_of_build(trecv) # AI generated: the previous body of methods_of_uninstrumented, unchanged
