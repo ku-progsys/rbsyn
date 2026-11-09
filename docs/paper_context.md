@@ -68,3 +68,8 @@ MOI ablation, 2026-10-23, commit 4c15a41, seed 1, 1200 s per round, one method a
 - Bootstrapping: a method on type T is only learned once some program produces a T, so methods on call results are
   learned late.
 - Refine picks the first of several overloaded signatures (fixed by the planned collapse).
+- Permissive setters and loose specs: inference learns any signature that runs without an error. ActiveRecord setters
+  convert values silently (`issue.state_id = true` stores 1; `issue.closed_at = true` keeps `true`) and nothing raises
+  until a save, so `issue_close` learns `state_id=(true or false)` and `closed_at=(true or false)`. Its spec only checks
+  `state_id == 1` and `closed_at != nil`, so `arg0.state_id = true; arg0.closed_at = true` passes, in the typed pass
+  too (seen before 2026-11-08 changes, run do_base_1108). Fully-typed rejects it (`Integer`, `Time` arguments).
