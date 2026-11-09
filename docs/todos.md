@@ -19,3 +19,7 @@ method. Do this before item 5.
 7. If time: report learned types that are too broad for the user to annotate by hand (an argument position that
    succeeded with several unrelated classes and never failed, e.g. `state_id=` in `issue_close`). Evaluate by
    simulating from run logs: what if the user had been shown the report at round N?
+8. Test whether pruning before running (DeadCallPrune rules, PRUNE_CHECK) speeds up synthesis end to end. Earlier
+   checks only counted programs run (unstage_user 695 -> 493, activate 716 -> 460), never time or solved count.
+   Compare runs with `PRUNE=off` against the default on the passing benchmarks; also the mid-batch re-prune that
+   `docs/paper_tracking.md` lists as under evaluation.
