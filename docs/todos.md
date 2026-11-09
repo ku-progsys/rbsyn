@@ -13,3 +13,6 @@ method. Do this before item 4.
    types and assertion calls were seen before, but the branch condition depends on the setup, not the assertions, and
    can need methods no earlier spec used. Its fallback to inference only fires on "No candidates", not on timeout.
    Compare against `INFERENCE_EVERY_PASS=1`.
+6. If time: report learned types that are too broad for the user to annotate by hand (an argument position that
+   succeeded with several unrelated classes and never failed, e.g. `state_id=` in `issue_close`). Evaluate by
+   simulating from run logs: what if the user had been shown the report at round N?
