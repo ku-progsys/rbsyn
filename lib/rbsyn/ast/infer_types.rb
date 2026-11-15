@@ -61,6 +61,11 @@ class InferTypes
     @tracelist = tracelist
   end
 
+  # AI generated (2026-11-15): a class or module value gets its singleton type (User -> singleton(User)), not Class.
+  def value_type(v)
+    v.is_a?(Module) ? RDL::Type::SingletonType.new(v) : RDL::Type::NominalType.new(v.class.to_s)
+  end
+
   def hashargtypes(hash, lnum_child)
     # AI version, skip hash arg types.  
     truefalse = RDL::Type::OptionalType.new(RDL::Type::UnionType.new(RDL::Type::SingletonType.new(false), RDL::Type::SingletonType.new(true)))
@@ -74,7 +79,8 @@ class InferTypes
       elsif val.is_a?(TrueClass) || val.is_a?(FalseClass)
         local_hash[key] = truefalse
       else
-        local_hash[key] = RDL::Type::OptionalType.new(RDL::Type::NominalType.new(val.class.to_s))
+        # local_hash[key] = RDL::Type::OptionalType.new(RDL::Type::NominalType.new(val.class.to_s)) # AI altered
+        local_hash[key] = RDL::Type::OptionalType.new(value_type(val)) # AI generated
       end
     end
     local_hash
@@ -97,7 +103,8 @@ end
         elsif recvr.is_a?(TrueClass) || recvr.is_a?(FalseClass)
           truefalse
         else
-          RDL::Type::NominalType.new(recvr.class.to_s)
+          # RDL::Type::NominalType.new(recvr.class.to_s) # AI altered
+          value_type(recvr) # AI generated
         end,
 
       :args =>
@@ -110,7 +117,8 @@ end
           elsif i.is_a?(Hash)
             RDL::Type::FiniteHashType.new(hashargtypes(i, lnum_child), nil)
           else 
-            RDL::Type::NominalType.new(i.class.to_s)
+            # RDL::Type::NominalType.new(i.class.to_s) # AI altered
+            value_type(i) # AI generated
           end},
       :result => nil, 
       :except => nil} # why is this nominal type this might need to change because of generics
@@ -194,7 +202,8 @@ end
       trace[:result] = truefalse 
     else 
       #BR this shouldn't be to_s it gets rid of the type information esp with singleton types. Instead you should use the class itself.
-      trace[:result] = RDL::Type::NominalType.new(result.class.to_s)
+      # trace[:result] = RDL::Type::NominalType.new(result.class.to_s) # AI altered
+      trace[:result] = value_type(result) # AI generated
     end
     
     empty_hash_arg = trace[:args].is_a?(Array) &&
