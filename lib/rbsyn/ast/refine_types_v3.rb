@@ -29,7 +29,7 @@ class RefineTypesV3 < ::AST::Processor # AI generated
     @changed = false
     @var_types = {} # AI generated: variable name -> known type its assignment resolved to
     @env = nil # AI generated: the program's LocalEnvironment, set by retype
-    @env_done = {} # AI generated: env ref -> [type, retyped expr], each entry is walked once per program
+    @env_done = {} # AI generated: env ref -> [status, type, retyped expr], each entry is walked once per program
   end
 
   # AI generated: retypes a stored program (seed, effect expressions and the env entries they reference) rather than
@@ -38,7 +38,7 @@ class RefineTypesV3 < ::AST::Processor # AI generated
     @env = env
     new_exprs = exprs.map { |e| visit(e)[2] }
     new_seed = visit(seed)[2]
-    new_info = env.info.to_h { |ref, entry| [ref, @env_done.key?(ref) ? entry.merge(expr: @env_done[ref][1]) : entry] }
+    new_info = env.info.to_h { |ref, entry| [ref, @env_done.key?(ref) ? entry.merge(expr: @env_done[ref][2]) : entry] }
     [new_seed, new_exprs, new_info]
   ensure
     @env = nil
@@ -48,13 +48,18 @@ class RefineTypesV3 < ::AST::Processor # AI generated
   def on_envref(node)
     return handler_missing(node) if @env.nil?
     ref = node.children[0]
-    unless @env_done.key?(ref)
-      status, type, expr = visit(@env.get_expr(ref)[:expr])
-      @env_done[ref] = [status == :ok && all_known?([type]) ? type : nil, expr]
-    end
-    type = @env_done[ref][0]
-    return handler_missing(node) if type.nil?
-    [:ok, type, write(node, type)]
+    # unless @env_done.key?(ref) # AI altered: an unknown entry was counted again as %dyn at each reference
+    #   status, type, expr = visit(@env.get_expr(ref)[:expr])
+    #   @env_done[ref] = [status == :ok && all_known?([type]) ? type : nil, expr]
+    # end
+    # type = @env_done[ref][0]
+    # return handler_missing(node) if type.nil?
+    # [:ok, type, write(node, type)]
+    # AI generated: a reference stands for its expression (as to_ast inlines it): it passes up the expression's status
+    # and type, and its %dyn parts are counted once, when the expression is first walked
+    @env_done[ref] ||= visit(@env.get_expr(ref)[:expr])
+    status, type, _ = @env_done[ref]
+    [status, type, status == :ok ? write(node, type) : node]
   end
 
   # AI generated: an assignment remembers the type its expression resolved to, so later uses of the variable get it
