@@ -117,6 +117,8 @@ class RefineTypesV3 < ::AST::Processor # AI generated
   # more specific, and every member of a union argument must be covered.
   def match_success(template, signature)
     return false if template[:args].size != signature[:args].size
+    # AI generated (2026-11-15): successes carry no wildcards, so a %dyn receiver or argument cannot be said to match one
+    return false unless known?(signature[:recvr]) && signature[:args].all? { |a| known?(a) } # AI generated
     return false unless nil_safe_leq(signature[:recvr], template[:recvr])
     # template[:args].zip(signature[:args]).all? { |t, s| members(t).any? { |l| members(s).any? { |u| nil_safe_leq(l, u) } } }
     template[:args].zip(signature[:args]).all? { |t, s| members(s).all? { |u| members(t).any? { |l| nil_safe_leq(u, l) } } }
