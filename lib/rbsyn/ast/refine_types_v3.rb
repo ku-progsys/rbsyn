@@ -27,6 +27,23 @@ class RefineTypesV3 < ::AST::Processor # AI generated
     @dynamic_components = 0
     @drop_reason = nil
     @changed = false
+    @var_types = {} # AI generated: variable name -> known type its assignment resolved to
+  end
+
+  # AI generated: an assignment remembers the type its expression resolved to, so later uses of the variable get it
+  # (assignments come before their uses, see ProgWrapper#to_ast)
+  def on_lvasgn(node)
+    status, type, child = visit(node.children[1])
+    @var_types[node.children[0]] = type if status == :ok && all_known?([type])
+    @dynamic_components += 1 if node.ttype.is_a?(RDL::Type::DynamicType)
+    [:ok, node.ttype, rebuild(node, [node.children[0], child])]
+  end
+
+  # AI generated: a use of a variable takes the type of its assignment when that is known; otherwise the stored type
+  def on_lvar(node)
+    type = @var_types[node.children[0]]
+    return handler_missing(node) if type.nil?
+    [:ok, type, write(node, type)]
   end
 
   def drop?
