@@ -28,6 +28,33 @@ class RefineTypesV3 < ::AST::Processor # AI generated
     @drop_reason = nil
     @changed = false
     @var_types = {} # AI generated: variable name -> known type its assignment resolved to
+    @env = nil # AI generated: the program's LocalEnvironment, set by retype
+    @env_done = {} # AI generated: env ref -> [type, retyped expr], each entry is walked once per program
+  end
+
+  # AI generated: retypes a stored program (seed, effect expressions and the env entries they reference) rather than
+  # its to_ast copy. Returns [new_seed, new_exprs, new_env_info]; errors, dynamic_components and drop? as for process.
+  def retype(seed, exprs, env)
+    @env = env
+    new_exprs = exprs.map { |e| visit(e)[2] }
+    new_seed = visit(seed)[2]
+    new_info = env.info.to_h { |ref, entry| [ref, @env_done.key?(ref) ? entry.merge(expr: @env_done[ref][1]) : entry] }
+    [new_seed, new_exprs, new_info]
+  ensure
+    @env = nil
+  end
+
+  # AI generated: a reference to an env entry (a variable before to_ast) takes the type its expression resolves to
+  def on_envref(node)
+    return handler_missing(node) if @env.nil?
+    ref = node.children[0]
+    unless @env_done.key?(ref)
+      status, type, expr = visit(@env.get_expr(ref)[:expr])
+      @env_done[ref] = [status == :ok && all_known?([type]) ? type : nil, expr]
+    end
+    type = @env_done[ref][0]
+    return handler_missing(node) if type.nil?
+    [:ok, type, write(node, type)]
   end
 
   # AI generated: an assignment remembers the type its expression resolved to, so later uses of the variable get it
@@ -123,9 +150,18 @@ class RefineTypesV3 < ::AST::Processor # AI generated
       return [status, node.ttype, rebuilt]
     end
 
-    @dynamic_components += 1 if node.is_a?(TypedNode) && node.ttype.is_a?(RDL::Type::DynamicType)
-    children = node.children.map { |k| k.is_a?(TypedNode) ? visit(k)[2] : k }
-    [:ok, node.is_a?(TypedNode) ? node.ttype : nil, rebuild(node, children)]
+    # @dynamic_components += 1 if node.is_a?(TypedNode) && node.ttype.is_a?(RDL::Type::DynamicType) # AI altered
+    # children = node.children.map { |k| k.is_a?(TypedNode) ? visit(k)[2] : k } # AI altered
+    # [:ok, node.is_a?(TypedNode) ? node.ttype : nil, rebuild(node, children)] # AI altered
+    visited = node.children.map { |k| k.is_a?(TypedNode) ? visit(k) : [:ok, nil, k] } # AI generated
+    rebuilt = rebuild(node, visited.map { |_, _, n| n }) # AI generated
+    # AI generated: a block of statements has the type of its last statement
+    last = visited.last
+    if node.is_a?(TypedNode) && node.type == :begin && last && all_known?([last[1]])
+      return [:ok, last[1], write(rebuilt, last[1])]
+    end
+    @dynamic_components += 1 if node.is_a?(TypedNode) && node.ttype.is_a?(RDL::Type::DynamicType) # AI generated
+    [:ok, node.is_a?(TypedNode) ? node.ttype : nil, rebuilt] # AI generated
   end
 
   # a recorded success against the call: argument count, receiver (call <= record), each argument (call <= record),

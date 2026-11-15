@@ -99,6 +99,20 @@ class ProgWrapper
     @structure_hash ||= structure_string.hash
   end
 
+  # AI generated (2026-11-15): retype the stored program with RefineTypesV3 and keep the new types.
+  # Returns [errors, dynamic_components, drop_reason] (drop_reason nil unless the program should be pruned).
+  def retype!(type_info)
+    pass = RefineTypesV3.new(type_info.type_errs, type_info.type_successes)
+    new_seed, new_exprs, new_info = pass.retype(@seed, @exprs, @env)
+    if pass.changed
+      @seed = new_seed
+      @exprs = new_exprs
+      @env.info = new_info
+      @typehash = @typestring = @structure_string = @structure_hash = nil
+    end
+    [pass.errors, pass.dynamic_components, pass.drop_reason]
+  end
+
   # AI generated: write learned types into a hole-free candidate (see LearnedTypeWriteBack); no-op otherwise
   def write_back_learned_types!(type_info) # AI generated
     @hole_free = !has_hole? if @hole_free.nil?
