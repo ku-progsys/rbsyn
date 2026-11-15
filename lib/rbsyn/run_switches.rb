@@ -15,7 +15,6 @@ RUN_SWITCHES = {
   "PRUNE" => "on",              # "off" turns every pruning rule off
   "PRUNE_DEAD_LITERAL" => "on", # method missing on a literal receiver
   "PRUNE_DEAD_VAR" => "on",     # method missing on a known-type variable receiver
-  "PRUNE_TYPE_ERR" => "on",     # own matching of type-level failures (no nil carve-out; PRUNE_CHECK covers it)
   "PRUNE_CHECK" => "on",        # CheckErrorPassV2 reports a drop
 
   # failure records (lib/rbsyn/ast/infer_types.rb): "on" / "off"

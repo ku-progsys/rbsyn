@@ -239,8 +239,8 @@ end
     inner = e.is_a?(ComplexError) ? e.inner_error : e
     msg = inner.message.to_s.lines.first.to_s
     named = lambda { |v| wildcard_names(v).any? { |n| msg.match?(/\b#{Regexp.escape(n)}\b/) } }
-    # AI generated (2026-10-20): type-level failure (printed "=> :type_except", swept by DeadCallPrune rule
-    # PRUNE_TYPE_ERR): the error is a TypeError, or the message names the class of an argument. The receiver's class
+    # AI generated (2026-10-20): type-level failure (printed "=> :type_except", dropped by CheckErrorPassV2 through
+    # DeadCallPrune rule PRUNE_CHECK): the error is a TypeError, or the message names the class of an argument. The receiver's class
     # does not count: lookups name it for value reasons ("Couldn't find User with id=5"). ERR_TYPE_LEVEL=off.
     if ENV["ERR_TYPE_LEVEL"] != "off" && (inner.is_a?(TypeError) || args.any? { |v| named.(v) }) # AI generated
       trace[:type_level] = true # AI generated
