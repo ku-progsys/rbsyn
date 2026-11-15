@@ -23,3 +23,12 @@ method. Do this before item 5.
    checks only counted programs run (unstage_user 695 -> 493, activate 716 -> 460), never time or solved count.
    Compare runs with `PRUNE=off` against the default on the passing benchmarks; also the mid-batch re-prune that
    `docs/paper_tracking.md` lists as under evaluation.
+9. Make `compute_tout` (`type_ops.rb`) actually consider every overloaded signature. It loops over `tmethod`, but
+   every branch returns on the first signature, because the check that would skip non-matching overloads is commented
+   out ("BR: TODO force this next statement to respect variance"). Library calls therefore still use only the first
+   overload. (Found 2026-11-15.)
+10. Nullable results: a `nil` result is lost once the same call is seen returning anything else (RDL puts nil below
+    every type, and drops nil from a union on the first comparison). Idea: record a nil result as a stub type `NA`
+    (a plain class, not below other types), merge `X` and `NA` into the union `X or NA`, treat `NA` like nil in the
+    checker's nil carve-out. Risk: the typed search would no longer put a nullable result where `X` is expected
+    (a search change, needs a before/after comparison). (2026-11-15)
