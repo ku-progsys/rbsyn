@@ -70,6 +70,11 @@ class EffectAnalysis
 
       meth = ast.children[1]
       args = ast.children[2..].map { |arg| effect_of(arg, env, kind) }
+      # AI generated (2026-11-15): a union receiver (learned results can be unions) has the effects of all its members
+      if klass.is_a?(RDL::Type::UnionType) # AI generated
+        member_effs = klass.types.flat_map { |t| member_effect(t, meth, kind) } # AI generated
+        return effect_union(*([klass_eff, member_effs, args].flatten)) # AI generated
+      end # AI generated
       my_eff = case klass
       when RDL::Globals.types[:bool]
         []
@@ -120,6 +125,17 @@ class EffectAnalysis
     else
       raise RbSynError, "unhandled ast node #{ast.type}"
     end
+  end
+
+  # AI generated (2026-11-15): the effect of meth on one member of a union receiver, self replaced by that member
+  def self.member_effect(t, meth, kind) # AI generated
+    effs = case t
+    when RDL::Type::SingletonType then RDL::Globals.info.get(RDL::Util.add_singleton_marker(t.to_s), meth, kind)
+    when RDL::Type::NominalType then RDL::Globals.info.get(t.name, meth, kind)
+    end
+    (effs || []).map { |eff| eff.gsub('self', t.to_s) }
+  rescue StandardError
+    []
   end
 
   def self.type_of(ast, env)
