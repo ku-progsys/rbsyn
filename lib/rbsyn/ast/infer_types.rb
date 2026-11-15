@@ -343,13 +343,10 @@ end
       if sig[:recvr] != trace[:recvr]
         next
       end
-      # if trace[:except].is_a?(NoMethodError) || trace[:except].is_a?(NameError) # AI altered (2026-11-15): skipped the
-      #   new method-missing record whenever ANY failure existed for this receiver, e.g. an earlier TypeError
       if trace[:except].is_a?(NoMethodError) || trace[:except].is_a?(NameError)
         #if we've already seen this error we don't need to update anything, method missing is method missing. 
-        # AI generated: only an existing method-missing (:ALL) record for this receiver makes the new one redundant
-        return @type_errs if sig[:args] == :ALL # AI generated
-        next # AI generated
+        #we know we've seen it because it will be the only one with this reciever for this method
+        return @type_errs
       end
       if sig[:wild] || trace[:wild] # AI generated (2026-10-20): wildcard records are kept as they are, see apply_wildcards
         return @type_errs if sig[:wild] && trace[:wild] && same_wild_args?(sig[:args], trace[:args]) # AI generated
