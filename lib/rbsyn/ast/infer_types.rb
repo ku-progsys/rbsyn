@@ -393,7 +393,10 @@ end
       # so either merge loses the nil); they stay separate signatures
       next if nil_result?(sig[:result]) != nil_result?(trace[:result]) # AI generated
 
-      if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
+      # if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] ) # AI altered (2026-11-15): also unrelated results for identical arguments
+      results_unrelated = !(sig[:result] <= trace[:result] || trace[:result] <= sig[:result]) # AI generated
+      same_args = sig[:args].size == trace[:args].size && sig[:args].zip(trace[:args]).all? { |old, current| old == current } # AI generated
+      if sig[:args].size == trace[:args].size && (!results_unrelated || same_args) # AI generated
         temp = sig
         # if args are correct size and returns are comprable
         sigzip = sig[:args].zip(trace[:args])
@@ -409,7 +412,12 @@ end
           # we can consider the previous observation to be a call to an instance of this function 
           # or a more specific instance of this function (perhaps we should not fold in, but RUBY only allows one function of the same arity per reciever" 
           @type_successes[meth][ind][:args] = sigzip.map {|old, current| current <= old ? old : current}
-          @type_successes[meth][ind][:result] = sig[:result] <= trace[:result] ? trace[:result] : sig[:result]
+          # @type_successes[meth][ind][:result] = sig[:result] <= trace[:result] ? trace[:result] : sig[:result] # AI altered: union
+          @type_successes[meth][ind][:result] = if results_unrelated # AI generated (2026-11-15): identical arguments, unrelated results
+            RDL::Type::UnionType.new(sig[:result], trace[:result]) # AI generated
+          else # AI generated
+            sig[:result] <= trace[:result] ? trace[:result] : sig[:result]
+          end # AI generated
           # preserve the most generic version of the type
           update = @type_successes[meth][ind]
 
