@@ -363,7 +363,8 @@ end
           # reduce each argument to the smallest smaller arguments will be expanding the incorrectness as incorrectness travels upwards. 
           @type_errs[meth][ind][:args] = sigzip.map {|old, current| TypeOperations.leq_nc(old, current) ? old : current} # AI generated
           
-          return @type_errs
+          # return @type_errs # AI altered (2026-11-15): merge the narrowed record again until nothing else merges with it
+          return consolidate_type_errors(@type_errs[meth].delete_at(ind)) # AI generated
         end
       end
     end
@@ -444,7 +445,9 @@ end
 
           # build the new, more general type into RDL
           register_learned(update, meth) # AI generated
-          return @type_successes
+          # return @type_successes # AI altered (2026-11-15): the widened signature may now cover other signatures too;
+          # take it out and merge it again until nothing else merges with it (each round removes one signature)
+          return consolidate_type_successes(@type_successes[meth].delete_at(ind)) # AI generated
         end
       end
     end
