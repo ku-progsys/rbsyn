@@ -49,7 +49,9 @@ class CheckErrorPassV2 < ::AST::Processor # AI generated
     signature = { :recvr => trecv, :args => targs, :method => mth }
 
     if @type_successes.keys.include?(mth) # a method of interest
-      @type_successes[mth].each { |i|
+      # @type_successes[mth].each { |i| # AI altered (2026-11-15): nil results last, so a call fitting both a nil and a
+      #                                 # non-nil success takes the non-nil one (nil records are kept, see InferTypes)
+      @type_successes[mth].each_with_index.sort_by { |i, idx| [nil_type?(i[:result]) ? 1 : 0, idx] }.map(&:first).each { |i| # AI generated
         if match_success(i, signature)
           @dynamic_components += 1 if i[:result].is_a?(RDL::Type::DynamicType)
           return i[:result]

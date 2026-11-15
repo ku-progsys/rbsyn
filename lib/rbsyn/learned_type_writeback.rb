@@ -52,7 +52,8 @@ class LearnedTypeWriteBack < ::AST::Processor # AI generated
     types = [recv.ttype, *args.map(&:ttype)]
     return nil if types.any? { |t| t.nil? || t.is_a?(RDL::Type::DynamicType) }
     signature = { recvr: recv.ttype, args: args.map(&:ttype), method: mth }
-    match = @successes[mth].find { |s|
+    # match = @successes[mth].find { |s| # AI altered (2026-11-15): nil results last, as in CheckErrorPassV2
+    match = @successes[mth].each_with_index.sort_by { |s, idx| [@matcher.nil_type?(s[:result]) ? 1 : 0, idx] }.map(&:first).find { |s| # AI generated
       begin
         @matcher.match_success(s, signature)
       rescue StandardError
