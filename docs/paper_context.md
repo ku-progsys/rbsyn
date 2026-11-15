@@ -68,8 +68,12 @@ MOI ablation, 2026-10-23, commit 4c15a41, seed 1, 1200 s per round, one method a
 - Bootstrapping: a method on type T is only learned once some program produces a T, so methods on call results are
   learned late.
 - Refine picks the first of several overloaded signatures (fixed by the planned collapse).
-- Nullable results are not kept: once a call is also seen returning a non-nil type, its nil result is merged away
-  (RDL ranks nil below every type and removes it from unions). Todo item 10.
+- Nullable results: fixed 2026-11-15. A nil result is now kept as its own signature and tried last
+  (commits 45643dd, 08eb8e0).
+- Unknown types cost search time (2026-11-15). After a `%dyn` receiver or argument stopped matching recorded successes
+  (f0df66f), `user_confirm_email` went from about 43 s to 54-57 s, single runs (observed). Likely cause: those calls
+  now keep a `%dyn` result, so the checker has less to prune with (inferred, not measured). Worth discussing as the
+  price of soundness: guessing a type from a partial match is faster but can be wrong.
 - Permissive setters and loose specs: inference learns any signature that runs without an error. ActiveRecord setters
   convert values silently (`issue.state_id = true` stores 1; `issue.closed_at = true` keeps `true`) and nothing raises
   until a save, so `issue_close` learns `state_id=(true or false)` and `closed_at=(true or false)`. Its spec only checks
