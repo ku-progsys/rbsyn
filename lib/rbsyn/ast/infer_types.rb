@@ -1,6 +1,7 @@
 require "set"
 require_relative "check_error_pass"
 require_relative "check_error_pass_v2" # AI generated (2026-10-20): replacement checker, CHECKER=old uses the original
+require_relative "refine_types_v3" # AI generated (2026-11-15): checker that also writes types into the nodes
 require "pry"
 require "pry-byebug"
 require_relative "../type_helper"
