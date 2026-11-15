@@ -72,6 +72,7 @@ module SynHelper
     # By default it is returned at once; with INFER_FINISH_BUDGET=1 it is kept and returned when the inference budget
     # runs out (or the work list empties), so later specs get the types from the whole budget. Log line: INFERENCE SOLVED
     finish_budget = ENV.key?("INFER_FINISH_BUDGET") # AI generated
+    target_type = seed_hole.ttype # AI generated (2026-11-08): the return type of the target signature (%bool for conditions)
     exhaustion = DynArgExhaustion.new(@ctx.type_info) # AI generated: exhaustion of %dyn argument holes (lib/rbsyn/dyn_arg_exhaustion.rb)
     last_watermark = nil # AI generated: smallest program size in the work list at the last exhaustion check
     pruner = DeadCallPrune.new(@ctx.type_info) # AI generated (2026-10-20): drops candidates with a dead call (lib/rbsyn/dead_call_prune.rb)
@@ -275,6 +276,7 @@ module SynHelper
         # puts "TESTING: \n#{prog_wrap.to_ast} \nof TTYPE: #{prog_wrap.to_ast.ttype}"
         #puts Unparser.unparse(prog_wrap.to_ast)
         tempbool = false
+        wrong_ret = false # AI generated (2026-11-08): a result outside the target signature's return type (inference only)
 
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
@@ -287,6 +289,7 @@ module SynHelper
              else
                eval_ast(@ctx, prog_wrap.to_ast, precond)
              end
+            wrong_ret = true if add_dyn && !result_conforms?(res, target_type) # AI generated (2026-11-08)
 
             
           rescue RbSynError => err
@@ -379,7 +382,10 @@ module SynHelper
         # (except in SWEEP_DYN mode, where a correct program found while inferring is kept like any other)
         # if test_outputs.all?(true) && (!add_dyn || sweep_mode) # AI generated # AI altered (2026-11-08): the user wants
         #   correct programs found during inference returned, skipping the typed pass (see INFER_FINISH_BUDGET above)
-        if test_outputs.all?(true) # AI generated
+        # if test_outputs.all?(true) # AI generated # AI altered (2026-11-08): during inference a solution must also return
+        #                                            # a value of the target signature's return type
+        @ctx.logger.debug("INFERENCE REJECTED (result not of type #{target_type}): #{prog_wrap.to_ast.to_s.gsub(/\s+/, ' ')[0, 200]}") if wrong_ret && test_outputs.all?(true) # AI generated
+        if test_outputs.all?(true) && !wrong_ret # AI generated
             #puts "correct program \n#{format_ast(prog_wrap.to_ast)}"
             correct_progs << prog_wrap
           @ctx.logger.debug("INFERENCE SOLVED at count #{counter}#{finish_budget ? ' (kept, finishing inference budget)' : ''}: #{prog_wrap.to_ast.to_s.gsub(/\s+/, ' ')[0, 200]}") if add_dyn # AI generated
@@ -567,6 +573,16 @@ module SynHelper
 
   # AI generated: programs with holes keep the typed hash (hole types matter for expansion);
   # hole-free programs are keyed by source plus what they are searching for
+  # AI generated (2026-11-08): does a program's runtime result belong to the target return type? Used to reject
+  # inference-mode solutions that pass the specs but return the wrong type. If RDL cannot decide, accept.
+  def result_conforms?(res, target_type) # AI generated
+    return true if target_type.nil? || target_type.is_a?(RDL::Type::DynamicType)
+    return true if target_type.is_a?(RDL::Type::BotType) || target_type.is_a?(RDL::Type::TopType) # AI generated: %bot target = return value unconstrained
+    target_type.member?(res, vars_wild: true)
+  rescue StandardError
+    true
+  end
+
   def dedupe_key(prog_wrap) # AI generated
     # return prog_wrap.typehash if prog_wrap.has_hole?  # AI altered: see ProgWrapper#structure_hash; the key now also
     #                                                   # includes what the candidate is searching for (type vs effect step)
