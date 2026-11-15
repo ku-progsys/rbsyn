@@ -113,26 +113,58 @@ class CheckErrorPassV2 < ::AST::Processor # AI generated
   end
 
   # one failure record against the call: :pass, :fail or :drop (see the top of the file)
+  # A failure matches a call whose types are the recorded ones (:exact) or more general (:super, the value may still
+  # be the failing type). A more specific type may add what was missing, so it does not match. Only an all-exact
+  # match keeps :drop; any :super position makes it :fail.
+  # def err_outcome(template, signature)
+  #   if template[:args] == :ALL
+  #     return :pass unless known?(signature[:recvr]) && sub?(signature[:recvr], template[:recvr])
+  #     return :drop
+  #   end
+  #   return :pass if template[:args].size != signature[:args].size
+  #   return :pass unless known?(signature[:recvr]) && sub?(signature[:recvr], template[:recvr])
+  #   return :pass unless template[:args].zip(signature[:args]).all? { |t, s| position_match?(t, s) }
+  #   template[:type_level] ? :drop : :fail
+  # end
   def err_outcome(template, signature)
-    if template[:args] == :ALL
-      return :pass unless known?(signature[:recvr]) && sub?(signature[:recvr], template[:recvr])
-      return :drop
-    end
+    recv = known?(signature[:recvr]) ? fail_match(signature[:recvr], template[:recvr]) : nil
+    return :pass if recv.nil?
+    return(recv == :exact ? :drop : :fail) if template[:args] == :ALL
     return :pass if template[:args].size != signature[:args].size
-    return :pass unless known?(signature[:recvr]) && sub?(signature[:recvr], template[:recvr])
-    return :pass unless template[:args].zip(signature[:args]).all? { |t, s| position_match?(t, s) }
+    matches = [recv] + template[:args].zip(signature[:args]).map { |t, s| position_match(t, s) }
+    return :pass if matches.include?(nil)
+    return :fail unless matches.all? { |m| m == :exact }
     template[:type_level] ? :drop : :fail
   end
 
-  def position_match?(t, s)
-    return true if t.equal?(:ANY)
+  # def position_match?(t, s)
+  #   return true if t.equal?(:ANY)
+  #   if t.is_a?(AnyKeysHash)
+  #     return false unless s.is_a?(RDL::Type::FiniteHashType) && s.elts.key?(t.key)
+  #     return true if t.type.equal?(:ANY)
+  #     v = s.elts[t.key]
+  #     return known?(v) && sub?(unopt(v), unopt(t.type))
+  #   end
+  #   known?(s) && sub?(s, t)
+  # end
+  def position_match(t, s) # :exact, :super or nil (no match)
+    return :exact if t.equal?(:ANY)
     if t.is_a?(AnyKeysHash)
-      return false unless s.is_a?(RDL::Type::FiniteHashType) && s.elts.key?(t.key)
-      return true if t.type.equal?(:ANY)
+      return nil unless s.is_a?(RDL::Type::FiniteHashType) && s.elts.key?(t.key)
+      return :exact if t.type.equal?(:ANY)
       v = s.elts[t.key]
-      return known?(v) && sub?(unopt(v), unopt(t.type))
+      return known?(v) ? fail_match(unopt(v), unopt(t.type)) : nil
     end
-    known?(s) && sub?(s, t)
+    known?(s) ? fail_match(s, t) : nil
+  end
+
+  # call type s against recorded failing type t: :exact if every member of s is a member of t, :super if some
+  # member of t lies below some member of s, nil otherwise (s only more specific, or unrelated)
+  def fail_match(s, t)
+    eq = lambda { |x, y| nil_safe_leq(x, y) && nil_safe_leq(y, x) }
+    return :exact if members(s).all? { |x| members(t).any? { |y| eq.(x, y) } }
+    return :super if members(s).any? { |x| members(t).any? { |y| nil_safe_leq(y, x) } }
+    nil
   end
 
   def known?(t)
