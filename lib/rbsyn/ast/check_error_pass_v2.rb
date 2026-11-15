@@ -104,12 +104,15 @@ class CheckErrorPassV2 < ::AST::Processor # AI generated
     node.ttype
   end
 
-  # a recorded success against the call: argument count, receiver (call <= record), then each argument with
-  # any-member-of-a-union semantics (record <= call), all with the nil carve-out
+  # a recorded success against the call: argument count, receiver (call <= record), each argument (call <= record),
+  # all with the nil carve-out
+  # Arguments follow normal (Liskov) substitution like the receiver: the call's argument must be the recorded one or
+  # more specific, and every member of a union argument must be covered.
   def match_success(template, signature)
     return false if template[:args].size != signature[:args].size
     return false unless nil_safe_leq(signature[:recvr], template[:recvr])
-    template[:args].zip(signature[:args]).all? { |t, s| members(t).any? { |l| members(s).any? { |u| nil_safe_leq(l, u) } } }
+    # template[:args].zip(signature[:args]).all? { |t, s| members(t).any? { |l| members(s).any? { |u| nil_safe_leq(l, u) } } }
+    template[:args].zip(signature[:args]).all? { |t, s| members(s).all? { |u| members(t).any? { |l| nil_safe_leq(u, l) } } }
   end
 
   # one failure record against the call: :pass, :fail or :drop (see the top of the file)
