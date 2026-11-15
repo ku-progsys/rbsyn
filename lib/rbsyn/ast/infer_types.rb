@@ -374,6 +374,10 @@ end
 
 
 
+  def nil_result?(t) # AI generated (2026-11-15): t is nil
+    (t.is_a?(RDL::Type::SingletonType) && t.val.nil?) || (t.is_a?(RDL::Type::NominalType) && t.name == "NilClass")
+  end
+
   def consolidate_type_successes(trace)
 
     if trace[:recvr].to_s == "nil"
@@ -384,6 +388,9 @@ end
       if sig[:recvr] != trace[:recvr] 
         next
       end 
+      # AI generated (2026-11-15): a nil result and a non-nil result are never merged (RDL ranks nil below every type,
+      # so either merge loses the nil); they stay separate signatures
+      next if nil_result?(sig[:result]) != nil_result?(trace[:result]) # AI generated
 
       if sig[:args].size == trace[:args].size && ( sig[:result] <= trace[:result] || trace[:result] <= sig[:result] )
         temp = sig
@@ -414,7 +421,8 @@ end
             next if info.nil? # AI generated
             doomed = [] # AI generated
             info[:type].each_with_index do |tipe, index| # AI generated
-              if tipe.args.zip(update[:args]).all? { |left, right| left <= right } && tipe.ret <= update[:result] # AI generated
+              # if tipe.args.zip(update[:args]).all? { |left, right| left <= right } && tipe.ret <= update[:result] # AI generated # AI altered: keep nil
+              if tipe.args.zip(update[:args]).all? { |left, right| left <= right } && tipe.ret <= update[:result] && nil_result?(tipe.ret) == nil_result?(update[:result]) # AI generated
                 doomed << index # AI generated
               end # AI generated
             end # AI generated
