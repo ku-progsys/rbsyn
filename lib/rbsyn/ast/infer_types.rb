@@ -389,9 +389,12 @@ end
         temp = sig
         # if args are correct size and returns are comprable
         sigzip = sig[:args].zip(trace[:args])
-        if !(sigzip.any? {|old, current| old != current})
-          return @type_successes
-        end
+        # if !(sigzip.any? {|old, current| old != current}) # AI altered (2026-11-15): identical arguments returned before
+        #   return @type_successes                           # the result was widened, so a more general result was dropped
+        # end
+        if !(sigzip.any? {|old, current| old != current}) && trace[:result] <= sig[:result] # AI generated: nothing new
+          return @type_successes # AI generated
+        end # AI generated
 
         if !(sigzip.any? {|old, current| !(old <= current) && !(current <= old)}) # if all of the arguments are comparable
 
