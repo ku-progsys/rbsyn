@@ -277,6 +277,7 @@ module SynHelper
         #puts Unparser.unparse(prog_wrap.to_ast)
         tempbool = false
         wrong_ret = false # AI generated (2026-11-08): a result outside the target signature's return type (inference only)
+        run_copies = [] # AI generated (2026-11-14): copies of this candidate queued during its run (see the write-back below)
 
         test_outputs = preconds.zip(postconds).map { |precond, postcond|
           begin
@@ -350,6 +351,7 @@ module SynHelper
               orig_prog.passed_asserts = e.passed_count
               orig_prog.look_for(:teffect, orig_prog.target)
               effect_needed << orig_prog
+              run_copies << orig_prog # AI generated
             end
 
           rescue RbSynError => e
@@ -374,6 +376,10 @@ module SynHelper
           # type error encountered in a complete program, we should not add back to the worklist
           next
         end
+        # AI generated (2026-11-14): write learned types into the candidate once, right after it ran (they include what
+        # this run recorded), instead of on every rescore. WRITEBACK=rescore restores the old place.
+        # prog_wrap.write_back_learned_types!(@ctx.type_info) if add_dyn && ENV["WRITEBACK"] != "rescore" # AI generated # AI altered: also the copies
+        [prog_wrap, *run_copies].each { |pw| pw.write_back_learned_types!(@ctx.type_info) } if add_dyn && ENV["WRITEBACK"] != "rescore" # AI generated
         # passes all tests
         #debug(Unparser.unparse(prog_wrap.to_ast), "arg1.take(arg2)")
         # if test_outputs.all? true && !add_dyn
@@ -474,7 +480,8 @@ module SynHelper
           # score. Rescoring the whole work list on every new success/error made each inference iteration cost
           # O(work list). RESCORE_ALL=1 restores the old behaviour.
           next if prog_wrap.dynamic_components == 0 && !ENV.key?("RESCORE_ALL") # AI generated
-          prog_wrap.write_back_learned_types!(@ctx.type_info) # AI generated: hole-free candidates take their learned types
+          # prog_wrap.write_back_learned_types!(@ctx.type_info) # AI generated: hole-free candidates take their learned types # AI altered (2026-11-14): moved to right after the run
+          prog_wrap.write_back_learned_types!(@ctx.type_info) if ENV["WRITEBACK"] == "rescore" # AI generated
           prog_wrap.inferred_errors, prog_wrap.dynamic_components = @ctx.type_info.check_errors(prog_wrap)
         }
       end
