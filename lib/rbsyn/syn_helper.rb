@@ -76,7 +76,6 @@ module SynHelper
     exhaustion = DynArgExhaustion.new(@ctx.type_info) # AI generated: exhaustion of %dyn argument holes (lib/rbsyn/dyn_arg_exhaustion.rb)
     last_watermark = nil # AI generated: smallest program size in the work list at the last exhaustion check
     pruner = DeadCallPrune.new(@ctx.type_info) # AI generated (2026-10-20): drops candidates with a dead call (lib/rbsyn/dead_call_prune.rb)
-    retype_on = ENV["RETYPE"] != "off" # AI generated (2026-11-15): RefineTypesV3 rescoring after runs and new types; off = CheckErrorPassV2 + write-back
     rescore_dropped = [] # AI generated
     work_list = [seed_hole,]
     basehashlist = []
@@ -378,15 +377,8 @@ module SynHelper
           # type error encountered in a complete program, we should not add back to the worklist
           next
         end
-        # AI generated (2026-11-14): write learned types into the candidate once, right after it ran (they include what
-        # this run recorded), instead of on every rescore. WRITEBACK=rescore restores the old place.
-        # prog_wrap.write_back_learned_types!(@ctx.type_info) if add_dyn && ENV["WRITEBACK"] != "rescore" # AI generated # AI altered: also the copies
-        # [prog_wrap, *run_copies].each { |pw| pw.write_back_learned_types!(@ctx.type_info) } if add_dyn && ENV["WRITEBACK"] != "rescore" # AI generated # AI altered (2026-11-15): RefineTypesV3
-        if retype_on # AI generated (2026-11-15): the programs just run take the types on record, if any were recorded since their last check
-          [prog_wrap, *run_copies].each { |pw| pw.retype!(@ctx.type_info) if pw.stale?(@ctx.type_info) } if add_dyn # AI generated
-        else # AI generated
-          [prog_wrap, *run_copies].each { |pw| pw.write_back_learned_types!(@ctx.type_info) } if add_dyn && ENV["WRITEBACK"] != "rescore" # AI generated
-        end # AI generated
+        # AI generated (2026-11-15): the programs just run take the types on record, if any were recorded since their last check
+        [prog_wrap, *run_copies].each { |pw| pw.retype!(@ctx.type_info) if pw.stale?(@ctx.type_info) } if add_dyn # AI generated
         # passes all tests
         #debug(Unparser.unparse(prog_wrap.to_ast), "arg1.take(arg2)")
         # if test_outputs.all? true && !add_dyn
@@ -487,15 +479,8 @@ module SynHelper
           # score. Rescoring the whole work list on every new success/error made each inference iteration cost
           # O(work list). RESCORE_ALL=1 restores the old behaviour.
           next if prog_wrap.dynamic_components == 0 && !ENV.key?("RESCORE_ALL") # AI generated
-          # prog_wrap.write_back_learned_types!(@ctx.type_info) # AI generated: hole-free candidates take their learned types # AI altered (2026-11-14): moved to right after the run
-          # prog_wrap.write_back_learned_types!(@ctx.type_info) if ENV["WRITEBACK"] == "rescore" # AI generated # AI altered (2026-11-15): RefineTypesV3
-          # prog_wrap.inferred_errors, prog_wrap.dynamic_components = @ctx.type_info.check_errors(prog_wrap) # AI altered
-          if retype_on # AI generated: retype, rescore and prune in one pass
-            rescore_dropped << prog_wrap if prog_wrap.stale?(@ctx.type_info) && prog_wrap.retype!(@ctx.type_info)[2] # AI generated
-          else # AI generated
-            prog_wrap.write_back_learned_types!(@ctx.type_info) if ENV["WRITEBACK"] == "rescore" # AI generated
-            prog_wrap.inferred_errors, prog_wrap.dynamic_components = @ctx.type_info.check_errors(prog_wrap) # AI generated
-          end # AI generated
+          # AI generated (2026-11-15): RefineTypesV3 retypes, rescores and prunes in one pass
+          rescore_dropped << prog_wrap if prog_wrap.stale?(@ctx.type_info) && prog_wrap.retype!(@ctx.type_info)[2] # AI generated
         }
         unless rescore_dropped.empty? # AI generated
           dropped_ids = rescore_dropped.map(&:object_id).to_set # AI generated

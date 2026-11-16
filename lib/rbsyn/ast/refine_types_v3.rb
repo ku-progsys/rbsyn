@@ -14,7 +14,7 @@
 class RefineTypesV3 < ::AST::Processor # AI generated
   include TypeOperations
   require "set"
-  attr_reader :errors, :dynamic_components, :drop_reason, :changed
+  attr_reader :errors, :dynamic_components, :drop_reason, :changed, :missing_method # AI altered: + missing_method
 
   def initialize(errs, successes)
     update_reset(errs, successes)
@@ -27,6 +27,7 @@ class RefineTypesV3 < ::AST::Processor # AI generated
     @dynamic_components = 0
     @drop_reason = nil
     @changed = false
+    @missing_method = nil # AI generated: "Recv#meth" when a non-moi call's receiver type has no signature for it (RefineTypesV2 raised)
     @var_types = {} # AI generated: variable name -> known type its assignment resolved to
     @env = nil # AI generated: the program's LocalEnvironment, set by retype
     @env_done = {} # AI generated: env ref -> [status, type, retyped expr], each entry is walked once per program
@@ -152,6 +153,7 @@ class RefineTypesV3 < ::AST::Processor # AI generated
     else # not a method of interest
       mthds = methods_of(trecv)
       info = mthds[mth]
+      @missing_method ||= "#{trecv}##{mth}" if (info.nil? || info[:type].nil?) && trecv.to_s != "nil" # AI generated
       return [:error, "error", rebuilt] if info.nil?
       begin
         tret = compute_tout(trecv, info[:type], targs)

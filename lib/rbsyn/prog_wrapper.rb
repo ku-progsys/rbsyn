@@ -120,21 +120,6 @@ class ProgWrapper
     @checked_version.nil? || @checked_version < type_info.type_version
   end
 
-  # AI generated: write learned types into a hole-free candidate (see LearnedTypeWriteBack); no-op otherwise
-  def write_back_learned_types!(type_info) # AI generated
-    @hole_free = !has_hole? if @hole_free.nil?
-    return false unless @hole_free
-    pass = LearnedTypeWriteBack.new(type_info)
-    new_seed = pass.process(@seed)
-    new_exprs = @exprs.map { |e| pass.process(e) }
-    new_info = @env.info.transform_values { |entry| entry.merge(expr: pass.process(entry[:expr])) }
-    return false unless pass.changed
-    @seed = new_seed
-    @exprs = new_exprs
-    @env.info = new_info
-    @typehash = @typestring = @structure_string = @structure_hash = nil
-    true
-  end
 
   def to_ast
     pass = FlattenProgramPass.new(@ctx, @env)
@@ -225,8 +210,6 @@ class ProgWrapper
         # program = update_types_pass.process(temp)  # AI altered: merged into the single refiner.process below
         new_env = pass2.env
 
-        # refiner = DynamicRefineTypes.new(@ctx, new_env)  # AI altered: RefineTypesPass + DynamicRefineTypes in one pass
-        refiner = RefineTypesV2.new(ctx: @ctx, env: new_env, dynamic: true) # AI generated
         #BR, this is where you should really be counting the number of dynamic types. ???
         #even the number of errors??
         
@@ -236,9 +219,12 @@ class ProgWrapper
           #   puts "program: \n#{new_env.info[program.to_ast.children[0]][:expr].to_ast}"
           #   binding.pry
           # end
-          # program = refiner.process(program)  # AI altered: input is now the unrefined candidate (temp),
-          #                                     # since RefineTypesPass no longer runs before this
-          program = refiner.process(temp) # AI generated
+          # AI generated (2026-11-15): RefineTypesV3 types the new candidate and its env; a missing method skips it below
+          ti = @ctx.type_info # AI generated: nil when nothing is inferred
+          v3 = RefineTypesV3.new(ti ? ti.type_errs : {}, ti ? ti.type_successes : {}) # AI generated
+          program, _, new_info = v3.retype(temp, [], new_env) # AI generated
+          new_env.info = new_info # AI generated
+          raise NoMethodError, "RefineTypesV3: no signature for #{v3.missing_method}" if v3.missing_method # AI generated
           if ENV["DBG_DYN"] then __n = Process.clock_gettime(Process::CLOCK_MONOTONIC); __q3[:refine] += __n - __q3t; __q3t = __n end # INSTRUMENTATION Q3
      
           # if program.ttype != @target && (((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT))  
