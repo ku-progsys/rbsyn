@@ -1,6 +1,5 @@
 class ProgWrapper
   include AST
-  require_relative "ast/check_error_pass"
   # require_relative "ast/refine_type_pass_v2"  # AI altered: DynamicRefineTypes merged into RefineTypesV2
   require_relative "ast/ttype_print"
   require_relative "./complex_error"
@@ -112,6 +111,11 @@ class ProgWrapper
     end
     @inferred_errors, @dynamic_components = pass.errors, pass.dynamic_components # AI generated
     [pass.errors, pass.dynamic_components, pass.drop_reason]
+  end
+
+  # AI generated (2026-11-15): record a check made elsewhere (RefineTypesV3 when the program was built)
+  def mark_checked(errors, dynamic_components, type_version)
+    @inferred_errors, @dynamic_components, @checked_version = errors, dynamic_components, type_version
   end
 
   # AI generated (2026-11-15): true when successes or failures were recorded since this program was last retyped
@@ -252,6 +256,7 @@ class ProgWrapper
 
         if ENV["DBG_DYN"] then __n = Process.clock_gettime(Process::CLOCK_MONOTONIC); __q3[:variance] += __n - __q3t; __q3t = __n end # INSTRUMENTATION Q3
         prog_wrap = ProgWrapper.new(@ctx, program, new_env)
+        prog_wrap.mark_checked(v3.errors, v3.dynamic_components, ti.type_version) if ti # AI generated: V3 above checked the whole program
         prog_wrap.look_for(:type, @target)
         prog_wrap.passed_asserts = @passed_asserts
         prog_wrap

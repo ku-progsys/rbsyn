@@ -2,7 +2,6 @@ class ExpandHolePass < ::AST::Processor
   include AST
   include TypeOperations
 
-  require_relative "check_error_pass"
   require_relative "ttype_print"
   attr_reader :expand_map, :read_effs, :env
   attr_writer :effect_methds

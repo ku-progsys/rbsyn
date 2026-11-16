@@ -1,6 +1,4 @@
 require "set"
-require_relative "check_error_pass"
-require_relative "check_error_pass_v2" # AI generated (2026-10-20): replacement checker, CHECKER=old uses the original
 require_relative "refine_types_v3" # AI generated (2026-11-15): checker that also writes types into the nodes
 require "pry"
 require "pry-byebug"
@@ -44,7 +42,6 @@ class InferTypes
       @type_successes[i] = []
     end
     @tracelist = {}
-    @checker = (ENV["CHECKER"] == "old" ? CheckErrorPass : CheckErrorPassV2).new(@type_errs, @type_successes) # AI generated
     @set_exception = false
     @new_types = []
     @newsuccess = false # AI generated
@@ -510,12 +507,6 @@ end
     }
   end
 
-  def check_errors(ast)
-    @checker.update_reset(@type_errs, @type_successes) # resetting the checker
-    @checker.process(ast) # the # of errors 
-    [@checker.errors, @checker.dynamic_components]  
-
-  end
 
   def expanded_type_to_s(tipe)
     str = ""

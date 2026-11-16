@@ -75,7 +75,7 @@ module SynHelper
     target_type = seed_hole.ttype # AI generated (2026-11-08): the return type of the target signature (%bool for conditions)
     exhaustion = DynArgExhaustion.new(@ctx.type_info) # AI generated: exhaustion of %dyn argument holes (lib/rbsyn/dyn_arg_exhaustion.rb)
     last_watermark = nil # AI generated: smallest program size in the work list at the last exhaustion check
-    pruner = DeadCallPrune.new(@ctx.type_info) # AI generated (2026-10-20): drops candidates with a dead call (lib/rbsyn/dead_call_prune.rb)
+    dropped = Hash.new(0) # AI generated (2026-11-15): programs RefineTypesV3 pruned, by place
     rescore_dropped = [] # AI generated
     work_list = [seed_hole,]
     basehashlist = []
@@ -98,7 +98,7 @@ module SynHelper
       # mode is switched off, and the same search continues with the typed candidates it already has.
       if counter >= type_search_depth && add_dyn # AI generated
         @ctx.logger.debug("EXPLORE: inference ended at #{counter}: #{programs_run} programs run, #{explore_picks} exploration picks") if ENV["EXPLORE"] == "on" # AI generated (2026-10-20)
-        @ctx.logger.debug("PRUNE: inference ended at #{counter}, dropped #{pruner.dropped.to_h}") # AI generated (2026-10-20)
+        @ctx.logger.debug("PRUNE: inference ended at #{counter}, dropped #{dropped.to_h}") # AI generated (2026-10-20)
         if finish_budget && !correct_progs.empty? # AI generated (2026-11-08): return the kept solution, skip the typed pass
           @ctx.logger.debug("INFERENCE SOLVED: budget finished at #{counter}, returning #{correct_progs.size} kept solution(s)") # AI generated
           return return_all ? correct_progs : correct_progs.first # AI generated
@@ -115,7 +115,7 @@ module SynHelper
             dyn_nodes = []
             walk = lambda { |n| next unless n.is_a?(TypedNode); dyn_nodes << "#{n.type}#{n.type == :send ? ':' + n.children[1].to_s : ''}(#{n.ttype})" if n.ttype.is_a?(RDL::Type::DynamicType); n.children.each { |c| walk.(c) } }
             walk.(pw.to_ast)
-            fresh = @ctx.type_info.check_errors(pw)
+            fresh = pw.retype!(@ctx.type_info).first(2)
             warn "[SW]   pa=#{pw.passed_asserts} look=#{pw.looking_for} stored_dyn=#{pw.dynamic_components} recomputed(err,dyn)=#{fresh.inspect} %dyn-typed nodes=#{dyn_nodes.inspect[0, 160]} ast=#{pw.to_ast.to_s.gsub(/\s+/, ' ')[0, 150]}"
           end
         end
@@ -210,8 +210,6 @@ module SynHelper
       $__prof_t = __prof_mark(:pop_dedupe, $__prof_t) if ENV["DBG_DYN"] # INSTRUMENTATION P (AI generated, remove)
       __bt0 = Process.clock_gettime(Process::CLOCK_MONOTONIC) if ENV["DBG_DYN"] # INSTRUMENTATION B (AI generated, remove)
       generated = base.build_candidates()
-      pruner.refresh # AI generated (2026-10-20)
-      generated = pruner.filter(generated) # AI generated (2026-10-20): dead children are neither run nor queued
       if ENV["DBG_DYN"] # INSTRUMENTATION B (AI generated, remove)
         __bdt = Process.clock_gettime(Process::CLOCK_MONOTONIC) - __bt0 # INSTRUMENTATION B
         warn "[B] counter=#{counter} add_dyn=#{add_dyn} build=#{__bdt.round(2)}s generated=#{generated.size} look=#{base.looking_for} ast=#{base.to_ast.to_s.gsub(/\s+/, ' ')[0, 200]}" if __bdt > 0.5 # INSTRUMENTATION B
@@ -485,14 +483,14 @@ module SynHelper
         unless rescore_dropped.empty? # AI generated
           dropped_ids = rescore_dropped.map(&:object_id).to_set # AI generated
           work_list = work_list.reject { |pw| dropped_ids.include?(pw.object_id) } # AI generated
-          pruner.dropped["RETYPE_DROP"] += rescore_dropped.size # AI generated
+          dropped["rescore"] += rescore_dropped.size # AI generated
           rescore_dropped.clear # AI generated
         end # AI generated
       end
 
-      remainder_holes.map {|prog_wrap|
-          prog_wrap.inferred_errors, prog_wrap.dynamic_components = @ctx.type_info.check_errors(prog_wrap)
-      }
+      # AI generated (2026-11-15): new programs were checked when built; one is checked again only if types were recorded
+      # since, and dropped if RefineTypesV3 prunes it
+      remainder_holes = remainder_holes.reject { |pw| pw.stale?(@ctx.type_info) && pw.retype!(@ctx.type_info)[2] && (dropped["new"] += 1) } # AI generated
  
       $__prof_t = __prof_mark(:rescore, $__prof_t) if ENV["DBG_DYN"] # INSTRUMENTATION P (AI generated, remove)
       remainder_holes.push(*effect_needed)
@@ -513,15 +511,13 @@ module SynHelper
       # AI generated: while inferring, record %dyn argument holes of new candidates and concretize any whose
       # (receiver type, method, position, depth) is already exhausted (see DynArgExhaustion)
       # AI generated (2026-10-20): failures recorded while running this batch can make queued candidates dead
-      work_list = pruner.filter(work_list) if pruner.refresh # AI generated
-      remainder_holes = pruner.filter(remainder_holes) # AI generated
       if add_dyn # AI generated
         # watermark = work_list.empty? ? nil : work_list.map(&:prog_size).min # AI altered (2026-10-20): see front_min_size
         watermark = front_min_size(work_list) # AI generated
         remainder_holes = remainder_holes.flat_map { |prog_wrap| # AI generated
           exhaustion.note(prog_wrap) # AI generated
           replaced = watermark.nil? ? nil : exhaustion.concretize(prog_wrap, watermark) # AI generated
-          replaced.nil? ? [prog_wrap] : replaced.each { |pw| pw.inferred_errors, pw.dynamic_components = @ctx.type_info.check_errors(pw) } # AI generated
+          replaced.nil? ? [prog_wrap] : replaced.reject { |pw| pw.retype!(@ctx.type_info)[2] && (dropped["concretized"] += 1) } # AI generated
         } # AI generated
       end # AI generated
       work_list = [*work_list, *remainder_holes].sort_by { |prog_wrap| comparator_key(prog_wrap) } # AI generated
@@ -534,7 +530,7 @@ module SynHelper
           work_list = work_list.flat_map { |prog_wrap| # AI generated
             replaced = exhaustion.concretize(prog_wrap, watermark) # AI generated
             next [prog_wrap] if replaced.nil? # AI generated
-            replaced.each { |pw| pw.inferred_errors, pw.dynamic_components = @ctx.type_info.check_errors(pw); exhaustion.note(pw) } # AI generated
+            replaced.reject { |pw| pw.retype!(@ctx.type_info)[2] && (dropped["concretized"] += 1) }.each { |pw| exhaustion.note(pw) } # AI generated
           }.sort_by { |prog_wrap| comparator_key(prog_wrap) } # AI generated
           @ctx.logger.debug("Exhaustion watermark #{last_watermark.inspect} -> #{watermark}: concretized #{exhaustion.concretized - before[0]}, dropped #{exhaustion.dropped - before[1]}, work list #{work_list.size}") # AI generated
           last_watermark = watermark # AI generated
