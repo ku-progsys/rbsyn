@@ -37,6 +37,7 @@ require "rbsyn/prog_wrapper"
 require "rbsyn/prog_cache"
 require "rbsyn/dbutils"
 require "rbsyn/reachability"
+require "rbsyn/spec_type_guard" # AI generated: per-spec decision whether to run an inference pass
 require "rbsyn/synthesizer"
 require "rbsyn/active_record/adapter"
 require "rbsyn/active_record/utils"
