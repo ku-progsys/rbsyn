@@ -88,13 +88,17 @@ class Synthesizer
     else
       inference_iterations = 19
     end
-    spec_guard = SpecTypeGuard.new(@ctx) # AI generated: decides per spec whether an inference pass is needed
+    # AI generated (2026-11-15): every spec gets an inference pass; the first gets the full budget, each later one the
+    # previous budget divided by INFER_DECAY (2 = halving, 4 = quartering), at least one iteration per method of interest
+    infer_decay = ENV["INFER_DECAY"].to_i # AI generated
+    infer_budget = nil # AI generated
     spec_index = -1 # AI generated
     progconds = @ctx.preconds.zip(@ctx.postconds, @ctx.desc).map { |precond, postcond, desc|
       @ctx.logger.debug("Finding sln for subspec: #{desc}")
       spec_index += 1 # AI generated
-      use_inference, guard_reasons = ENV.key?("INFERENCE_EVERY_PASS") ? [true, ["INFERENCE_EVERY_PASS set"]] : spec_guard.decide(spec_index, precond, postcond) # AI generated
-      @ctx.logger.debug("Spec type guard: #{use_inference ? 'inference pass' : 'typed only'} (#{guard_reasons.join('; ')})") # AI generated
+      full_budget = inference_iterations * @ctx.moi.size # AI generated
+      infer_budget = infer_budget.nil? ? full_budget : [infer_budget / infer_decay, @ctx.moi.size].max # AI generated
+      @ctx.logger.debug("Inference budget for spec #{spec_index}: #{infer_budget} iterations") # AI generated
       #binding.pry
       prog = prog_cache.find_prog([precond], [postcond])
       
@@ -125,7 +129,7 @@ class Synthesizer
         # else
         #   prog = generate(seed, [precond], [postcond], false, add_dyn: false) 
         # end
-        prog = program_search(precond, postcond, inference_iterations, use_inference) # AI generated
+        prog = program_search(precond, postcond, infer_budget) # AI generated
         prog_cache.add(prog)
 
         @ctx.logger.debug("Synthesized program:\n#{format_ast(prog.to_ast)}")
@@ -172,7 +176,7 @@ class Synthesizer
       else # AI generated
       @ctx.logger.debug("Searching for branch") # AI generated (kept from the block above)
       # branches = branch_search(precond, inference_iterations, use_inference) # AI altered: `!` visible during the branch search only
-      branches = with_condition_terms { branch_search(precond, inference_iterations, use_inference) } # AI generated
+      branches = with_condition_terms { branch_search(precond, infer_budget) } # AI generated
       end # AI generated
 
       cond = BoolCond.new
@@ -294,21 +298,12 @@ class Synthesizer
     seed
   end
 
-  # AI generated: the program search from run (same code as before) plus the spec type guard. With use_inference
-  # false it runs typed only, falling back to the inference path if the typed search runs out of candidates.
-  def program_search(precond, postcond, inference_iterations, use_inference) # AI generated
+  # AI generated: the program search from run: an inference pass of `budget` iterations, then the typed search
+  def program_search(precond, postcond, budget) # AI generated
     return generate(new_program_seed, [precond], [postcond], false, add_dyn: false) if @ctx.moi == []
-    unless use_inference
-      begin
-        return generate(new_program_seed, [precond], [postcond], false, add_dyn: false)
-      rescue RbSynError => e
-        raise e unless e.message.start_with?("No candidates")
-        @ctx.logger.debug("Typed-only program search ran out of candidates, falling back to an inference pass")
-      end
-    end
     begin
-      @ctx.logger.debug("Inferring Types with #{inference_iterations*(@ctx.moi.size)} iterations")
-      generate(new_program_seed, [precond], [postcond], false, add_dyn: true, type_search_depth: (@ctx.moi.size)*inference_iterations)
+      @ctx.logger.debug("Inferring Types with #{budget} iterations")
+      generate(new_program_seed, [precond], [postcond], false, add_dyn: true, type_search_depth: budget)
     rescue NameError => e
       @ctx.logger.debug("Inference Complete")
       print_inferred_types()
@@ -316,23 +311,15 @@ class Synthesizer
     end
   end
 
-  # AI generated: the branch search from run (same code as before) plus the spec type guard, as program_search
-  def branch_search(precond, inference_iterations, use_inference) # AI generated
+  # AI generated: the branch search from run, as program_search
+  def branch_search(precond, budget) # AI generated
     if @ctx.moi == []
       @ctx.logger.debug("Searching for branch with no type inference.")
       return generate(new_branch_seed, [precond], [TRUE_POSTCOND], true)
     end
-    unless use_inference
-      begin
-        return generate(new_branch_seed, [precond], [TRUE_POSTCOND], true)
-      rescue RbSynError => e
-        raise e unless e.message.start_with?("No candidates")
-        @ctx.logger.debug("Typed-only branch search ran out of candidates, falling back to an inference pass")
-      end
-    end
     begin
-      @ctx.logger.debug("Inferring Types for branch search with #{inference_iterations*(@ctx.moi.size)} iterations")
-      generate(new_branch_seed, [precond], [TRUE_POSTCOND], true, add_dyn: true, type_search_depth: (@ctx.moi.size)*inference_iterations)
+      @ctx.logger.debug("Inferring Types for branch search with #{budget} iterations")
+      generate(new_branch_seed, [precond], [TRUE_POSTCOND], true, add_dyn: true, type_search_depth: budget)
     rescue NameError => e
       @ctx.logger.debug("Inference Complete, resuming branch search")
       generate(new_branch_seed, [precond], [TRUE_POSTCOND], true)

@@ -12,6 +12,10 @@ RUN_SWITCHES = {
   # "off" keeps it, counts every failing call and carries on with the failed call's stored type
   "AGGRESSIVE_PRUNING" => "off",
 
+  # inference budget of each spec after the first (lib/rbsyn/synthesizer.rb): the previous budget divided by this
+  # ("2" = halving, "4" = quartering)
+  "INFER_DECAY" => "2",
+
   # failure records (lib/rbsyn/ast/infer_types.rb): "on" / "off"
   "ERR_ANY_POS" => "on",        # one blamed argument: other positions become ANY
   "ERR_ANY_KEY" => "on",        # one blamed key in a hash argument: other keys become ANY
