@@ -27,7 +27,6 @@ require "rbsyn/ast/flatten_prog_pass"
 require "rbsyn/context"
 require "rbsyn/bool_cond"
 require "rbsyn/dyn_arg_exhaustion" # AI generated: %dyn argument exhaustion used by SynHelper#generate
-require "rbsyn/dead_call_prune" # AI generated (2026-10-20): dead-candidate pruning used by SynHelper#generate
 require "rbsyn/syn_helper"
 require "rbsyn/dsl"
 require "rbsyn/prune/prune_strategy"
