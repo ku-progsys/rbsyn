@@ -71,6 +71,29 @@ class RefineTypesV3 < ::AST::Processor # AI generated
     [:ok, node.ttype, rebuild(node, [node.children[0], child])]
   end
 
+  # AI generated (2026-11-15): a hash literal's type is rebuilt from its values' resolved types; a value that stays
+  # unknown keeps its stored type. The rebuilt type is used for checking the enclosing call, and written into the node
+  # only when every value is known (as for any type). An error in a value makes the hash an error, as an error in an
+  # argument does for its call.
+  def on_hash(node)
+    return handler_missing(node) unless node.ttype.is_a?(RDL::Type::FiniteHashType) &&
+                                        node.children.all? { |c| c.is_a?(TypedNode) && c.type == :pair }
+    status = :ok
+    elts = node.ttype.elts.dup
+    pairs = node.children.map { |pair|
+      key_node, value = pair.children
+      vstatus, vtype, vnode = visit(value)
+      status = :error if vstatus == :error
+      key = key_node.children[0]
+      elts[key] = RDL::Type::OptionalType.new(vtype) if vstatus == :ok && all_known?([vtype]) && elts.key?(key)
+      rebuild(pair, [key_node, vnode])
+    }
+    rebuilt = rebuild(node, pairs)
+    return [:error, "error", rebuilt] if status == :error
+    type = RDL::Type::FiniteHashType.new(elts, node.ttype.rest)
+    [:ok, type, write(rebuilt, type)]
+  end
+
   # AI generated: a use of a variable takes the type of its assignment when that is known; otherwise the stored type
   def on_lvar(node)
     type = @var_types[node.children[0]]
