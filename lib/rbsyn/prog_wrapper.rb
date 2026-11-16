@@ -102,6 +102,7 @@ class ProgWrapper
   # AI generated (2026-11-15): retype the stored program with RefineTypesV3 and keep the new types.
   # Returns [errors, dynamic_components, drop_reason] (drop_reason nil unless the program should be pruned).
   def retype!(type_info)
+    @checked_version = type_info.type_version # AI generated: the type info this program was last checked against
     pass = RefineTypesV3.new(type_info.type_errs, type_info.type_successes)
     new_seed, new_exprs, new_info = pass.retype(@seed, @exprs, @env)
     if pass.changed
@@ -110,7 +111,13 @@ class ProgWrapper
       @env.info = new_info
       @typehash = @typestring = @structure_string = @structure_hash = nil
     end
+    @inferred_errors, @dynamic_components = pass.errors, pass.dynamic_components # AI generated
     [pass.errors, pass.dynamic_components, pass.drop_reason]
+  end
+
+  # AI generated (2026-11-15): true when successes or failures were recorded since this program was last retyped
+  def stale?(type_info)
+    @checked_version.nil? || @checked_version < type_info.type_version
   end
 
   # AI generated: write learned types into a hole-free candidate (see LearnedTypeWriteBack); no-op otherwise

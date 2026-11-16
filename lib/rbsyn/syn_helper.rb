@@ -76,6 +76,9 @@ module SynHelper
     exhaustion = DynArgExhaustion.new(@ctx.type_info) # AI generated: exhaustion of %dyn argument holes (lib/rbsyn/dyn_arg_exhaustion.rb)
     last_watermark = nil # AI generated: smallest program size in the work list at the last exhaustion check
     pruner = DeadCallPrune.new(@ctx.type_info) # AI generated (2026-10-20): drops candidates with a dead call (lib/rbsyn/dead_call_prune.rb)
+    retype_on = ENV["RETYPE"] != "off" # AI generated (2026-11-15): RefineTypesV3 rescoring after runs and new types; off = CheckErrorPassV2 + write-back
+    rescore_dropped = [] # AI generated
+    retype_requeued = 0 # AI generated: popped programs put back because their rescore made them rank lower
     work_list = [seed_hole,]
     basehashlist = []
     evaluated_srcs = Set.new # AI generated: sources of hole-free programs already run against the specs
@@ -98,6 +101,7 @@ module SynHelper
       if counter >= type_search_depth && add_dyn # AI generated
         @ctx.logger.debug("EXPLORE: inference ended at #{counter}: #{programs_run} programs run, #{explore_picks} exploration picks") if ENV["EXPLORE"] == "on" # AI generated (2026-10-20)
         @ctx.logger.debug("PRUNE: inference ended at #{counter}, dropped #{pruner.dropped.to_h}") # AI generated (2026-10-20)
+        @ctx.logger.debug("RETYPE: requeued #{retype_requeued} popped programs") if retype_on # AI generated
         if finish_budget && !correct_progs.empty? # AI generated (2026-11-08): return the kept solution, skip the typed pass
           @ctx.logger.debug("INFERENCE SOLVED: budget finished at #{counter}, returning #{correct_progs.size} kept solution(s)") # AI generated
           return return_all ? correct_progs : correct_progs.first # AI generated
@@ -170,6 +174,22 @@ module SynHelper
 
       # if basehashlist.include? base.typehash  # AI altered: identical hole-free programs carrying different
       #                                         # inferred signatures had distinct typehashes and were all expanded
+      # AI generated (2026-11-15): before a popped program is expanded, it is rescored if types were recorded since its
+      # last check; dropped if V3 says so, put back if it now ranks below the next program
+      if retype_on && add_dyn && base.stale?(@ctx.type_info) # AI generated
+        if base.retype!(@ctx.type_info)[2] # AI generated
+          pruner.dropped["RETYPE_DROP"] += 1 # AI generated
+          counter -= 1 # AI generated: no expansion happened, so no iteration is used
+          next # AI generated
+        end # AI generated
+        if !work_list.empty? && (comparator_key(base) <=> comparator_key(work_list.first)) == 1 # AI generated
+          at = work_list.bsearch_index { |pw| (comparator_key(pw) <=> comparator_key(base)) == 1 } || work_list.size # AI generated
+          work_list.insert(at, base) # AI generated
+          retype_requeued += 1 # AI generated
+          counter -= 1 # AI generated
+          next # AI generated
+        end # AI generated
+      end # AI generated
       base_key = dedupe_key(base) # AI generated
       # >>> INSTRUMENTATION ER (AI generated, remove) >>>
       if ENV["DBG_DYN"]
@@ -379,7 +399,12 @@ module SynHelper
         # AI generated (2026-11-14): write learned types into the candidate once, right after it ran (they include what
         # this run recorded), instead of on every rescore. WRITEBACK=rescore restores the old place.
         # prog_wrap.write_back_learned_types!(@ctx.type_info) if add_dyn && ENV["WRITEBACK"] != "rescore" # AI generated # AI altered: also the copies
-        [prog_wrap, *run_copies].each { |pw| pw.write_back_learned_types!(@ctx.type_info) } if add_dyn && ENV["WRITEBACK"] != "rescore" # AI generated
+        # [prog_wrap, *run_copies].each { |pw| pw.write_back_learned_types!(@ctx.type_info) } if add_dyn && ENV["WRITEBACK"] != "rescore" # AI generated # AI altered (2026-11-15): RefineTypesV3
+        if retype_on # AI generated (2026-11-15): the programs just run take the types on record, if any were recorded since their last check
+          [prog_wrap, *run_copies].each { |pw| pw.retype!(@ctx.type_info) if pw.stale?(@ctx.type_info) } if add_dyn # AI generated
+        else # AI generated
+          [prog_wrap, *run_copies].each { |pw| pw.write_back_learned_types!(@ctx.type_info) } if add_dyn && ENV["WRITEBACK"] != "rescore" # AI generated
+        end # AI generated
         # passes all tests
         #debug(Unparser.unparse(prog_wrap.to_ast), "arg1.take(arg2)")
         # if test_outputs.all? true && !add_dyn
@@ -481,9 +506,21 @@ module SynHelper
           # O(work list). RESCORE_ALL=1 restores the old behaviour.
           next if prog_wrap.dynamic_components == 0 && !ENV.key?("RESCORE_ALL") # AI generated
           # prog_wrap.write_back_learned_types!(@ctx.type_info) # AI generated: hole-free candidates take their learned types # AI altered (2026-11-14): moved to right after the run
-          prog_wrap.write_back_learned_types!(@ctx.type_info) if ENV["WRITEBACK"] == "rescore" # AI generated
-          prog_wrap.inferred_errors, prog_wrap.dynamic_components = @ctx.type_info.check_errors(prog_wrap)
+          # prog_wrap.write_back_learned_types!(@ctx.type_info) if ENV["WRITEBACK"] == "rescore" # AI generated # AI altered (2026-11-15): RefineTypesV3
+          # prog_wrap.inferred_errors, prog_wrap.dynamic_components = @ctx.type_info.check_errors(prog_wrap) # AI altered
+          if retype_on # AI generated: retype, rescore and prune in one pass
+            rescore_dropped << prog_wrap if prog_wrap.stale?(@ctx.type_info) && prog_wrap.retype!(@ctx.type_info)[2] # AI generated
+          else # AI generated
+            prog_wrap.write_back_learned_types!(@ctx.type_info) if ENV["WRITEBACK"] == "rescore" # AI generated
+            prog_wrap.inferred_errors, prog_wrap.dynamic_components = @ctx.type_info.check_errors(prog_wrap) # AI generated
+          end # AI generated
         }
+        unless rescore_dropped.empty? # AI generated
+          dropped_ids = rescore_dropped.map(&:object_id).to_set # AI generated
+          work_list = work_list.reject { |pw| dropped_ids.include?(pw.object_id) } # AI generated
+          pruner.dropped["RETYPE_DROP"] += rescore_dropped.size # AI generated
+          rescore_dropped.clear # AI generated
+        end # AI generated
       end
 
       remainder_holes.map {|prog_wrap|

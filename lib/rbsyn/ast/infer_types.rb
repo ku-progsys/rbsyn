@@ -32,7 +32,7 @@ end
 
 class InferTypes
 
-  attr_reader :type_errs, :type_successes, :moi, :new_types, :newerror, :newsuccess, :exclude
+  attr_reader :type_errs, :type_successes, :moi, :new_types, :newerror, :newsuccess, :exclude, :type_version # AI altered: + type_version
 
   def initialize(moi, exclude)
     @moi = moi
@@ -49,6 +49,7 @@ class InferTypes
     @new_types = []
     @newsuccess = false # AI generated
     @newerror = false   # AI generated
+    @type_version = 0 # AI generated (2026-11-15): goes up whenever a success or failure is recorded or merged
     @counter = 0
   end
 
@@ -367,7 +368,7 @@ end
       if sig[:args].size == trace[:args].size
         sigzip = sig[:args].zip(trace[:args])
         if sigzip.all? { |old, current| TypeOperations.leq_nc(current, old) || TypeOperations.leq_nc(old, current) } # AI generated
-          @newerror = true
+          @newerror = true; @type_version += 1 # AI generated
           # if all arguments in the old observation are comprable to the current observation
           # reduce each argument to the smallest smaller arguments will be expanding the incorrectness as incorrectness travels upwards. 
           @type_errs[meth][ind][:args] = sigzip.map {|old, current| TypeOperations.leq_nc(old, current) ? old : current} # AI generated
@@ -378,7 +379,7 @@ end
       end
     end
 
-    @newerror = true
+    @newerror = true; @type_version += 1 # AI generated
     @type_errs[meth].append(trace)
     return @type_errs
   end
@@ -431,7 +432,7 @@ end
           # preserve the most generic version of the type
           update = @type_successes[meth][ind]
 
-          @newsuccess = true
+          @newsuccess = true; @type_version += 1 # AI generated
           @new_types << update
 
           # AI altered: same clean-up, done for each class the signature is filed under (see registration_targets)
@@ -464,7 +465,7 @@ end
     # we have not found any type that is a comprable version of this one, we can add it in as is
     @type_successes[meth].append(trace)
     update = @type_successes[meth][-1]
-    @newsuccess = true
+    @newsuccess = true; @type_version += 1 # AI generated
     @new_types << update
     register_learned(update, meth) # AI generated
     return @type_successes
