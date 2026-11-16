@@ -72,9 +72,10 @@ class InferTypes
     hash.each do |key, val|
       x = locals_list.shift
       next if val.nil?   # exclude nil-valued keys
-      if !x.nil?
-        local_hash[key] = RDL::Type::OptionalType.new(x)
-      elsif val.is_a?(TrueClass) || val.is_a?(FalseClass)
+      # if !x.nil? # AI altered (2026-11-15): record the value's type, not the static type of the expression
+      #   local_hash[key] = RDL::Type::OptionalType.new(x)
+      # elsif val.is_a?(TrueClass) || val.is_a?(FalseClass)
+      if val.is_a?(TrueClass) || val.is_a?(FalseClass) # AI generated
         local_hash[key] = truefalse
       else
         # local_hash[key] = RDL::Type::OptionalType.new(RDL::Type::NominalType.new(val.class.to_s)) # AI altered
@@ -96,9 +97,10 @@ end
     trace = {
       :method => meth,
       :recvr => 
-        if !recarg.nil?
-          recarg
-        elsif recvr.is_a?(TrueClass) || recvr.is_a?(FalseClass)
+        # if !recarg.nil? # AI altered (2026-11-15): record the value's type, not the static type of the expression
+        #   recarg
+        # elsif recvr.is_a?(TrueClass) || recvr.is_a?(FalseClass)
+        if recvr.is_a?(TrueClass) || recvr.is_a?(FalseClass) # AI generated
           truefalse
         else
           # RDL::Type::NominalType.new(recvr.class.to_s) # AI altered
@@ -108,9 +110,10 @@ end
       :args =>
         args.map {|i| x = argtypes.shift
           lnum_child += 0.1
-          if !x.nil?
-            x
-          elsif i.is_a?(TrueClass) || i.is_a?(FalseClass) 
+          # if !x.nil? # AI altered (2026-11-15): record the value's type, not the static type of the expression
+          #   x
+          # elsif i.is_a?(TrueClass) || i.is_a?(FalseClass)
+          if i.is_a?(TrueClass) || i.is_a?(FalseClass) # AI generated
             truefalse 
           elsif i.is_a?(Hash)
             RDL::Type::FiniteHashType.new(hashargtypes(i, lnum_child), nil)
