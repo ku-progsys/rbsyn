@@ -390,6 +390,35 @@ end
     (t.is_a?(RDL::Type::SingletonType) && t.val.nil?) || (t.is_a?(RDL::Type::NominalType) && t.name == "NilClass")
   end
 
+  # AI generated (2026-11-15): one argument position of two successes: [mergeable, merged]. Two hash arguments merge
+  # key by key (merge_hash); anything else must be comparable, and the wider type is kept, as before.
+  def merge_arg(old, current)
+    return merge_hash(old, current) if old.is_a?(RDL::Type::FiniteHashType) && current.is_a?(RDL::Type::FiniteHashType)
+    return [false, nil] unless old <= current || current <= old
+    [true, current <= old ? old : current]
+  end
+
+  # AI generated (2026-11-15): two recorded hash arguments merge when every key they share has comparable values; the
+  # merged hash has every key of both, each optional, a shared key taking the wider value.
+  # {a: ?Integer, b: ?String} and {a: ?Numeric} -> {a: ?Numeric, b: ?String}; {a: ?Integer} and {a: ?String} do not merge.
+  def merge_hash(old, current)
+    return [false, nil] unless old.rest.nil? && current.rest.nil?
+    unopt = ->(t) { t.is_a?(RDL::Type::OptionalType) ? t.type : t }
+    elts = {}
+    (old.elts.keys | current.elts.keys).each { |k|
+      o, c = old.elts[k], current.elts[k]
+      if o && c
+        a, b = unopt.(o), unopt.(c)
+        return [false, nil] unless a <= b || b <= a
+        elts[k] = RDL::Type::OptionalType.new(b <= a ? a : b)
+      else
+        v = unopt.(o || c)
+        elts[k] = RDL::Type::OptionalType.new(v)
+      end
+    }
+    [true, RDL::Type::FiniteHashType.new(elts, nil)]
+  end
+
   def consolidate_type_successes(trace)
 
     if trace[:recvr].to_s == "nil"
@@ -418,11 +447,14 @@ end
           return @type_successes # AI generated
         end # AI generated
 
-        if !(sigzip.any? {|old, current| !(old <= current) && !(current <= old)}) # if all of the arguments are comparable
+        # if !(sigzip.any? {|old, current| !(old <= current) && !(current <= old)}) # if all of the arguments are comparable # AI altered (2026-11-15): hash arguments merge key by key, see merge_arg
+        merged_args = sigzip.map { |old, current| merge_arg(old, current) } # AI generated: [mergeable, merged] per position
+        if merged_args.all? { |ok, _| ok } # AI generated
 
           # we can consider the previous observation to be a call to an instance of this function 
           # or a more specific instance of this function (perhaps we should not fold in, but RUBY only allows one function of the same arity per reciever" 
-          @type_successes[meth][ind][:args] = sigzip.map {|old, current| current <= old ? old : current}
+          # @type_successes[meth][ind][:args] = sigzip.map {|old, current| current <= old ? old : current} # AI altered
+          @type_successes[meth][ind][:args] = merged_args.map { |_, merged| merged } # AI generated
           # @type_successes[meth][ind][:result] = sig[:result] <= trace[:result] ? trace[:result] : sig[:result] # AI altered: union
           @type_successes[meth][ind][:result] = if results_unrelated # AI generated (2026-11-15): identical arguments, unrelated results
             RDL::Type::UnionType.new(sig[:result], trace[:result]) # AI generated
