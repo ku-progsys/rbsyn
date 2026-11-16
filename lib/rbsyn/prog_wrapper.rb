@@ -104,7 +104,7 @@ class ProgWrapper
   def retype!(type_info)
     @checked_version = type_info.type_version # AI generated: the type info this program was last checked against
     pass = RefineTypesV3.new(type_info.type_errs, type_info.type_successes)
-    new_seed, new_exprs, new_info = pass.retype(@seed, @exprs, @env)
+    _, new_seed, new_exprs, new_info = pass.retype(@seed, @exprs, @env)
     if pass.changed
       @seed = new_seed
       @exprs = new_exprs
@@ -219,12 +219,13 @@ class ProgWrapper
           #   puts "program: \n#{new_env.info[program.to_ast.children[0]][:expr].to_ast}"
           #   binding.pry
           # end
-          # AI generated (2026-11-15): RefineTypesV3 types the new candidate and its env; a missing method skips it below
+          # AI generated (2026-11-15): RefineTypesV3 types the new candidate and its env; a program flagged for pruning is
+          # dropped here, one of the wrong type by the check below
           ti = @ctx.type_info # AI generated: nil when nothing is inferred
           v3 = RefineTypesV3.new(ti ? ti.type_errs : {}, ti ? ti.type_successes : {}) # AI generated
-          program, _, new_info = v3.retype(temp, [], new_env) # AI generated
+          status, program, _, new_info = v3.retype(temp, [], new_env) # AI generated
           new_env.info = new_info # AI generated
-          raise NoMethodError, "RefineTypesV3: no signature for #{v3.missing_method}" if v3.missing_method # AI generated
+          next if status == :prune # AI generated
           if ENV["DBG_DYN"] then __n = Process.clock_gettime(Process::CLOCK_MONOTONIC); __q3[:refine] += __n - __q3t; __q3t = __n end # INSTRUMENTATION Q3
      
           # if program.ttype != @target && (((program.ttype <= @target) && @variance_at_creation == CONTRAVARIANT) || ((@target <= program.ttype) && @variance_at_creation == COVARIANT))  

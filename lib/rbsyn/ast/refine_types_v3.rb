@@ -1,20 +1,24 @@
-# AI generated (2026-11-15): a standalone pass that checks a program like CheckErrorPassV2 and also writes the types it
-# works out into the nodes.
+# AI generated (2026-11-15): one pass that checks a program against the recorded successes and failures and writes
+# the types it works out into the nodes.
 #
-# Same walk, matching and counting as CheckErrorPassV2; the matching helpers below are copied from it, so the two can be
-# changed separately. The difference is what each handler returns: [status, type, node] instead of a type.
-#   status  :ok or :error (CheckErrorPassV2 returned the string "error"); an error makes the enclosing call an error
-#   type    the type CheckErrorPassV2 would have returned, used for checking the enclosing call
+# Every handler returns [status, type, node]:
+#   status  :pass, :fail or :prune
+#             :fail   a call matches a recorded failure, but not exactly (counted in errors, the program is kept)
+#             :prune  a call matches a recorded failure exactly, or its receiver type has no such method
+#   type    the type worked out (nil unless :pass), used for checking the enclosing call
 #   node    the node rebuilt with its new children and, where a type was worked out, that type
-# Nodes are frozen, so a changed node is a new copy and every parent is rebuilt around its new children.
+# A node checks its children in order and returns at once with the first child that comes back :fail or :prune;
+# only when every child passes is the node itself checked. Nodes are frozen, so a changed node is a new copy and every
+# parent is rebuilt around its new children.
 #
 # A type is written into a node only when it is known (not %dyn) and, for a method of interest, only when the receiver
-# and every argument are known: a %dyn receiver matches any success, so its type is used for checking but not written.
+# and every argument are known.
 # Use: status, _type, new_root = RefineTypesV3.new(errs, successes).process(root)
+#      status, new_seed, new_exprs, new_env_info = RefineTypesV3.new(errs, successes).retype(seed, exprs, env)
 class RefineTypesV3 < ::AST::Processor # AI generated
   include TypeOperations
   require "set"
-  attr_reader :errors, :dynamic_components, :drop_reason, :changed, :missing_method # AI altered: + missing_method
+  attr_reader :errors, :dynamic_components, :drop_reason, :changed
 
   def initialize(errs, successes)
     update_reset(errs, successes)
@@ -27,111 +31,108 @@ class RefineTypesV3 < ::AST::Processor # AI generated
     @dynamic_components = 0
     @drop_reason = nil
     @changed = false
-    @missing_method = nil # AI generated: "Recv#meth" when a non-moi call's receiver type has no signature for it (RefineTypesV2 raised)
-    @var_types = {} # AI generated: variable name -> known type its assignment resolved to
-    @env = nil # AI generated: the program's LocalEnvironment, set by retype
-    @env_done = {} # AI generated: env ref -> [status, type, retyped expr], each entry is walked once per program
-  end
-
-  # AI generated: retypes a stored program (seed, effect expressions and the env entries they reference) rather than
-  # its to_ast copy. Returns [new_seed, new_exprs, new_env_info]; errors, dynamic_components and drop? as for process.
-  def retype(seed, exprs, env)
-    @env = env
-    new_exprs = exprs.map { |e| visit(e)[2] }
-    new_seed = visit(seed)[2]
-    new_info = env.info.to_h { |ref, entry| [ref, @env_done.key?(ref) ? entry.merge(expr: @env_done[ref][2]) : entry] }
-    [new_seed, new_exprs, new_info]
-  ensure
-    @env = nil
-  end
-
-  # AI generated: a reference to an env entry (a variable before to_ast) takes the type its expression resolves to
-  def on_envref(node)
-    return handler_missing(node) if @env.nil?
-    ref = node.children[0]
-    # unless @env_done.key?(ref) # AI altered: an unknown entry was counted again as %dyn at each reference
-    #   status, type, expr = visit(@env.get_expr(ref)[:expr])
-    #   @env_done[ref] = [status == :ok && all_known?([type]) ? type : nil, expr]
-    # end
-    # type = @env_done[ref][0]
-    # return handler_missing(node) if type.nil?
-    # [:ok, type, write(node, type)]
-    # AI generated: a reference stands for its expression (as to_ast inlines it): it passes up the expression's status
-    # and type, and its %dyn parts are counted once, when the expression is first walked
-    @env_done[ref] ||= visit(@env.get_expr(ref)[:expr])
-    status, type, _ = @env_done[ref]
-    [status, type, status == :ok ? write(node, type) : node]
-  end
-
-  # AI generated: an assignment remembers the type its expression resolved to, so later uses of the variable get it
-  # (assignments come before their uses, see ProgWrapper#to_ast)
-  def on_lvasgn(node)
-    status, type, child = visit(node.children[1])
-    @var_types[node.children[0]] = type if status == :ok && all_known?([type])
-    @dynamic_components += 1 if node.ttype.is_a?(RDL::Type::DynamicType)
-    [:ok, node.ttype, rebuild(node, [node.children[0], child])]
-  end
-
-  # AI generated (2026-11-15): a hash literal's type is rebuilt from its values' resolved types; a value that stays
-  # unknown keeps its stored type. The rebuilt type is used for checking the enclosing call, and written into the node
-  # only when every value is known (as for any type). An error in a value makes the hash an error, as an error in an
-  # argument does for its call.
-  def on_hash(node)
-    return handler_missing(node) unless node.ttype.is_a?(RDL::Type::FiniteHashType) &&
-                                        node.children.all? { |c| c.is_a?(TypedNode) && c.type == :pair }
-    status = :ok
-    elts = node.ttype.elts.dup
-    pairs = node.children.map { |pair|
-      key_node, value = pair.children
-      vstatus, vtype, vnode = visit(value)
-      status = :error if vstatus == :error
-      key = key_node.children[0]
-      elts[key] = RDL::Type::OptionalType.new(vtype) if vstatus == :ok && all_known?([vtype]) && elts.key?(key)
-      rebuild(pair, [key_node, vnode])
-    }
-    rebuilt = rebuild(node, pairs)
-    return [:error, "error", rebuilt] if status == :error
-    type = RDL::Type::FiniteHashType.new(elts, node.ttype.rest)
-    [:ok, type, write(rebuilt, type)]
-  end
-
-  # AI generated: a use of a variable takes the type of its assignment when that is known; otherwise the stored type
-  def on_lvar(node)
-    type = @var_types[node.children[0]]
-    return handler_missing(node) if type.nil?
-    [:ok, type, write(node, type)]
+    @var_types = {} # variable name -> known type its assignment resolved to
+    @env = nil # the program's LocalEnvironment, set by retype
+    @env_done = {} # env ref -> [status, type, retyped expr], each entry is walked once per program
   end
 
   def drop?
     !@drop_reason.nil?
   end
 
+  # retypes a stored program (effect expressions, then the seed, and the env entries they reference) rather than its
+  # to_ast copy; stops at the first expression that does not pass
+  def retype(seed, exprs, env)
+    @env = env
+    status = :pass
+    new_exprs = exprs.map { |e|
+      next e unless status == :pass
+      status, _, node = visit(e)
+      node
+    }
+    new_seed = seed
+    status, _, new_seed = visit(seed) if status == :pass
+    new_info = env.info.to_h { |ref, entry| [ref, @env_done.key?(ref) ? entry.merge(expr: @env_done[ref][2]) : entry] }
+    [status, new_seed, new_exprs, new_info]
+  ensure
+    @env = nil
+  end
+
   def process(node)
     node = node.to_ast if !node.is_a?(Parser::AST::Node) && node.respond_to?(:to_ast) # as AST::Processor does
-    return [:ok, nil, node] unless node.is_a?(Parser::AST::Node)
+    return [:pass, nil, node] unless node.is_a?(Parser::AST::Node)
     super
+  end
+
+  # a reference to an env entry stands for its expression (as to_ast inlines it): it passes up the expression's status
+  # and type, and the expression is walked once
+  def on_envref(node)
+    return handler_missing(node) if @env.nil?
+    ref = node.children[0]
+    @env_done[ref] ||= visit(@env.get_expr(ref)[:expr])
+    status, type, _ = @env_done[ref]
+    [status, type, status == :pass ? write(node, type) : node]
+  end
+
+  # an assignment remembers the type its expression resolved to, so later uses of the variable get it
+  def on_lvasgn(node)
+    status, type, child = visit(node.children[1])
+    rebuilt = rebuild(node, [node.children[0], child])
+    return [status, nil, rebuilt] unless status == :pass
+    @var_types[node.children[0]] = type if all_known?([type])
+    @dynamic_components += 1 if node.ttype.is_a?(RDL::Type::DynamicType)
+    [:pass, node.ttype, rebuilt]
+  end
+
+  # a use of a variable takes the type of its assignment when that is known; otherwise the stored type
+  def on_lvar(node)
+    type = @var_types[node.children[0]]
+    return handler_missing(node) if type.nil?
+    [:pass, type, write(node, type)]
+  end
+
+  # a hash literal's type is rebuilt from its values' resolved types; a value that stays unknown keeps its stored type
+  def on_hash(node)
+    return handler_missing(node) unless node.ttype.is_a?(RDL::Type::FiniteHashType) &&
+                                        node.children.all? { |c| c.is_a?(TypedNode) && c.type == :pair }
+    elts = node.ttype.elts.dup
+    pairs = node.children.dup
+    node.children.each_with_index { |pair, i|
+      key_node, value = pair.children
+      status, vtype, vnode = visit(value)
+      pairs[i] = rebuild(pair, [key_node, vnode])
+      return [status, nil, rebuild(node, pairs)] unless status == :pass
+      key = key_node.children[0]
+      elts[key] = RDL::Type::OptionalType.new(vtype) if all_known?([vtype]) && elts.key?(key)
+    }
+    rebuilt = rebuild(node, pairs)
+    type = RDL::Type::FiniteHashType.new(elts, node.ttype.rest)
+    [:pass, type, write(rebuilt, type)]
   end
 
   def on_send(node)
     mth = node.children[1]
-    _, trecv, recv_node = visit(node.children[0])
+    children = node.children.dup
+    status, trecv, children[0] = visit(node.children[0])
+    return [status, nil, rebuild(node, children)] unless status == :pass
     @dynamic_components += 1 if trecv.is_a?(RDL::Type::DynamicType)
-    return [:error, "error", rebuild(node, [recv_node, *node.children[1..]])] if trecv.to_s == "error"
 
-    visited = node.children[2..].map { |k| k.is_a?(TypedNode) ? visit(k) : [:ok, nil, k] }
-    targs = visited.map { |_, t, _| t }
-    rebuilt = rebuild(node, [recv_node, mth, *visited.map { |_, _, n| n }])
-    return [:error, "error", rebuilt] if targs.map { |i| i.to_s }.include?("error")
+    targs = []
+    node.children[2..].each_with_index { |k, i|
+      status, t, children[i + 2] = k.is_a?(TypedNode) ? visit(k) : [:pass, nil, k]
+      return [status, nil, rebuild(node, children)] unless status == :pass
+      targs << t
+    }
+    rebuilt = rebuild(node, children)
     signature = { :recvr => trecv, :args => targs, :method => mth }
 
     if @type_successes.keys.include?(mth) # a method of interest
-      # @type_successes[mth].each { |i| # AI altered (2026-11-15): nil results last, so a call fitting both a nil and a
-      #                                 # non-nil success takes the non-nil one (nil records are kept, see InferTypes)
-      @type_successes[mth].each_with_index.sort_by { |i, idx| [nil_type?(i[:result]) ? 1 : 0, idx] }.map(&:first).each { |i| # AI generated
+      # nil results last, so a call fitting both a nil and a non-nil success takes the non-nil one
+      @type_successes[mth].each_with_index.sort_by { |i, idx| [nil_type?(i[:result]) ? 1 : 0, idx] }.map(&:first).each { |i|
         if match_success(i, signature)
           @dynamic_components += 1 if i[:result].is_a?(RDL::Type::DynamicType)
           written = all_known?([trecv, *targs]) ? write(rebuilt, i[:result]) : rebuilt
-          return [:ok, i[:result], written]
+          return [:pass, i[:result], written]
         end
       }
 
@@ -144,54 +145,52 @@ class RefineTypesV3 < ::AST::Processor # AI generated
         end
         outcome = :fail if o == :fail
       }
-      unless outcome == :pass
+      if outcome == :drop
         @errors += 1
-        @drop_reason ||= "#{trecv} :#{mth}" if outcome == :drop
-        return [:error, "error", rebuilt]
+        @drop_reason ||= "#{trecv} :#{mth}"
+        return [:prune, nil, rebuilt]
       end
-      return [:ok, RDL::Type::DynamicType.new, rebuilt]
+      if outcome == :fail
+        @errors += 1
+        return [:fail, nil, rebuilt]
+      end
+      return [:pass, RDL::Type::DynamicType.new, rebuilt]
     else # not a method of interest
-      mthds = methods_of(trecv)
-      info = mthds[mth]
-      @missing_method ||= "#{trecv}##{mth}" if (info.nil? || info[:type].nil?) && trecv.to_s != "nil" # AI generated
-      return [:error, "error", rebuilt] if info.nil?
+      info = methods_of(trecv)[mth]
+      if info.nil? || info[:type].nil?
+        # the receiver type has no such method: ill-typed, as RefineTypesV2 rejected it (a nil receiver is kept, as there)
+        return [:fail, nil, rebuilt] if trecv.to_s == "nil"
+        @drop_reason ||= "no method #{trecv}##{mth}"
+        return [:prune, nil, rebuilt]
+      end
       begin
         tret = compute_tout(trecv, info[:type], targs)
         @dynamic_components += 1 if tret.is_a?(RDL::Type::DynamicType)
-        return [:ok, tret, write(rebuilt, tret)]
+        return [:pass, tret, write(rebuilt, tret)]
       rescue Exception => e
         raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException))
-        return [:error, "error", rebuilt]
+        return [:fail, nil, rebuilt]
       end
     end
   end
 
   def handler_missing(node)
-    # a begin wrapping a single call passes the call's resolved type up (as CheckErrorPassV2) and takes it as its own
-    if node.is_a?(TypedNode) && node.type == :begin && node.children.size == 1 && node.children[0].is_a?(TypedNode)
-      status, resolved, child = visit(node.children[0])
-      rebuilt = rebuild(node, [child])
-      if resolved.is_a?(RDL::Type::Type)
-        @dynamic_components += 1 if resolved.is_a?(RDL::Type::DynamicType)
-        # the begin takes the call's type only if the call took it (it was written, or already had it)
-        return [status, resolved, child.is_a?(TypedNode) && child.ttype == resolved ? write(rebuilt, resolved) : rebuilt]
-      end
-      @dynamic_components += 1 if node.ttype.is_a?(RDL::Type::DynamicType)
-      return [status, node.ttype, rebuilt]
+    return [:pass, nil, node] unless node.is_a?(TypedNode)
+    children = node.children.dup
+    last_type = nil
+    node.children.each_with_index { |k, i|
+      next unless k.is_a?(TypedNode)
+      status, last_type, children[i] = visit(k)
+      return [status, nil, rebuild(node, children)] unless status == :pass
+    }
+    rebuilt = rebuild(node, children)
+    # a block of statements has the type of its last statement
+    if node.type == :begin && node.children.last.is_a?(TypedNode) && last_type.is_a?(RDL::Type::Type)
+      @dynamic_components += 1 if last_type.is_a?(RDL::Type::DynamicType) && node.children.size == 1
+      return [:pass, last_type, all_known?([last_type]) ? write(rebuilt, last_type) : rebuilt] if node.children.size == 1 || all_known?([last_type])
     end
-
-    # @dynamic_components += 1 if node.is_a?(TypedNode) && node.ttype.is_a?(RDL::Type::DynamicType) # AI altered
-    # children = node.children.map { |k| k.is_a?(TypedNode) ? visit(k)[2] : k } # AI altered
-    # [:ok, node.is_a?(TypedNode) ? node.ttype : nil, rebuild(node, children)] # AI altered
-    visited = node.children.map { |k| k.is_a?(TypedNode) ? visit(k) : [:ok, nil, k] } # AI generated
-    rebuilt = rebuild(node, visited.map { |_, _, n| n }) # AI generated
-    # AI generated: a block of statements has the type of its last statement
-    last = visited.last
-    if node.is_a?(TypedNode) && node.type == :begin && last && all_known?([last[1]])
-      return [:ok, last[1], write(rebuilt, last[1])]
-    end
-    @dynamic_components += 1 if node.is_a?(TypedNode) && node.ttype.is_a?(RDL::Type::DynamicType) # AI generated
-    [:ok, node.is_a?(TypedNode) ? node.ttype : nil, rebuilt] # AI generated
+    @dynamic_components += 1 if node.ttype.is_a?(RDL::Type::DynamicType)
+    [:pass, node.ttype, rebuilt]
   end
 
   # a recorded success against the call: argument count, receiver (call <= record), each argument (call <= record),
@@ -327,7 +326,7 @@ class RefineTypesV3 < ::AST::Processor # AI generated
 
   # a child as CheckErrorPassV2 processed it: any AST node is processed, anything else (nil, a symbol) has no type
   def visit(k)
-    k.is_a?(Parser::AST::Node) ? process(k) : [:ok, nil, k]
+    k.is_a?(Parser::AST::Node) ? process(k) : [:pass, nil, k]
   end
 
   def all_known?(types)
