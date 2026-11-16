@@ -3,13 +3,15 @@
 #
 # Every handler returns [status, type, node]:
 #   status  :pass, :fail or :prune
-#             :fail   a call matches a recorded failure, but not exactly (counted in errors, the program is kept)
-#             :prune  a call matches a recorded failure exactly, or its receiver type has no such method
-#   type    the type worked out (nil unless :pass), used for checking the enclosing call
+#             :fail   a call fails the check but the program is kept (a recorded failure, not an exact type-level or
+#                     ALL match, counts in errors); with AGGRESSIVE_PRUNING=on every :fail is a :prune instead
+#             :prune  a call matches an exact type-level or ALL failure, or its receiver type has no such method
+#   type    the type worked out; for a failed call its stored type; nil for :prune
 #   node    the node rebuilt with its new children and, where a type was worked out, that type
-# A node checks its children in order and returns at once with the first child that comes back :fail or :prune;
-# only when every child passes is the node itself checked. Nodes are frozen, so a changed node is a new copy and every
-# parent is rebuilt around its new children.
+# A :prune stops the walk at once (the program is dropped). A :fail does not: the failed call keeps its stored type,
+# its parent is checked with that type, and the walk carries on, so every failing call is counted. A node is :fail
+# if it or anything below it failed. Nodes are frozen, so a changed node is a new copy and every parent is rebuilt
+# around its new children.
 #
 # A type is written into a node only when it is known (not %dyn) and, for a method of interest, only when the receiver
 # and every argument are known.
@@ -46,12 +48,16 @@ class RefineTypesV3 < ::AST::Processor # AI generated
     @env = env
     status = :pass
     new_exprs = exprs.map { |e|
-      next e unless status == :pass
-      status, _, node = visit(e)
+      next e if status == :prune
+      st, _, node = visit(e)
+      status = worse(status, st)
       node
     }
     new_seed = seed
-    status, _, new_seed = visit(seed) if status == :pass
+    if status != :prune
+      st, _, new_seed = visit(seed)
+      status = worse(status, st)
+    end
     new_info = env.info.to_h { |ref, entry| [ref, @env_done.key?(ref) ? entry.merge(expr: @env_done[ref][2]) : entry] }
     [status, new_seed, new_exprs, new_info]
   ensure
@@ -78,10 +84,10 @@ class RefineTypesV3 < ::AST::Processor # AI generated
   def on_lvasgn(node)
     status, type, child = visit(node.children[1])
     rebuilt = rebuild(node, [node.children[0], child])
-    return [status, nil, rebuilt] unless status == :pass
-    @var_types[node.children[0]] = type if all_known?([type])
+    return [status, nil, rebuilt] if status == :prune
+    @var_types[node.children[0]] = type if status == :pass && all_known?([type])
     @dynamic_components += 1 if node.ttype.is_a?(RDL::Type::DynamicType)
-    [:pass, node.ttype, rebuilt]
+    [status, node.ttype, rebuilt]
   end
 
   # a use of a variable takes the type of its assignment when that is known; otherwise the stored type
@@ -97,33 +103,42 @@ class RefineTypesV3 < ::AST::Processor # AI generated
                                         node.children.all? { |c| c.is_a?(TypedNode) && c.type == :pair }
     elts = node.ttype.elts.dup
     pairs = node.children.dup
+    status = :pass
     node.children.each_with_index { |pair, i|
       key_node, value = pair.children
-      status, vtype, vnode = visit(value)
+      st, vtype, vnode = visit(value)
       pairs[i] = rebuild(pair, [key_node, vnode])
-      return [status, nil, rebuild(node, pairs)] unless status == :pass
+      return [:prune, nil, rebuild(node, pairs)] if st == :prune
+      status = worse(status, st)
       key = key_node.children[0]
-      elts[key] = RDL::Type::OptionalType.new(vtype) if all_known?([vtype]) && elts.key?(key)
+      elts[key] = RDL::Type::OptionalType.new(vtype) if st == :pass && all_known?([vtype]) && elts.key?(key)
     }
     rebuilt = rebuild(node, pairs)
     type = RDL::Type::FiniteHashType.new(elts, node.ttype.rest)
-    [:pass, type, write(rebuilt, type)]
+    [status, type, write(rebuilt, type)]
   end
 
   def on_send(node)
     mth = node.children[1]
     children = node.children.dup
-    status, trecv, children[0] = visit(node.children[0])
-    return [status, nil, rebuild(node, children)] unless status == :pass
+    below, trecv, children[0] = visit(node.children[0]) # below: :pass or :fail for everything under this call
+    return [:prune, nil, rebuild(node, children)] if below == :prune
     @dynamic_components += 1 if trecv.is_a?(RDL::Type::DynamicType)
 
     targs = []
     node.children[2..].each_with_index { |k, i|
-      status, t, children[i + 2] = k.is_a?(TypedNode) ? visit(k) : [:pass, nil, k]
-      return [status, nil, rebuild(node, children)] unless status == :pass
+      st, t, children[i + 2] = k.is_a?(TypedNode) ? visit(k) : [:pass, nil, k]
+      return [:prune, nil, rebuild(node, children)] if st == :prune
+      below = worse(below, st)
       targs << t
     }
     rebuilt = rebuild(node, children)
+    status, type, out = check_call(node, rebuilt, mth, trecv, targs)
+    [status == :prune ? :prune : worse(below, status), type, out]
+  end
+
+  # the call itself, once its receiver and arguments are typed: [status, type, node]
+  def check_call(node, rebuilt, mth, trecv, targs)
     signature = { :recvr => trecv, :args => targs, :method => mth }
 
     if @type_successes.keys.include?(mth) # a method of interest
@@ -152,14 +167,14 @@ class RefineTypesV3 < ::AST::Processor # AI generated
       end
       if outcome == :fail
         @errors += 1
-        return [:fail, nil, rebuilt]
+        return failed(rebuilt, "#{trecv} :#{mth}")
       end
       return [:pass, RDL::Type::DynamicType.new, rebuilt]
     else # not a method of interest
       info = methods_of(trecv)[mth]
       if info.nil? || info[:type].nil?
         # the receiver type has no such method: ill-typed, as RefineTypesV2 rejected it (a nil receiver is kept, as there)
-        return [:fail, nil, rebuilt] if trecv.to_s == "nil"
+        return failed(rebuilt, "nil receiver ##{mth}") if trecv.to_s == "nil"
         @drop_reason ||= "no method #{trecv}##{mth}"
         return [:prune, nil, rebuilt]
       end
@@ -169,7 +184,7 @@ class RefineTypesV3 < ::AST::Processor # AI generated
         return [:pass, tret, write(rebuilt, tret)]
       rescue Exception => e
         raise e if e.is_a?(Timeout::Error) || (defined?(Timeout::ExitException) && e.is_a?(Timeout::ExitException))
-        return [:fail, nil, rebuilt]
+        return failed(rebuilt, "#{trecv}##{mth} arguments")
       end
     end
   end
@@ -178,19 +193,21 @@ class RefineTypesV3 < ::AST::Processor # AI generated
     return [:pass, nil, node] unless node.is_a?(TypedNode)
     children = node.children.dup
     last_type = nil
+    status = :pass
     node.children.each_with_index { |k, i|
       next unless k.is_a?(TypedNode)
-      status, last_type, children[i] = visit(k)
-      return [status, nil, rebuild(node, children)] unless status == :pass
+      st, last_type, children[i] = visit(k)
+      return [:prune, nil, rebuild(node, children)] if st == :prune
+      status = worse(status, st)
     }
     rebuilt = rebuild(node, children)
     # a block of statements has the type of its last statement
     if node.type == :begin && node.children.last.is_a?(TypedNode) && last_type.is_a?(RDL::Type::Type)
       @dynamic_components += 1 if last_type.is_a?(RDL::Type::DynamicType) && node.children.size == 1
-      return [:pass, last_type, all_known?([last_type]) ? write(rebuilt, last_type) : rebuilt] if node.children.size == 1 || all_known?([last_type])
+      return [status, last_type, all_known?([last_type]) ? write(rebuilt, last_type) : rebuilt] if node.children.size == 1 || all_known?([last_type])
     end
     @dynamic_components += 1 if node.ttype.is_a?(RDL::Type::DynamicType)
-    [:pass, node.ttype, rebuilt]
+    [status, node.ttype, rebuilt]
   end
 
   # a recorded success against the call: argument count, receiver (call <= record), each argument (call <= record),
@@ -323,6 +340,20 @@ class RefineTypesV3 < ::AST::Processor # AI generated
   end
 
   private
+
+  # :fail ranks below :pass (only :pass and :fail reach here; :prune returns at once)
+  def worse(a, b)
+    a == :fail || b == :fail ? :fail : :pass
+  end
+
+  # a call that fails the check: kept with its stored type, or dropped with AGGRESSIVE_PRUNING=on
+  def failed(node, reason)
+    if ENV["AGGRESSIVE_PRUNING"] == "on"
+      @drop_reason ||= "aggressive: #{reason}"
+      return [:prune, nil, node]
+    end
+    [:fail, node.ttype, node]
+  end
 
   # a child as CheckErrorPassV2 processed it: any AST node is processed, anything else (nil, a symbol) has no type
   def visit(k)

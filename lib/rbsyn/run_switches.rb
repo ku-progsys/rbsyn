@@ -8,6 +8,10 @@ RUN_SWITCHES = {
   # "all" = smallest size in the whole work list (previous behaviour)
   "WATERMARK" => "front",
 
+  # RefineTypesV3 (lib/rbsyn/ast/refine_types_v3.rb): "on" drops a program at its first failing call, as a prune;
+  # "off" keeps it, counts every failing call and carries on with the failed call's stored type
+  "AGGRESSIVE_PRUNING" => "off",
+
   # failure records (lib/rbsyn/ast/infer_types.rb): "on" / "off"
   "ERR_ANY_POS" => "on",        # one blamed argument: other positions become ANY
   "ERR_ANY_KEY" => "on",        # one blamed key in a hash argument: other keys become ANY
