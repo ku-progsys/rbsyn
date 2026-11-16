@@ -78,7 +78,6 @@ module SynHelper
     pruner = DeadCallPrune.new(@ctx.type_info) # AI generated (2026-10-20): drops candidates with a dead call (lib/rbsyn/dead_call_prune.rb)
     retype_on = ENV["RETYPE"] != "off" # AI generated (2026-11-15): RefineTypesV3 rescoring after runs and new types; off = CheckErrorPassV2 + write-back
     rescore_dropped = [] # AI generated
-    retype_requeued = 0 # AI generated: popped programs put back because their rescore made them rank lower
     work_list = [seed_hole,]
     basehashlist = []
     evaluated_srcs = Set.new # AI generated: sources of hole-free programs already run against the specs
@@ -101,7 +100,6 @@ module SynHelper
       if counter >= type_search_depth && add_dyn # AI generated
         @ctx.logger.debug("EXPLORE: inference ended at #{counter}: #{programs_run} programs run, #{explore_picks} exploration picks") if ENV["EXPLORE"] == "on" # AI generated (2026-10-20)
         @ctx.logger.debug("PRUNE: inference ended at #{counter}, dropped #{pruner.dropped.to_h}") # AI generated (2026-10-20)
-        @ctx.logger.debug("RETYPE: requeued #{retype_requeued} popped programs") if retype_on # AI generated
         if finish_budget && !correct_progs.empty? # AI generated (2026-11-08): return the kept solution, skip the typed pass
           @ctx.logger.debug("INFERENCE SOLVED: budget finished at #{counter}, returning #{correct_progs.size} kept solution(s)") # AI generated
           return return_all ? correct_progs : correct_progs.first # AI generated
@@ -174,22 +172,6 @@ module SynHelper
 
       # if basehashlist.include? base.typehash  # AI altered: identical hole-free programs carrying different
       #                                         # inferred signatures had distinct typehashes and were all expanded
-      # AI generated (2026-11-15): before a popped program is expanded, it is rescored if types were recorded since its
-      # last check; dropped if V3 says so, put back if it now ranks below the next program
-      if retype_on && add_dyn && base.stale?(@ctx.type_info) # AI generated
-        if base.retype!(@ctx.type_info)[2] # AI generated
-          pruner.dropped["RETYPE_DROP"] += 1 # AI generated
-          counter -= 1 # AI generated: no expansion happened, so no iteration is used
-          next # AI generated
-        end # AI generated
-        if !work_list.empty? && (comparator_key(base) <=> comparator_key(work_list.first)) == 1 # AI generated
-          at = work_list.bsearch_index { |pw| (comparator_key(pw) <=> comparator_key(base)) == 1 } || work_list.size # AI generated
-          work_list.insert(at, base) # AI generated
-          retype_requeued += 1 # AI generated
-          counter -= 1 # AI generated
-          next # AI generated
-        end # AI generated
-      end # AI generated
       base_key = dedupe_key(base) # AI generated
       # >>> INSTRUMENTATION ER (AI generated, remove) >>>
       if ENV["DBG_DYN"]
