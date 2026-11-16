@@ -88,8 +88,6 @@ class Synthesizer
     else
       inference_iterations = 19
     end
-    # update_types_pass = RefineTypesPass.new  # AI altered: replaced by RefineTypesV2 (same behaviour without dynamic:)
-    update_types_pass = RefineTypesV2.new # AI generated
     spec_guard = SpecTypeGuard.new(@ctx) # AI generated: decides per spec whether an inference pass is needed
     spec_index = -1 # AI generated
     progconds = @ctx.preconds.zip(@ctx.postconds, @ctx.desc).map { |precond, postcond, desc|
@@ -179,7 +177,9 @@ class Synthesizer
 
       cond = BoolCond.new
       branches.each { |b| warn "[BR] branch=#{b.to_ast.to_s.gsub(/\s+/, ' ')[0, 250]} ttype=#{b.to_ast.ttype}" } if ENV["DBG_DYN"] # INSTRUMENTATION BR (AI generated, remove)
-      branches.each { |b| cond << update_types_pass.process(b.to_ast) }
+      # AI generated (2026-11-15): RefineTypesV3 writes the branch condition's types (finished programs, nothing dropped)
+      ti = @ctx.type_info # AI generated
+      branches.each { |b| cond << RefineTypesV3.new(ti ? ti.type_errs : {}, ti ? ti.type_successes : {}).process(b.to_ast)[2] } # AI generated
 
       # @ctx.logger.debug("Synthesized branch: #{format_ast(cond.to_ast)}")
       # AI altered: BoolCond#to_ast assumes at least one condition, so an empty one (single spec) is not formatted

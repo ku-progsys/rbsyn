@@ -23,7 +23,6 @@ require "rbsyn/ast/prog_size_pass"
 require "rbsyn/ast/expand_hole_pass"
 require "rbsyn/ast/extract_ast_pass"
 # require "rbsyn/ast/refine_types_pass"  # AI altered: RefineTypesPass merged into RefineTypesV2
-require "rbsyn/ast/refine_types_v2" # AI generated
 require "rbsyn/ast/flatten_prog_pass"
 require "rbsyn/context"
 require "rbsyn/bool_cond"

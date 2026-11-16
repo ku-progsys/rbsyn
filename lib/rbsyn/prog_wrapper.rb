@@ -2,7 +2,6 @@ class ProgWrapper
   include AST
   require_relative "ast/check_error_pass"
   # require_relative "ast/refine_type_pass_v2"  # AI altered: DynamicRefineTypes merged into RefineTypesV2
-  require_relative "ast/refine_types_v2" # AI generated
   require_relative "ast/ttype_print"
   require_relative "./complex_error"
 
@@ -162,8 +161,6 @@ class ProgWrapper
 
   def build_candidates()
     
-    # update_types_pass = RefineTypesPass.new  # AI altered: replaced by RefineTypesV2 (same behaviour without dynamic:)
-    update_types_pass = RefineTypesV2.new # AI generated
     case @looking_for
     when :type
       
@@ -292,15 +289,20 @@ class ProgWrapper
           read_eff = pass1.read_effs[selection.first]
           pass2 = ExtractASTPass.new(selection, @env)
 
-          program = update_types_pass.process(pass2.process(expanded))
+          extracted = pass2.process(expanded) # AI generated (2026-11-15): RefineTypesV3 in place of RefineTypesV2
           new_env = pass2.env
+          ti = @ctx.type_info # AI generated: nil when nothing is inferred
+          v3 = RefineTypesV3.new(ti ? ti.type_errs : {}, ti ? ti.type_successes : {}) # AI generated
+          status, program, _, new_info = v3.retype(extracted, [], new_env) # AI generated
+          new_env.info = new_info # AI generated
+          next if status == :prune # AI generated
           prog_wrap = ProgWrapper.new(@ctx, @seed, new_env, @exprs.dup)
           prog_wrap.add_side_effect_expr(program)
           prog_wrap.look_for(:teffect, read_eff)
           prog_wrap.passed_asserts = @passed_asserts
           prog_wrap
         }
-      }.flatten
+      }.flatten.compact # AI altered: + compact, pruned effect candidates are nil
       x
     when :teffect
       pass1 = ExpandHolePass.new(@ctx, @env)
